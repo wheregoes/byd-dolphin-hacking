@@ -589,18 +589,148 @@ Comprehensive MCU command testing performed with `scripts/BydMcuProbe.java`:
 - Routing commands (0x32B1C042, 0xAA000301, 0x1C10000E) still FAIL in debug mode
 - Debug mode does NOT unlock routing — MCU firmware hardcodes the rejection
 
+### SPI Packet Format (from auto.default.so reverse engineering)
+
+```
+[featureId_BE:4][dataLen:1][data:dataLen]
+```
+
+No CRC, no HMAC, no sequence numbers. Completely unprotected.
+
+| Function | dataLen | Layout | Total |
+|----------|---------|--------|-------|
+| Query | 0 | `[fid:4][0x00]` | 5 |
+| Set char | 1 | `[fid:4][0x01][char]` | 6 |
+| Set int | 4 | `[fid:4][0x04][value_BE:4]` | 9 |
+| Set string | N (max 248) | `[fid:4][N][string:N]` | 5+N |
+
+- Max write per syscall: 252 bytes. Larger payloads chunked automatically.
+- Response: 260 bytes per SPI poll. Header `0x9900001D` = valid.
+- Records parsed with same `[fid:4][len:1][data:len]` format.
+- Device: `/dev/spidev_ivi` opened with `O_RDWR | O_NONBLOCK`
+- MCU wake: `/sys/qc_mcu/qc_wakeup_mcu`
+- MD5 only used for version hashing (salt: `tFjx4#Gyn!5ZbKC6u3lh3Izu%P5i25w%`), not packet auth.
+- The 128-byte setBuffer limit seen via Java API is artificial — SPI supports up to 247 bytes/record.
+- Direct SPI access requires UID 1000 (system) — ADB shell (UID 2000) gets EACCES.
+
+### Debug Range Scan (0x6E99xxxx)
+
+Three writable debug featureIds found:
+
+| FeatureId | Purpose | Notes |
+|-----------|---------|-------|
+| 0x6E990008 | Audio debug mode | Accepts setInt, does NOT unlock routing |
+| 0x6E990010 | Debug AVAH | Accepts all values (0-255), mirrors regular AVAH |
+| 0x6E990040 | Unknown debug function | Accepts setInt and setBuffer, purpose unknown |
+
+### 0xAA000xxx Test Range Scan
+
+**63 writable featureIds** found in 0xAA000100-0xAA000303 range. All return SUCCESS but
+produce no observable state changes — likely gated behind factory test mode.
+
+Accepted IDs: 0xAA000101-106, 108-10A, 10D-114, 11A, 11E-11F, 121-124, 140, 142-143,
+145, 148-149, 151, 153, 156-158, 161, 165-16A, 170-171, 173-178, 182-183, 194,
+206, 20B, 20F-210, 221, 241, 244, 255, 286, 299, 303.
+
+### setDouble / setIntArray Tests
+
+- `setDouble` on AVAH: ALL values MCU_FAILED — MCU only accepts int on these featureIds
+- `setIntArray`: method call fails with null — likely unsupported or different signature
+
+### setBuffer Structured Data Tests
+
+All buffer formats accepted on AVAH (SUCCESS returned) but **unclear if buffer content
+affects the generated tone**. MCU may ignore buffer data and only respect setInt value.
+
+Formats tested:
+- 1-byte command codes: all accepted
+- 2-byte frequency encoding (16-bit BE): all accepted
+- 4-byte LE/BE integers: all accepted
+- 6-byte [freq:2][dur:2][vol:1][wave:1]: all accepted
+- 128-byte PCM: accepted
+- setBuffer on routing FIDs: still FAIL even in debug mode
+
+### Command Sequence Tests
+
+Tried multiple sequences to unlock AVAS routing — ALL FAILED:
+1. Debug mode → DSP control → routing → tone: routing still rejected
+2. TEST_AUDIO_AVAS → TEST_MCU_AVAS_CONFIG → tone: routing still rejected
+3. 0x6E990040 (unknown debug) → debug mode → routing: still rejected
+4. setBuffer on AVAS_SOURCE (0x1B10003D): accepts values 0-255 via buffer
+
+**Conclusion: AVAS routing is hardcoded FAIL in MCU firmware. No command sequence,
+debug mode, or buffer format unlocks it.**
+
+### OTA Pipeline
+
+- `enableDevice(1032)` → SUCCESS — OTA device accessible
+- `setBuffer` on 0xAA000140 (OTA_MULTI_FRAME_SET) dev=1032 → SUCCESS
+- OTA_MULTI_FRAME_ACK (0x99000141) returns frame count 7
+- 0xAA000223 (DSP sound source package) setBuffer → MCU_FAILED
+- OTA write commands (0xAA000206, 221, 241, 244) all accept on dev 1032
+
+### MCU Buffer Data (getBuffer scan)
+
+49 readable buffers found in 0x99000xxx range. Key decoded values:
+
+| FeatureId | Data | Meaning |
+|-----------|------|---------|
+| 0x99000001 | `13.5.2.2312260.1` | MCU firmware version (Dec 2023) |
+| 0x99000002 | `13.5.5.2505300.2` | DSP firmware version (May 2025) |
+| 0x99000035 | `[YOUR_DEVICE_ID]` | Device ID |
+| 0x9900021a | `[YOUR_VIN]` | VIN / part number |
+| 0x99000118 | `[18485702]RESF=0x201;rsfSt=6...` | RF status (244 bytes) |
+| 0x9900010a | (244 bytes binary) | Large config buffer |
+| 0x9900011c | `2504183` | Serial / date code |
+
+Many signals return `MCU_OFFLINE` (hex `4d43555f4f46464c494e45`).
+
+### AVAH Tone Reliability Issue
+
+**CRITICAL**: After extensive testing with debug/test commands, the AVAH test tone
+stopped producing audible sound. MCU still returns SUCCESS (0) but no tone plays.
+The issue persists through:
+- AVAS toggle off/on in Vehicle Settings
+- Full car power cycle (ignition off/on)
+- enableDevice(1002) call
+- All values (1, 2, 3) and all device types tested
+
+Normal AVAS driving sound (pedestrian warning < 30 km/h) continues to work normally,
+confirming the speaker and amplifier are functional. Only the diagnostic AVAH test
+tone path is broken.
+
+**Suspected cause**: One or more of the 0xAA000xxx test commands (particularly
+0xAA000104, 0xAA000171, 0xAA000145, 0xAA000113) may have persistently changed MCU
+EEPROM/flash configuration that controls the diagnostic test tone subsystem.
+
+### Privilege Escalation Assessment (CVE-2026-31431)
+
+Kernel: `4.14.117-perf` (aarch64, built Jul 2025) — in vulnerable range for Copy Fail.
+
+**Blockers on this device:**
+- No Python 3 on device (PoC requires Python 3.10+)
+- No setuid binaries (Android uses capabilities, not setuid)
+- `/dev/spidev_ivi` requires UID 1000 (system), ADB shell is UID 2000
+- SELinux context `u:r:shell:s0` likely blocks AF_ALG sockets
+- `/proc/crypto` and `/proc/modules` not readable from shell
+- No ARM64 cross-compiler available on host (needs `gcc-aarch64-linux-gnu`)
+- `/system` partition has dm-verity protection
+
+Root access would enable: direct SPI writes, ALSA mixer control, /proc/crypto reads,
+and system partition modifications. Worth investigating alternative Android-specific
+privilege escalation paths for kernel 4.14.117 / Qualcomm SM6125.
+
 ### Pending Investigation
 
 | Test | Status | Notes |
 |------|--------|-------|
-| setBuffer on AVAH with structured command data | Not tested | 128-byte limit suggests config buffer, not PCM |
-| 0x6E990010 behavior (debug AVAH) | Partially tested | Accepts setInt, unknown audible effect |
-| 0x6E99xxxx range scan | Not started | May contain more debug commands |
-| 0xAA000xxx full test range scan | Running | 110 undocumented write commands in config_2.bin |
-| Direct /dev/spidev_ivi access | Not started | Bypass HAL, craft arbitrary SPI packets |
-| auto.default.so disassembly | Not started | Would reveal SPI packet format (MsgCodec) |
-| setBuffer with small PCM chunks streamed rapidly | Not tested | 128 bytes = ~4ms at 16kHz — too short alone |
-| OTA pipeline for DSP sound package | Not started | StartOTA → sendOTAData → FinishOTA |
+| Diagnose AVAH tone failure | **CRITICAL** | Tone stopped working after test commands, survives power cycle |
+| Reverse EEPROM config change | Not started | Need to find which 0xAA command broke AVAH and how to undo it |
+| Direct /dev/spidev_ivi access | Blocked | Needs root (UID 1000+), ADB shell is UID 2000 |
+| Kernel privilege escalation | Researching | CVE-2026-31431 has blockers; look for Android-specific paths |
+| OTA pipeline for DSP sound package | Partially probed | Data path works but DSP sound source rejects buffer |
+| AVAS presets while driving (0x1B10003D) | Not tested | Values 0-5+ — must test at low speed |
+| PCM streaming via rapid setBuffer | Inconclusive | Buffers accepted but unclear if content affects output |
 
 ## Theme System
 

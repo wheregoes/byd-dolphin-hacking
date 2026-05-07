@@ -42,6 +42,10 @@ Research, reverse engineering, and tooling for the BYD Dolphin 25/26 infotainmen
 │   ├── BydDeviceScan.java         # Multi-device signal scanner (bodywork, doorlock, OTA, test)
 │   ├── BydMcuProbe.java           # MCU security probe (setBuffer, featureId scanning, extreme values)
 │   ├── BydNavAudioTest.java       # Navigation I2S path audio test (QUAT_MI2S_RX)
+│   ├── BydAvasPlayer.java         # AVAS melody player (frequency control via setBuffer)
+│   ├── BydBufferProbe.java        # Structured buffer data tests on AVAH
+│   ├── BydDebugProbe.java         # Debug range scanner, setDouble/intArray tests
+│   ├── BydSpiDirect.java          # Direct SPI access tool (needs root)
 │   ├── BydLockSoundMonitor.java   # Supplementary lock sound player (prototype)
 │   └── car-telemetry.py           # Car data polling and logging
 ├── data/native-libs/              # Pulled native libraries for analysis
