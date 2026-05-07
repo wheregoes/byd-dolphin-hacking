@@ -4,9 +4,37 @@
 
 The BYD Dolphin's sound system communicates via CAN bus (CANFD protocol) through DiCarServer (`com.byd.car.server`).
 
-Signal flow:
+### Audio Hardware Topology
+
 ```
-Android App → DiCarServer → BYDAutoManager (JNI → libbydauto.so) → MCU (CANFD) → BCM/Amplifier/AVAS Speaker
+                                    ┌──────────────────────────────────────┐
+                                    │              MCU DSP                 │
+  SoC (SM6125)                      │                                      │
+  ┌──────────┐    I2S    ┌─────┐    │    ┌─────────────────────┐           │
+  │ Qualcomm ├──────────►│ MCU ├────┼───►│     A2B Bus         │           │
+  │  ADSP    │           │     │    │    │  (Analog Devices     │           │
+  └──────────┘           │     │    │    │   Automotive Audio)  │           │
+       ▲                 │     │    │    └──┬──────────┬────────┘           │
+       │                 └──┬──┘    │       │          │                    │
+  SPI (/dev/spidev_ivi)     │       │       ▼          ▼                   │
+       │                    │       │   Main Amp    AVAS Amp               │
+  ┌────┴─────┐              │       │       │          │                   │
+  │BYDAuto   │   CAN bus    │       │       ▼          ▼                   │
+  │Manager   ├──────────────┘       │   Cabin      External               │
+  │(libbyd   │  commands            │   Speakers   Speaker                 │
+  │ auto.so) │                      │              (pedestrian)            │
+  └──────────┘                      └──────────────────────────────────────┘
+```
+
+The SoC sends audio data to the MCU via I2S. The MCU's DSP is the master of the
+A2B (Analog Devices Automotive Audio Bus) and decides all routing to speakers.
+There is NO direct audio path from the SoC to the AVAS speaker — it must go
+through the MCU's DSP.
+
+### CAN Bus Signal Flow
+
+```
+Android App → DiCarServer → BYDAutoManager (JNI → libbydauto.so) → SPI → MCU → A2B → Amplifiers
 ```
 
 DiCarServer uses two ID systems:
@@ -161,7 +189,21 @@ The AVAS is **partially controlled from the Android head unit**. DiCarServer has
 
 **Vehicle Prompt Sound Source**: A separate sound profile system accessible via `STATISTICS_SOUND_SOURCE_INFO` (0x99000194 read, 0xAA000194 write). Values: 1=Normal, 2=Tech. When set to "Tech", the engine simulator sub-menu is hidden in Vehicle Settings. This is read as a byte array — byte offset 5 contains the current value.
 
-**Boombox / custom sound verdict**: `AUDIO_AVAS_AUDIO_SOURCE_TO_EXTERNAL_SPEAKER_SET` exists in DiCarServer's code (shared across all BYD models) but the Dolphin's MCU firmware **does not implement it**. The MCU returns FAILED (-2147482648). Android's audio system also does not expose the AVAS speaker as an output device — only "speaker" (cabin speakers) is available.
+**AVAH test tones**: `TEST_CMD_TEST_AUDIO_AVAH_SET` (0x6E970010) generates test tones on the AVAS speaker. Both GET and SET have **real non-zero feature IDs** (1855389712 SET, 1856438288 GET) — fully implemented in the HAL. Values: 0=stop, 1=1kHz, 2=2kHz, 3=3kHz. **This proves the AVAS hardware is functional and commandable from the SoC.** Testing this will confirm the AVAS speaker works.
+
+**Sound source channels**: The DSP manages parallel channels, each with a SET/STATE signal pair. All channels select MCU-stored presets — none routes SoC audio:
+
+| Channel | SET Signal | STATE Signal |
+|---------|-----------|-------------|
+| Media | 0x1B10001C | 0x4C60000C |
+| Radar | 0x1B100025 | 0x4C600015 |
+| Navigation | 0x1B10002D | 0x4C60001D |
+| ANC | 0x1B100035 | 0x4C600025 |
+| **AVAS** | 0x1B10003D | 0x4C60002D |
+| INS | 0x1B100045 | 0x4C600035 |
+| BD | 0x1C100026 | 0x4FD0001E |
+
+**Boombox / custom sound verdict**: `AUDIO_AVAS_AUDIO_SOURCE_TO_EXTERNAL_SPEAKER_SET` (0x32B1C042) exists but the Dolphin's MCU firmware does not implement it (returns FAILED). No Android audio device represents the AVAS speaker. The A2B bus connecting DSP to amplifiers is MCU-mastered — the SoC cannot address A2B endpoints directly. However, the AVAH test tone path works, proving the hardware itself is functional. The remaining question is whether any combination of test/diagnostic signals can unlock arbitrary audio routing.
 
 **DSP OTA sound source**: `OTA_REMOTE_CONFIG_DSP_SOUND_SOURCE_PACKAGE` (0x99000223) is **read-only** (0x99 prefix = MCU→SOC). It reports the current DSP sound package status — there is no corresponding 0xAA write signal. However, the `BYDAutoOtaDevice` class provides `sendOTAData(byte[])` which pushes arbitrary binary data through `setBuffer()` → JNI → `libbydauto.so` → SPI → MCU. The OTA pipeline is: `StartOTA()` → `sendOTAData(byte[])` → `FinishOTA()`. OTA permissions: `android.permission.BYDAUTO_OTA_SET`. The MCU likely validates signatures/checksums.
 
@@ -263,7 +305,7 @@ Changeable to different presets through infotainment settings.
 | Horn | Physical relay, hardware-controlled |
 | Seatbelt warning chime | Safety-critical, BCM/Cluster |
 | Boot animation sound | `/system` partition read-only, dm-verity protected |
-| Route audio to exterior speaker | No external speaker in Android audio device list; MCU rejects routing commands |
+| Route audio to exterior speaker | A2B bus is MCU-mastered; SoC has no direct path to AVAS amplifier |
 
 ### Lock Sound Architecture
 
@@ -298,9 +340,51 @@ An Android app could listen for lock/unlock CAN bus events and play a **suppleme
 | Engine sound | Limited | 3 UI presets, MCU accepts 1-255 via CAN |
 | Sound profile | N/A | 2 profiles (Normal/Tech) via Vehicle Prompt Sound Source |
 
-## Testing Guide (While Driving)
+## Testing Guide
 
-### Priority 1: Hidden AVAS Presets (drive at 0-30 km/h)
+### Audio Routing Test Tool
+
+Build the comprehensive audio routing test tool:
+```bash
+javac -source 11 -target 11 -d /tmp/bydroute scripts/BydAudioRoutingTest.java
+d8 --output /tmp/bydroute /tmp/bydroute/BydAudioRoutingTest.class
+adb push /tmp/bydroute/classes.dex /data/local/tmp/bydroute.dex
+```
+
+### Priority 0: AVAH Test Tone (PARKED — confirms AVAS hardware works)
+
+**This is the first thing to test.** It plays a test tone directly on the AVAS speaker.
+```bash
+# Run full diagnostics first (read-only, safe):
+adb shell "CLASSPATH=/data/local/tmp/bydroute.dex app_process /data/local/tmp BydAudioRoutingTest diag"
+
+# Play 1kHz test tone on AVAS speaker:
+adb shell "CLASSPATH=/data/local/tmp/bydroute.dex app_process /data/local/tmp BydAudioRoutingTest avah 1"
+
+# Stop the test tone:
+adb shell "CLASSPATH=/data/local/tmp/bydroute.dex app_process /data/local/tmp BydAudioRoutingTest avah 0"
+```
+If you hear a 1kHz tone from outside the car, the AVAS speaker hardware path is confirmed working.
+
+### Priority 1: Audio Routing Combination Attack (PARKED)
+
+Tries multiple signals in sequence to enable external speaker routing:
+```bash
+adb shell "CLASSPATH=/data/local/tmp/bydroute.dex app_process /data/local/tmp BydAudioRoutingTest combo"
+```
+This enables the exterior speaker, wakes the DSP, enables loopback, unmutes the UE channel, routes AVAS to external, and plays a test tone.
+
+### Priority 2: Individual Route Tests (PARKED)
+
+```bash
+# Test exterior speaker enable + source routing:
+adb shell "CLASSPATH=/data/local/tmp/bydroute.dex app_process /data/local/tmp BydAudioRoutingTest route"
+
+# Test loopback / DSP passthrough:
+adb shell "CLASSPATH=/data/local/tmp/bydroute.dex app_process /data/local/tmp BydAudioRoutingTest loopback"
+```
+
+### Priority 3: Hidden AVAS Presets (drive at 0-30 km/h)
 
 ```bash
 # Try each value, listen for different AVAS sounds while driving slowly
@@ -313,22 +397,14 @@ adb shell "CLASSPATH=/data/local/tmp/bydquery.dex app_process /data/local/tmp By
 # Reset to default: value 0 or 1
 ```
 
-### Priority 2: Test/Diagnostic AVAS (drive at 0-30 km/h)
+### Priority 4: Test/Diagnostic AVAS (drive at 0-30 km/h)
 
 ```bash
-# These may trigger or reconfigure AVAS playback
 adb shell "CLASSPATH=/data/local/tmp/bydquery.dex app_process /data/local/tmp BydAudioQuery set 0xAA000104 1"  # TEST_AUDIO_AVAS_SET
 adb shell "CLASSPATH=/data/local/tmp/bydquery.dex app_process /data/local/tmp BydAudioQuery set 0xAA000171 1"  # TEST_MCU_AVAS_CONFIGURATION_SET
 ```
 
-### Priority 3: Speaker/Amplifier Tests (parked, listen for sounds)
-
-```bash
-adb shell "CLASSPATH=/data/local/tmp/bydquery.dex app_process /data/local/tmp BydAudioQuery set 0xAA000142 1"  # TEST_MCU_SPEAK_SET
-adb shell "CLASSPATH=/data/local/tmp/bydquery.dex app_process /data/local/tmp BydAudioQuery set 0xAA000148 1"  # TEST_PA_CONTROL_SET
-```
-
-### Priority 4: Hidden Engine Simulator Presets (while driving)
+### Priority 5: Hidden Engine Simulator Presets (while driving)
 
 ```bash
 # UI shows 1-3, but MCU accepts 1-255. Try values 4-10 to find hidden sounds
@@ -342,12 +418,16 @@ adb shell "CLASSPATH=/data/local/tmp/bydquery.dex app_process /data/local/tmp By
 
 | Signal | What to Try | Why |
 |--------|-------------|-----|
-| AVAS_SOUND_SOURCE_SET_SET [0x1B10003D] | Values 0-5+ while driving 0-30 km/h | Hidden presets — MCU accepts far more than UI shows |
-| TEST_AUDIO_AVAS_SET [0xAA000104] | Values 0-3 while driving | MCU accepts; may trigger/change AVAS playback |
-| TEST_MCU_AVAS_CONFIGURATION_SET [0xAA000171] | Values 0-3 while driving | MCU accepts; may reconfigure AVAS behavior |
-| TEST_MCU_SPEAK_SET [0xAA000142] | Value 1 while parked | MCU accepts; might trigger audible test |
-| TEST_PA_CONTROL_SET [0xAA000148] | Value 1 while parked | MCU accepts; power amplifier control |
-| ENGINE_SIMULATOR [0x3E300038] dev=1003 | Values 4-10 while driving | Hidden presets beyond UI's 3 options |
+| **AVAH_SET [0x6E970010]** | **Values 1-3 while parked** | **Plays test tones on AVAS speaker — proves hardware works** |
+| EXT_SPEAKER_SWITCH [0x1C10000E] | Value 1 | Enable exterior speaker before routing |
+| AVAS_TO_EXT_SPEAKER [0x32B1C042] | Values 0-3 | Route audio source to external speaker |
+| LOOPBACK_PASSAGE [0xAA000301] | Values 0-2 | Open loopback/passthrough audio path |
+| SOC_CONTROL_DSP [0xAA000145] | Values 0-3 | Put DSP in different modes |
+| UE_MUTE [0xAA000346] | Value 0 | Unmute possible external channel |
+| AVAS_SOURCE [0x1B10003D] | Values 0-5+ while driving | Hidden presets |
+| TEST_AUDIO_AVAS [0xAA000104] | Values 0-3 while driving | Factory AVAS test |
+| TEST_MCU_AVAS_CONFIG [0xAA000171] | Values 0-3 while driving | AVAS configuration |
+| ENGINE_SIMULATOR [0x3E300038] dev=1003 | Values 4-10 while driving | Hidden presets beyond UI |
 
 ## DiCarServer Analysis
 
