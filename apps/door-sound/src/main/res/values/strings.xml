@@ -4,16 +4,14 @@
     <string name="service_channel">Door Sound Service</string>
     <string name="service_running">Listening for door events...</string>
     <string name="enabled">Enabled</string>
-    <string name="select_file">Select</string>
+    <string name="select_file">Select File</string>
     <string name="clear">Clear</string>
     <string name="no_file_selected">No file selected</string>
     <string name="door_open_sound">Door Open Sound</string>
     <string name="door_close_sound">Door Close Sound</string>
-    <string name="lock_sound">Lock Sound</string>
-    <string name="unlock_sound">Unlock Sound</string>
-    <string name="service_status">Service Status</string>
+    <string name="volume">Vol:</string>
+    <string name="service_status">Status</string>
     <string name="status_running">Running</string>
     <string name="status_stopped">Stopped</string>
     <string name="last_event">Last Event</string>
-    <string name="none">None</string>
 </resources>

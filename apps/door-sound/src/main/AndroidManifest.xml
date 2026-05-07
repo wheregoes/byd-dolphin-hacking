@@ -8,12 +8,14 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.BYDAUTO_BODYWORK_GET" />
     <uses-permission android:name="android.permission.BYDAUTO_BODYWORK_COMMON" />
 
     <application
         android:label="Door Sound"
         android:icon="@drawable/ic_notification"
+        android:debuggable="true"
         android:supportsRtl="true">
 
         <activity

@@ -45,17 +45,28 @@ find src/main/java -name "*.java" | xargs javac \
     -cp "$ANDROID_JAR:$BUILD_DIR/stubs-classes:$BUILD_DIR/gen" \
     -d "$BUILD_DIR/classes"
 
-echo "=== Dexing ==="
+echo "=== Dexing app classes ==="
 d8 --min-api 28 \
     --lib "$ANDROID_JAR" \
     --classpath "$BUILD_DIR/stubs-classes" \
     --output "$BUILD_DIR/classes.zip" \
     $(find "$BUILD_DIR/classes" -name "*.class")
 
+echo "=== Merging with BYD SDK ==="
+cd "$BUILD_DIR"
+unzip -o classes.zip classes.dex
+mv classes.dex app-classes.dex
+cd "$SCRIPT_DIR"
+d8 --min-api 28 \
+    --lib "$ANDROID_JAR" \
+    --output "$BUILD_DIR/merged.zip" \
+    "$BUILD_DIR/app-classes.dex" \
+    libs/byd_sdk.dex
+
 echo "=== Packaging APK ==="
 cp "$BUILD_DIR/app-unsigned.apk" "$BUILD_DIR/$OUT_APK"
 cd "$BUILD_DIR"
-unzip -o classes.zip classes.dex
+unzip -o merged.zip classes.dex
 zip -u "$OUT_APK" classes.dex
 cd "$SCRIPT_DIR"
 

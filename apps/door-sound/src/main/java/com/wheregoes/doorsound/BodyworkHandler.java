@@ -2,10 +2,8 @@ package com.wheregoes.doorsound;
 
 import android.hardware.bydauto.bodywork.AbsBYDAutoBodyworkListener;
 import android.hardware.bydauto.bodywork.BYDAutoBodyworkDevice;
-import android.util.Log;
 
 public class BodyworkHandler extends AbsBYDAutoBodyworkListener {
-    private static final String TAG = "DoorSoundHandler";
     private final DoorSoundService service;
 
     BodyworkHandler(DoorSoundService service) {
@@ -24,21 +22,8 @@ public class BodyworkHandler extends AbsBYDAutoBodyworkListener {
     }
 
     @Override
-    public void onAutoSystemStateChanged(int state) {
-        int prevState = service.getLastSystemState();
-        if (state == prevState) return;
-        service.setLastSystemState(state);
-
-        if (state == BYDAutoBodyworkDevice.BODYWORK_AUTO_SYSTEM_STATE_SET_SECURE) {
-            service.handleLock();
-        } else if (state == BYDAutoBodyworkDevice.BODYWORK_AUTO_SYSTEM_STATE_NORMAL
-                && prevState == BYDAutoBodyworkDevice.BODYWORK_AUTO_SYSTEM_STATE_SET_SECURE) {
-            service.handleUnlock();
-        }
-    }
+    public void onAutoSystemStateChanged(int state) {}
 
     @Override
-    public void onPowerLevelChanged(int level) {
-        Log.d(TAG, "Power level: " + level);
-    }
+    public void onPowerLevelChanged(int level) {}
 }
