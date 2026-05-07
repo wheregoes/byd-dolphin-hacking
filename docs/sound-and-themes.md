@@ -685,23 +685,68 @@ debug mode, or buffer format unlocks it.**
 
 Many signals return `MCU_OFFLINE` (hex `4d43555f4f46464c494e45`).
 
-### AVAH Tone Reliability Issue
+### AVAH Tone Reliability Issue — RESOLVED
 
-**CRITICAL**: After extensive testing with debug/test commands, the AVAH test tone
-stopped producing audible sound. MCU still returns SUCCESS (0) but no tone plays.
-The issue persists through:
-- AVAS toggle off/on in Vehicle Settings
-- Full car power cycle (ignition off/on)
-- enableDevice(1002) call
-- All values (1, 2, 3) and all device types tested
+After extensive testing with debug/test commands, the AVAH test tone stopped producing
+audible sound. MCU still returned SUCCESS (0) but no tone played. This persisted
+through AVAS toggle off/on and full car power cycle. Normal AVAS driving sound
+(pedestrian warning < 30 km/h) continued to work normally.
 
-Normal AVAS driving sound (pedestrian warning < 30 km/h) continues to work normally,
-confirming the speaker and amplifier are functional. Only the diagnostic AVAH test
-tone path is broken.
+**Root cause**: The 0xAA000xxx test commands persistently changed MCU EEPROM/flash
+configuration. The AVAH diagnostic tone now requires **enabler commands** before it
+will produce audible output.
 
-**Suspected cause**: One or more of the 0xAA000xxx test commands (particularly
-0xAA000104, 0xAA000171, 0xAA000145, 0xAA000113) may have persistently changed MCU
-EEPROM/flash configuration that controls the diagnostic test tone subsystem.
+### AVAH Enabler Commands (CRITICAL DISCOVERY — 2026-05-07)
+
+After MCU config was altered by probing, AVAH requires these factory test commands
+to be set before it will produce audible sound on the AVAS speaker:
+
+| Command | Feature ID | Enable Value | Purpose |
+|---------|-----------|-------------|---------|
+| TEST_PA_CONTROL_SET | 0xAA000148 | 1 | Power amplifier for diagnostic path |
+| TEST_MCU_SPEAK_SET | 0xAA000142 | 1 | MCU speaker test mode |
+| TEST_FM_SPEAK_SET | 0xAA00011A | 1 | FM speaker path |
+| TEST_AUDIO_AVAS_SET | 0xAA000104 | 1 | AVAS test audio |
+| TEST_MCU_AVAS_CONFIGURATION_SET | 0xAA000171 | 1 | AVAS test mode config |
+| AUDIO_CHANNLE_WITH_MUTE_STATE_SET | 0xAA00011E | 0 | Unmute channel |
+
+**Start sequence** (plays tone on AVAS external speaker):
+```java
+// Set all enablers
+setInt(1002, 0xAA000148, 1);  // PA on
+setInt(1002, 0xAA000142, 1);  // MCU speak on
+setInt(1002, 0xAA00011A, 1);  // FM speak on
+setInt(1002, 0xAA000104, 1);  // Test AVAS on
+setInt(1002, 0xAA000171, 1);  // AVAS config on
+setInt(1002, 0xAA00011E, 0);  // Unmute
+Thread.sleep(100);
+setInt(1002, 0x6E970010, 1);  // AVAH tone on
+```
+
+**Stop sequence** (MUST disable enablers FIRST, then AVAH):
+```java
+setInt(1002, 0xAA000148, 0);  // PA off
+setInt(1002, 0xAA000142, 0);  // MCU speak off
+setInt(1002, 0xAA00011A, 0);  // FM speak off
+setInt(1002, 0xAA000104, 0);  // Test AVAS off
+setInt(1002, 0xAA000171, 0);  // AVAS config off
+setInt(1002, 0x6E970010, 0);  // AVAH tone off
+```
+
+**WARNING**: Setting AVAH=0 WITHOUT disabling enablers first causes the tone to
+get **stuck** — can only be stopped by toggling AVAS off/on in Vehicle Settings.
+
+**Verified working**:
+- Start/stop cycling works reliably (tested 5 rapid cycles including 300ms beeps)
+- Duration-controlled beeps from 300ms to 5s+
+- Rapid beep patterns (3x 300ms with 300ms gaps)
+
+**Under investigation**:
+- Whether setBuffer frequency control works with enablers (user reported hearing
+  tone changes in some test sequences — needs systematic isolation)
+- Whether different enabler value combinations affect the tone pitch
+- Minimum required enabler subset (which of the 6 are actually needed?)
+- Whether enablers are needed on a fresh MCU (before any probing)
 
 ### Privilege Escalation Assessment
 
