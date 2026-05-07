@@ -22,10 +22,13 @@ Research, reverse engineering, and tooling for the BYD Dolphin 25/26 infotainmen
 
 ```
 .
+├── apps/                          # Custom Android apps
+│   └── door-sound/                # Door event sound player app
 ├── docs/                          # Documentation
 │   ├── system-overview.md         # Hardware, partitions, architecture
 │   ├── bydauto-api.md             # BYDAUTO permission/API reference
 │   ├── content-providers.md       # Content provider URIs and schemas
+│   ├── rooting-guide.md           # Magisk root via fastboot guide
 │   ├── sideloading-guide.md       # APK installation guide
 │   └── sound-and-themes.md        # What can/cannot be customized
 ├── data/                          # Raw data dumps from the car
