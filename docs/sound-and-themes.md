@@ -703,31 +703,101 @@ tone path is broken.
 0xAA000104, 0xAA000171, 0xAA000145, 0xAA000113) may have persistently changed MCU
 EEPROM/flash configuration that controls the diagnostic test tone subsystem.
 
-### Privilege Escalation Assessment (CVE-2026-31431)
+### Privilege Escalation Assessment
 
-Kernel: `4.14.117-perf` (aarch64, built Jul 2025) — in vulnerable range for Copy Fail.
+#### Bootloader Status (CRITICAL FINDING)
 
-**Blockers on this device:**
-- No Python 3 on device (PoC requires Python 3.10+)
-- No setuid binaries (Android uses capabilities, not setuid)
-- `/dev/spidev_ivi` requires UID 1000 (system), ADB shell is UID 2000
-- SELinux context `u:r:shell:s0` likely blocks AF_ALG sockets
-- `/proc/crypto` and `/proc/modules` not readable from shell
-- No ARM64 cross-compiler available on host (needs `gcc-aarch64-linux-gnu`)
-- `/system` partition has dm-verity protection
+**The bootloader is UNLOCKED.** This is the simplest path to root.
 
-Root access would enable: direct SPI writes, ALSA mixer control, /proc/crypto reads,
-and system partition modifications. Worth investigating alternative Android-specific
-privilege escalation paths for kernel 4.14.117 / Qualcomm SM6125.
+| Property | Value |
+|----------|-------|
+| `ro.boot.flash.locked` | **0** (unlocked) |
+| `ro.boot.verifiedbootstate` | **orange** (custom boot allowed) |
+| `ro.oem_unlock_supported` | 1 |
+| `ro.debuggable` | 0 |
+| `ro.secure` | 1 |
+| Boot slot | `_b` (A/B partitions) |
+| `boot_b` | `/dev/block/sde30` (root-only: `brw-------`) |
+| `recovery_b` | `/dev/block/sda8` |
+| `vbmeta_b` | `/dev/block/sde35` |
+
+**Root via Magisk**: Extract boot image → patch with Magisk → flash via fastboot.
+Blocker: boot partition is root-only from ADB shell. Need USB fastboot access to
+extract and flash boot image.
+
+#### Kernel Exploit Assessment
+
+Kernel: `4.14.117-perf` (aarch64, clang 8.0.12, built Jul 2025)
+Security patch level: **2023-02-05** (3+ years behind)
+SELinux: Enforcing, `u:r:shell:s0`
+
+**Kernel hardening:**
+- KASLR enabled (`CONFIG_RANDOMIZE_BASE=y`)
+- Stack protector strong (`CONFIG_CC_STACKPROTECTOR_STRONG=y`)
+- Hardened usercopy (`CONFIG_HARDENED_USERCOPY=y`)
+- Slab freelist hardened (`CONFIG_SLAB_FREELIST_HARDENED=y`)
+- kallsyms blocked (0 lines readable)
+- `/proc/timer_list`, `/proc/sched_debug`, `/proc/iomem`: Permission denied
+- dmesg: blocked by SELinux
+
+**Disabled mitigations:**
+- CONFIG_USER_NS is not set
+- CONFIG_USERFAULTFD is not set
+- CONFIG_BPF_JIT is not set
+- CONFIG_KASAN is not set
+
+**Attack surface probed:**
+
+| Vector | Device | Access | Result |
+|--------|--------|--------|--------|
+| `/dev/binder` | crw-rw-rw- | World writable | BINDER_THREAD_EXIT returns EINVAL — CVE-2019-2215 likely patched |
+| `/dev/kgsl-3d0` | crw-rw-rw- | World writable | Properties/alloc work, but DRAWCTXT_CREATE returns EINVAL on ALL flags |
+| BPF syscall | CONFIG_BPF_SYSCALL=y | — | EPERM — blocked by SELinux/capabilities |
+| perf_event_open | CONFIG_PERF_EVENTS=y | — | EPERM |
+| userfaultfd | not compiled | — | ENOSYS |
+| CLONE_NEWUSER | not compiled | — | EINVAL |
+| `/dev/snd/*` | system:audio | Not in audio group | Can't access ALSA devices |
+| `/dev/adsprpc-smd` | system:system rw-r-- | Read only | Can't write to ADSP |
+
+**KGSL ioctl map** (Adreno 610, chip ID 0x6010000):
+
+Ioctls that return SUCCESS with empty data: `0x38, 0x39, 0x3a, 0x40, 0x41, 0x45`
+Ioctls that exist but need valid args: `0x02, 0x07, 0x10, 0x13, 0x14, 0x16, 0x17,
+0x21, 0x24, 0x2f, 0x32-0x37, 0x3b-0x3d, 0x42, 0x43, 0x46, 0x47, 0x4a, 0x4c`
+EFAULT (reads user mem): `0x49`
+ENOTSUP: `0x15, 0x20, 0x4b`
+
+**CVE candidates assessed:**
+
+| CVE | Type | Viable? | Notes |
+|-----|------|---------|-------|
+| CVE-2019-2215 | Binder UAF | **No** | BINDER_THREAD_EXIT returns EINVAL — patched |
+| CVE-2023-33106 | KGSL AUX OOB | **Maybe** | ioctl 0x41 responds, but no GPU context possible |
+| CVE-2023-33107 | KGSL integer overflow | **Maybe** | GPUOBJ_IMPORT exists but context creation blocked |
+| CVE-2024-43047 | ADSP UAF | **No** | /dev/adsprpc-smd not writable from shell |
+| CVE-2023-0266 | ALSA UAF | **No** | /dev/snd/* not accessible from shell |
+| CVE-2026-31431 | kernel crypto (Copy Fail) | **No** | No Python, no setuid, SELinux blocks AF_ALG |
+
+**Conclusion**: Kernel exploits are blocked by SELinux restricting device ioctls
+from shell context. The unlocked bootloader + Magisk via fastboot is the viable path.
+
+#### What Root Enables
+
+- Direct `/dev/spidev_ivi` access (bypass 128-byte Java limit, send 247-byte SPI records)
+- Read/write ALSA mixer controls (potential AVAS audio routing)
+- Modify `/system` partition (custom boot animation, preinstalled apps)
+- Read `/proc/kallsyms`, dmesg, full kernel state
+- Potentially restore AVAH test tone by resetting MCU config directly via SPI
+- Install system-level apps with BYDAUTO permissions
 
 ### Pending Investigation
 
 | Test | Status | Notes |
 |------|--------|-------|
 | Diagnose AVAH tone failure | **CRITICAL** | Tone stopped working after test commands, survives power cycle |
-| Reverse EEPROM config change | Not started | Need to find which 0xAA command broke AVAH and how to undo it |
+| **Root via Magisk + fastboot** | **READY** | Bootloader unlocked; need USB access for fastboot |
+| Reverse EEPROM config change | Not started | Need root + direct SPI to reset MCU config |
 | Direct /dev/spidev_ivi access | Blocked | Needs root (UID 1000+), ADB shell is UID 2000 |
-| Kernel privilege escalation | Researching | CVE-2026-31431 has blockers; look for Android-specific paths |
 | OTA pipeline for DSP sound package | Partially probed | Data path works but DSP sound source rejects buffer |
 | AVAS presets while driving (0x1B10003D) | Not tested | Values 0-5+ — must test at low speed |
 | PCM streaming via rapid setBuffer | Inconclusive | Buffers accepted but unclear if content affects output |

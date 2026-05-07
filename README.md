@@ -94,7 +94,7 @@ adb shell am force-stop com.android.launcher3
 - **Vehicle Prompt Sound Source** switchable between Normal (1) and Tech (2) profiles via 0xAA000194
 - **Multiple sound sources writable**: BD, INS, Radar sound sources all accept CAN writes
 - **DSP OTA sound package** mechanism exists (0x99000223) — potential vector for custom sounds
-- **AVAH test tones CONFIRMED WORKING** — 1kHz tone audible on AVAS external speaker (0x6E970010)
+- **AVAH test tones** — were working on AVAS speaker (0x6E970010), currently broken after test commands
 - **A2B bus architecture** confirmed: SoC → I2S → MCU DSP → A2B bus → amplifiers
 - **Full SPI stack mapped**: App → BYDAutoManager → Binder → autoservice → auto.default.so (HAL) → /dev/spidev_ivi → MCU
 - **No per-packet signing** on regular commands — only MD5 for OTA. Direct SPI access possible
@@ -106,6 +106,9 @@ adb shell am force-stop com.android.launcher3
 - **Custom lock/power-on sounds NOT possible** — MCU firmware rejects (0xAA000321, 0xAA000243)
 - **Test/diagnostic AVAS signals work** — MCU accepts TEST_AUDIO_AVAS_SET and TEST_MCU_AVAS_CONFIGURATION_SET
 - **Horn** is hardware-controlled (physical relay, not software)
+- **Bootloader is UNLOCKED** — `ro.boot.flash.locked=0`, `verifiedbootstate=orange`, Magisk root viable via fastboot
+- **Security patch level 2023-02-05** — 3+ years behind, but kernel exploits blocked by SELinux from shell
+- **KGSL GPU driver accessible** — /dev/kgsl-3d0 world-writable, Adreno 610 ioctls respond, but context creation blocked
 - **Boot animation** exists at `/system/media/` but requires root to replace
 - **Theme system** exists via `com.byd.automultipletheme` with wallpaper/theme APIs
 
@@ -121,6 +124,16 @@ adb shell am force-stop com.android.launcher3
 | Spotify | Pre-installed bloatware | Uninstalled (user 0) |
 | Guard Manager | Car security/guard app | Installed |
 
+## Root Status
+
+**Bootloader is UNLOCKED** — root via Magisk is the viable path:
+1. Extract boot image via `fastboot` (USB required)
+2. Patch with Magisk
+3. Flash patched boot image back
+4. Reboot — full root with SELinux bypass
+
+See `docs/sound-and-themes.md` → "Privilege Escalation Assessment" for full details.
+
 ## Limitations (No Root)
 
 - Cannot write to `/system` partition (read-only, dm-verity)
@@ -130,3 +143,4 @@ adb shell am force-stop com.android.launcher3
 - No custom lock/power-on sounds — MCU firmware rejects these commands
 - Horn is hardware-controlled (physical relay)
 - Some content providers require system-level signing to query
+- AVAH test tone broken after probe commands — may need root + direct SPI to restore
