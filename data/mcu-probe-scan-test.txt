@@ -1,0 +1,144 @@
+[init] setBuffer method found: public int android.hardware.BYDAutoManager.setBuffer(int,int,byte[])
+========================================
+  Probe: Scan Test FeatureId Range
+========================================
+
+--- Range 0xAA000100 - 0xAA0001FF (test read) ---
+Found: 0 readable in 0xAA0001xx
+
+--- Range 0xAA000200 - 0xAA0002FF (test commands) ---
+Found: 0 readable in 0xAA0002xx
+
+--- Range 0xAA000300 - 0xAA0003FF (test controls) ---
+Found: 0 readable in 0xAA0003xx
+
+--- Write scan: 0xAA000100 - 0xAA0003FF ---
+Trying setInt(1002, fid, 1) for 0xAA range...
+
+  ACCEPTED: 0xaa000101 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000102 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000103 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000104 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000105 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000106 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000108 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000109 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa00010a setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa00010d setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa00010e setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa00010f setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000110 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000111 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000112 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000113 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000114 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa00011a setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa00011e setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa00011f setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000121 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000122 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000123 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000124 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000140 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000142 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000143 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000145 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000148 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000149 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000151 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000153 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000156 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000157 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000158 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000161 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000165 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000166 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000167 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000168 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000169 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000170 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000171 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000173 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000174 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000175 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000176 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000177 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000178 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000182 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000183 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000194 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000206 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa00020b setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa00020f setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000210 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000221 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000241 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000244 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000255 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000286 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000299 setInt(1) = SUCCESS
+    readback: -10011
+  ACCEPTED: 0xaa000303 setInt(1) = SUCCESS
+    readback: -10011
+Write-accepted: 63 in 0xAA range

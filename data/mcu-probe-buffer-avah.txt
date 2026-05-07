@@ -1,0 +1,69 @@
+[init] setBuffer method found: public int android.hardware.BYDAutoManager.setBuffer(int,int,byte[])
+========================================
+  Probe: setBuffer on AVAH (0x6E970010)
+========================================
+
+--- Baseline state ---
+  getInt AVAH_STATE [0x6ea70010] = 65535
+  getBuffer AVAH_STATE_BUF [0x6ea70010] len=4 hex=00000000
+  getBuffer AVAH_SET_BUF [0x6e970010] len=4 hex=00000000
+
+--- Test 1: Small buffers (type detection) ---
+Theory: MCU may read first bytes as int, ignore rest,
+        or reject buffer-type calls entirely.
+
+  setBuffer 1 byte: {0x01} -> SUCCESS (0)
+  getInt   AVAH_STATE after {0x01} [0x6ea70010] = 65535
+  setInt   (stop tone) [0x6e970010] = SUCCESS (0)
+  setBuffer 2 bytes: {0x01, 0x00} -> SUCCESS (0)
+  getInt   AVAH_STATE after 2-byte [0x6ea70010] = 65535
+  setInt   (stop tone) [0x6e970010] = SUCCESS (0)
+  setBuffer 4 bytes: {0x01, 0x00, 0x00, 0x00} (LE int 1) -> SUCCESS (0)
+  getInt   AVAH_STATE after 4-byte [0x6ea70010] = 65535
+  setInt   (stop tone) [0x6e970010] = SUCCESS (0)
+  setBuffer 4 bytes: {0x00, 0x00, 0x00, 0x01} (BE int 1) -> SUCCESS (0)
+  getInt   AVAH_STATE after BE 4-byte [0x6ea70010] = 65535
+  setInt   (stop tone) [0x6e970010] = SUCCESS (0)
+
+--- Test 2: 440Hz PCM audio injection ---
+Theory: If MCU interprets buffer as raw PCM data,
+        the AVAS speaker may play a 440Hz tone.
+
+Generated PCM: 16000 bytes (8kHz 16-bit mono, 1s)
+  setBuffer 440Hz PCM (8kHz/16bit/1s = 16000 bytes) -> MCU_FAILED (-2147482648)
+  getInt   AVAH_STATE after PCM inject [0x6ea70010] = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+
+--- Test 3: Known pattern (echo detection) ---
+Theory: If MCU echoes buffer data back via getBuffer,
+        we can detect memory read/write behavior.
+
+  setBuffer 64-byte pattern: 0xAA55 repeated -> SUCCESS (0)
+  Checking if MCU echoes the pattern...
+  getBuffer   AVAH_READ_BUF (echo check) [0x6ea70010] len=4 hex=00000000
+  getBuffer   AVAH_SET_BUF (echo check) [0x6e970010] len=4 hex=00000000
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+
+--- Test 4: Buffer size limit detection ---
+Theory: Find maximum accepted buffer size.
+
+  setBuffer 8-byte ascending pattern -> SUCCESS (0)
+  setBuffer 16-byte ascending pattern -> SUCCESS (0)
+  setBuffer 32-byte ascending pattern -> SUCCESS (0)
+  setBuffer 64-byte ascending pattern -> SUCCESS (0)
+  setBuffer 128-byte ascending pattern -> SUCCESS (0)
+  setBuffer 256-byte ascending pattern -> MCU_FAILED (-2147482648)
+  setBuffer 512-byte ascending pattern -> MCU_FAILED (-2147482648)
+  setBuffer 1024-byte ascending pattern -> MCU_FAILED (-2147482648)
+  setBuffer 2048-byte ascending pattern -> MCU_FAILED (-2147482648)
+  setBuffer 4096-byte ascending pattern -> MCU_FAILED (-2147482648)
+  setBuffer 8192-byte ascending pattern -> MCU_FAILED (-2147482648)
+  setBuffer 16384-byte ascending pattern -> MCU_FAILED (-2147482648)
+  setBuffer 32768-byte ascending pattern -> MCU_FAILED (-2147482648)
+  setBuffer 65536-byte ascending pattern -> MCU_FAILED (-2147482648)
+  setInt (cleanup: stop tone) [0x6e970010] = SUCCESS (0)
+
+--- Test 5: Edge cases ---
+  setBuffer 0 bytes: empty buffer -> MCU_FAILED (-2147482648)
+  setBuffer 4 bytes: all 0xFF -> SUCCESS (0)
+  setBuffer 4 bytes: all 0x00 -> SUCCESS (0)

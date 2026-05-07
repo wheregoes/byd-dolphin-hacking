@@ -1,0 +1,78 @@
+[init] setBuffer method found: public int android.hardware.BYDAutoManager.setBuffer(int,int,byte[])
+========================================
+  Probe: Extreme Values on AVAH
+========================================
+
+Theory: If MCU does not validate the value range,
+extreme values may cause unexpected behavior.
+
+  getInt AVAH_STATE (baseline) [0x6ea70010] = 65535
+
+--- Known values (reference) ---
+  setInt value=0 (stop) [0x6e970010] = SUCCESS (0)
+  getInt   state after 0 [0x6ea70010] = 65535
+  setInt value=1 (1kHz) [0x6e970010] = SUCCESS (0)
+  getInt   state after 1 [0x6ea70010] = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+
+--- Boundary values ---
+  setInt value=-1 (0xffffffff) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=4 (0x4) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=5 (0x5) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=10 (0xa) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=15 (0xf) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=16 (0x10) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=127 (0x7f) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=128 (0x80) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=255 (0xff) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=256 (0x100) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=32767 (0x7fff) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=65535 (0xffff) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=2147483647 (0x7fffffff) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=2147483646 (0x7ffffffe) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+
+--- Negative / overflow values ---
+  setInt value=-2147483648 (0x80000000) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=-2147483647 (0x80000001) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=-2 (0xfffffffe) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=-10011 (0xffffd8e5) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt value=-2147482648 (0x800003e8) [0x6e970010] = SUCCESS (0)
+  -> AVAH_STATE = 65535
+  setInt   (stop) [0x6e970010] = SUCCESS (0)
+  setInt FINAL CLEANUP: stop tone [0x6e970010] = SUCCESS (0)

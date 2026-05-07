@@ -530,6 +530,78 @@ Note: Feature ID = 0 means "stub" — the signal is not wired in `BYDAutoFeature
 
 Confirmed: There is NO mechanism in the BYD Dolphin's software to upload custom audio files (WAV, PCM, etc.) to the MCU/DSP. All sounds in the MCU are programmed at the firmware level during manufacturing. The `setBuffer()` API sends raw bytes but is used for metadata (song titles, OTA firmware chunks) — not audio samples. The `TEST_FLASH_MUSIC_VAL_SET` signal is an integer selector for pre-stored sound slots, not a data transfer channel.
 
+### Full SPI Communication Stack
+
+```
+App (Java, UID 1000 via app_process)
+  → BYDAutoManager.setInt/setBuffer (Binder client proxy)
+    → Binder IPC
+      → BYDAutoServer / autoservice (PID 77, system binary)
+        → libbydautoservice.so (137KB, Binder server stub, permission checks)
+          → auto.default.so (1MB, HAL module)
+            → MsgCodec: encodes featureId → canid (12-bit) + subid (8-bit)
+            → FeatureMapper: maps featureIds to CAN message IDs
+            → AutoInterface: SPI transport
+              → /dev/spidev_ivi (spidev_full_duplex driver)
+                → MCU
+```
+
+**Key security findings:**
+- No per-packet cryptographic authentication on regular commands (MD5 only for OTA)
+- `/dev/spidev_ivi` permissions: `system:system rw-rw----` — accessible by app_process (UID 1000)
+- Raw SPI access possible by bypassing entire Binder/HAL stack
+- Native libraries pulled to `data/native-libs/` for analysis
+
+### MCU Probe Results (BydMcuProbe.java)
+
+Comprehensive MCU command testing performed with `scripts/BydMcuProbe.java`:
+
+**BYDAutoManager Full API:**
+- `setInt(dev, fid, val)` / `getInt(dev, fid)` — single integer
+- `setBuffer(dev, fid, byte[])` / `getBuffer(dev, fid)` — binary data
+- `setIntArray(dev, fid[], val[])` / `getIntArray(dev, fid[])` — batch int
+- `setDouble(dev, fid, val)` / `getDouble(dev, fid)` — floating point
+- `setDoubleArray` / `getDoubleArray` — batch double
+- `enableDevice(dev)` / `disableDevice(dev)` — device control
+- `registerListener` / `unregisterListener` — event callbacks
+
+**setBuffer on AVAH (0x6E970010):**
+- Buffers 1-128 bytes → SUCCESS (MCU accepts)
+- Buffers 256+ bytes → MCU_FAILED (-2147482648)
+- **Buffer size limit: 128 bytes** per SPI frame
+- PCM audio injection (16000 bytes) → MCU_FAILED (too large for single frame)
+- No echo: getBuffer after setBuffer returns all zeros
+- Empty buffer → MCU_FAILED
+
+**Extreme values on AVAH:**
+- MCU accepts ALL int values (-2147483648 to 2147483647) — never errors
+- AVAH_STATE readback (0x6EA70010) always returns 65535 regardless of value sent
+- MCU truncates internally; known working tones are values 1 (1kHz), 2 (2kHz), 3 (3kHz)
+
+**Nearby featureId scan (0x6E97xxxx):**
+- ONLY 0x6E970010 accepts setInt in the entire 0x6E970000-0x6E97001F range
+- ONLY 0x6EA70010 returns data for getInt in 0x6EA70000-0x6EA7001F
+- **NEW: 0x6E990010 also accepts setInt** — in the audio debug range (0x6E99xxxx)
+- AVAH works on ALL device types (1001-1041) — not device-restricted
+
+**Audio debug mode (0x6E990008):**
+- `setInt(1002, 0x6E990008, 1)` → SUCCESS (enters debug mode)
+- Routing commands (0x32B1C042, 0xAA000301, 0x1C10000E) still FAIL in debug mode
+- Debug mode does NOT unlock routing — MCU firmware hardcodes the rejection
+
+### Pending Investigation
+
+| Test | Status | Notes |
+|------|--------|-------|
+| setBuffer on AVAH with structured command data | Not tested | 128-byte limit suggests config buffer, not PCM |
+| 0x6E990010 behavior (debug AVAH) | Partially tested | Accepts setInt, unknown audible effect |
+| 0x6E99xxxx range scan | Not started | May contain more debug commands |
+| 0xAA000xxx full test range scan | Running | 110 undocumented write commands in config_2.bin |
+| Direct /dev/spidev_ivi access | Not started | Bypass HAL, craft arbitrary SPI packets |
+| auto.default.so disassembly | Not started | Would reveal SPI packet format (MsgCodec) |
+| setBuffer with small PCM chunks streamed rapidly | Not tested | 128 bytes = ~4ms at 16kHz — too short alone |
+| OTA pipeline for DSP sound package | Not started | StartOTA → sendOTAData → FinishOTA |
+
 ## Theme System
 
 ### BYD Theme Store

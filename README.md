@@ -40,8 +40,14 @@ Research, reverse engineering, and tooling for the BYD Dolphin 25/26 infotainmen
 │   ├── BydAudioQuery.java         # CAN bus read/write tool (runs on-device via app_process)
 │   ├── BydAudioRoutingTest.java   # AVAS external speaker routing test tool
 │   ├── BydDeviceScan.java         # Multi-device signal scanner (bodywork, doorlock, OTA, test)
+│   ├── BydMcuProbe.java           # MCU security probe (setBuffer, featureId scanning, extreme values)
+│   ├── BydNavAudioTest.java       # Navigation I2S path audio test (QUAT_MI2S_RX)
 │   ├── BydLockSoundMonitor.java   # Supplementary lock sound player (prototype)
 │   └── car-telemetry.py           # Car data polling and logging
+├── data/native-libs/              # Pulled native libraries for analysis
+│   ├── auto.default.so            # HAL module (MsgCodec, SPI protocol, 1MB)
+│   ├── libbydautoservice.so       # Binder server stub (permission checks)
+│   └── libbydauto.so              # Binder client proxy
 └── data/apks/                     # Extracted APKs from system
     └── DiCarServer_extracted/     # DiCarServer assets (config protos, vehicle types)
 ```
@@ -86,7 +92,13 @@ adb shell am force-stop com.android.launcher3
 - **DSP OTA sound package** mechanism exists (0x99000223) — potential vector for custom sounds
 - **AVAH test tones CONFIRMED WORKING** — 1kHz tone audible on AVAS external speaker (0x6E970010)
 - **A2B bus architecture** confirmed: SoC → I2S → MCU DSP → A2B bus → amplifiers
-- **Tesla Boombox equivalent** — MCU rejects direct routing (0x32B1C042), but test/diagnostic paths may bypass
+- **Full SPI stack mapped**: App → BYDAutoManager → Binder → autoservice → auto.default.so (HAL) → /dev/spidev_ivi → MCU
+- **No per-packet signing** on regular commands — only MD5 for OTA. Direct SPI access possible
+- **setBuffer accepts 1-128 bytes** on AVAH featureId — MCU processes small binary buffers
+- **0x6E990010 (debug AVAH)** discovered — new command in audio debug range, accepts setInt
+- **Audio debug mode** (0x6E990008=1) does NOT unlock routing — MCU firmware hardcodes rejection
+- **MCU accepts ALL int values** on AVAH without error — truncates internally
+- **Tesla Boombox equivalent** — MCU rejects direct routing (0x32B1C042), debug mode doesn't help
 - **Custom lock/power-on sounds NOT possible** — MCU firmware rejects (0xAA000321, 0xAA000243)
 - **Test/diagnostic AVAS signals work** — MCU accepts TEST_AUDIO_AVAS_SET and TEST_MCU_AVAS_CONFIGURATION_SET
 - **Horn** is hardware-controlled (physical relay, not software)
