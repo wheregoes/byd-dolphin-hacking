@@ -31,8 +31,13 @@ public class DoorSoundService extends Service {
     static final String PREF_NAME = "door_sound_prefs";
     static final String KEY_ENABLED = "enabled";
     static final String KEY_DOOR_OPEN_PATH = "door_open_path";
+    static final String KEY_DOOR_CLOSE_PATH = "door_close_path";
     static final String KEY_LOCK_PATH = "lock_path";
     static final String KEY_UNLOCK_PATH = "unlock_path";
+    static final String KEY_DOOR_OPEN_ENABLED = "door_open_enabled";
+    static final String KEY_DOOR_CLOSE_ENABLED = "door_close_enabled";
+    static final String KEY_LOCK_ENABLED = "lock_enabled";
+    static final String KEY_UNLOCK_ENABLED = "unlock_enabled";
     static final String KEY_LAST_EVENT = "last_event";
 
     private static volatile boolean sRunning = false;
@@ -132,17 +137,22 @@ public class DoorSoundService extends Service {
 
     void handleDoorOpen(int area) {
         setLastEvent(getDoorName(area) + " opened");
-        playSound(KEY_DOOR_OPEN_PATH);
+        playSoundIfEnabled(KEY_DOOR_OPEN_ENABLED, KEY_DOOR_OPEN_PATH);
+    }
+
+    void handleDoorClose(int area) {
+        setLastEvent(getDoorName(area) + " closed");
+        playSoundIfEnabled(KEY_DOOR_CLOSE_ENABLED, KEY_DOOR_CLOSE_PATH);
     }
 
     void handleLock() {
         setLastEvent("Car locked");
-        playSound(KEY_LOCK_PATH);
+        playSoundIfEnabled(KEY_LOCK_ENABLED, KEY_LOCK_PATH);
     }
 
     void handleUnlock() {
         setLastEvent("Car unlocked");
-        playSound(KEY_UNLOCK_PATH);
+        playSoundIfEnabled(KEY_UNLOCK_ENABLED, KEY_UNLOCK_PATH);
     }
 
     int getLastSystemState() {
@@ -153,11 +163,12 @@ public class DoorSoundService extends Service {
         lastSystemState = state;
     }
 
-    private void playSound(String prefKey) {
+    private void playSoundIfEnabled(String enableKey, String pathKey) {
         SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
         if (!prefs.getBoolean(KEY_ENABLED, false)) return;
+        if (!prefs.getBoolean(enableKey, true)) return;
 
-        String path = prefs.getString(prefKey, null);
+        String path = prefs.getString(pathKey, null);
         if (path == null || path.isEmpty()) return;
 
         mainHandler.post(new SoundPlayer(this, path));

@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Enable toggle -->
+        <!-- Master enable toggle -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,13 +43,26 @@
             android:padding="16dp"
             android:layout_marginBottom="12dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/door_open_sound"
-                android:textColor="#FF4FC3F7"
-                android:textSize="16sp"
-                android:layout_marginBottom="8dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/door_open_sound"
+                    android:textColor="#FF4FC3F7"
+                    android:textSize="16sp" />
+
+                <Switch
+                    android:id="@+id/switch_door_open"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/text_door_open_file"
@@ -83,6 +96,68 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Door Close Sound -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FF424242"
+            android:padding="16dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/door_close_sound"
+                    android:textColor="#FF4FC3F7"
+                    android:textSize="16sp" />
+
+                <Switch
+                    android:id="@+id/switch_door_close"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/text_door_close_file"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/no_file_selected"
+                android:textColor="#FFAAAAAA"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"
+                android:singleLine="true"
+                android:ellipsize="middle" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_door_close_select"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/select_file"
+                    android:layout_marginEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btn_door_close_clear"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/clear" />
+            </LinearLayout>
+        </LinearLayout>
+
         <!-- Lock Sound -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -92,13 +167,26 @@
             android:padding="16dp"
             android:layout_marginBottom="12dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/lock_sound"
-                android:textColor="#FF4FC3F7"
-                android:textSize="16sp"
-                android:layout_marginBottom="8dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/lock_sound"
+                    android:textColor="#FF4FC3F7"
+                    android:textSize="16sp" />
+
+                <Switch
+                    android:id="@+id/switch_lock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/text_lock_file"
@@ -141,13 +229,26 @@
             android:padding="16dp"
             android:layout_marginBottom="16dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/unlock_sound"
-                android:textColor="#FF4FC3F7"
-                android:textSize="16sp"
-                android:layout_marginBottom="8dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/unlock_sound"
+                    android:textColor="#FF4FC3F7"
+                    android:textSize="16sp" />
+
+                <Switch
+                    android:id="@+id/switch_unlock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/text_unlock_file"

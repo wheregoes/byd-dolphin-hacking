@@ -8,6 +8,7 @@
     <string name="clear">Clear</string>
     <string name="no_file_selected">No file selected</string>
     <string name="door_open_sound">Door Open Sound</string>
+    <string name="door_close_sound">Door Close Sound</string>
     <string name="lock_sound">Lock Sound</string>
     <string name="unlock_sound">Unlock Sound</string>
     <string name="service_status">Service Status</string>

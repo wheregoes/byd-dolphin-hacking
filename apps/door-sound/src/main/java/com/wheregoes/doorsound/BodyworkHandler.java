@@ -14,8 +14,12 @@ public class BodyworkHandler extends AbsBYDAutoBodyworkListener {
 
     @Override
     public void onDoorStateChanged(int area, int state) {
-        if (area >= 1 && area <= 4 && state == BYDAutoBodyworkDevice.BODYWORK_STATE_OPEN) {
-            service.handleDoorOpen(area);
+        if (area >= 1 && area <= 4) {
+            if (state == BYDAutoBodyworkDevice.BODYWORK_STATE_OPEN) {
+                service.handleDoorOpen(area);
+            } else if (state == BYDAutoBodyworkDevice.BODYWORK_STATE_CLOSED) {
+                service.handleDoorClose(area);
+            }
         }
     }
 
