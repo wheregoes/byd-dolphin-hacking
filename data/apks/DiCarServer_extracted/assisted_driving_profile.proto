@@ -1,0 +1,33 @@
+// Copyright 2020 Google Inc.
+// All Rights Reserved.
+//
+// Proto messages describing the assistive driving capabilities of a vehicle.
+//
+// For the full detail on this API, see attached Assisted Driving Developer
+// Guide.
+//
+// Version 0.2
+syntax = "proto3";
+
+package maps.automotive.assisted_driving_profile;
+
+//option features.field_presence = IMPLICIT;
+option java_multiple_files = false;
+option java_package = "com.google.maps.automotive.proto";
+
+// Outline of the assistive driving capabilities of a vehicle.
+//
+// What assistance a vehicle can give to a user changes how relevant Maps
+// features behave, including ranking of routes in search results. Maps'
+// reaction to these different vehicle assistance features are defined by the
+// values in this proto.
+message AssistedDrivingProfile {
+  reserved 1;
+
+  // The identifier of the dataset defining the areas where assisted driving is
+  // available to the vehicle. This is the identifier defined during dataset
+  // upload
+  string dataset_id = 2;
+
+  reserved 3;
+}

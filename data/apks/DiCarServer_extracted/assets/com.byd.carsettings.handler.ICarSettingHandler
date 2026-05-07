@@ -1,0 +1,6 @@
+com.byd.carsettings.handler.impl.ConfigHandler
+com.byd.carsettings.handler.impl.GlobalHandler
+com.byd.carsettings.handler.impl.SystemSettingHandler
+com.byd.carsettings.handler.impl.UserTableDataHandler
+com.byd.carsettings.handler.impl.TravelInfoHandler
+com.byd.carsettings.handler.impl.DiCareRecordHandler

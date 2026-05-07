@@ -1,0 +1,365 @@
+// Copyright 2020 Google Inc.
+// All Rights Reserved.
+// Vehicle energy model (v1.2). See more details at:
+// https://docs.partner.android.com/gas/integrate/maps/maps_ev/vem_reference
+//
+// Updated to support both lightweight and fully feature predictions, as well as
+// mixing-and-matching between the two.
+
+//edition = "2023";
+syntax = "proto3";
+
+package maps.automotive.vehicle_energy_model;
+
+//option features.field_presence = IMPLICIT;
+option java_multiple_files = true;
+option java_package = "com.google.maps.automotive.proto";
+option objc_class_prefix = "GMAM";
+
+message VehicleEnergyModel {
+  // Information about the vehicle.
+  VehicleInfo vehicle_info = 1;
+
+  // Coefficients for calculating road load forces.
+  RoadLoadForce road_load = 2;
+
+  // Losses in the drivetrain.
+  DrivetrainLosses drivetrain_losses = 3;
+
+  // Maximum regenerative capability of the battery.
+  MaxRegenPower max_regen_power = 4;
+
+  // Losses within the vehicle's battery.
+  BatteryLosses battery_losses = 5;
+
+  // Expected auxiliary power drain at a future point in time.
+  repeated DrainAtTime auxiliary_drain_at_time = 6;
+
+  // Expected auxiliary drain relative to temperature.
+  repeated DrainAtTemperature auxiliary_drain_at_temp = 7;
+
+  // Description of charging curves for the vehicle.
+  ChargingCurves charging_curves = 8;
+
+  // Expected charging time of the vehicle if currently plugged in.
+  ChargingTime current_charging_time = 9;
+
+  // Description of the battery preconditioning model.
+  // Optional, only required if recommended charging times and predicted energy
+  // usage should use the given battery preconditioning model.
+  optional BatteryPreconditioning battery_preconditioning = 10;
+}
+
+// The expected value of a measurement as an int along with an uncertainty.
+message IntWithUncertainty {
+  // Expected value.
+  int32 mean = 1;
+
+  // Standard deviation of the above measurement.
+  float standard_deviation = 2;
+}
+
+// The expected value of a measurement as a float along with an uncertainty.
+message FloatWithUncertainty {
+  // Expected value.
+  float mean = 1;
+
+  // Standard deviation of the above measurement.
+  float standard_deviation = 2;
+}
+
+// Specifies basic information about a vehicle.
+message VehicleInfo {
+  // Possible states of the Heating, Ventilation, and Air Conditioning (HVAC)
+  // system.
+  enum HvacStatus {
+    UNKNOWN_HVAC_STATUS = 0;
+    OFF_HVAC_STATUS = 1;
+    ON_HVAC_STATUS = 2;
+  }
+
+  // Gross mass of the vehicle in kilograms.
+  IntWithUncertainty mass_kilograms = 2;
+
+  // Current battery level in watt-hours.
+  IntWithUncertainty battery_level_wh = 3;
+
+  // Maximum battery capacity in watt-hours.
+  IntWithUncertainty battery_capacity_wh = 4;
+
+  // Status of the HVAC system.
+  HvacStatus hvac_status = 5;
+
+  // Reference air density that road load forces are evaluated against, measured
+  // in kg/m^3.
+  float reference_air_density = 6;
+
+  // Current ambient air temperature outside the vehicle in degrees Celsius.
+  float external_temp_celsius = 7;
+
+  // Current temperature of the battery in degrees Celsius.
+  // Optional, only required if battery preconditioning parameters are provided.
+  float battery_temp_celsius = 8;//[features.field_presence = EXPLICIT];
+
+  // Rated peak combined power of the EV's electric motors, in watts. Impacts
+  // drivetrain and regen braking modeling in lightweight predictions.
+  // Optional, only required for lightweight predictions.
+  uint32 peak_motor_power_watts = 9; //[features.field_presence = EXPLICIT];
+
+  // Rated maximum battery recharging rate, in watts.
+  // Optional, only required for lightweight predictions.
+  uint32 maximum_charging_rate_watts = 10;//[features.field_presence = EXPLICIT];
+
+  // Whether the EV is equipped with a heat pump for heating. Impacts auxiliary
+  // load modeling in lightweight predictions.
+  // Optional, only required for lightweight predictions.
+  bool heat_pump_equipped = 11;// [features.field_presence = EXPLICIT];
+
+  reserved 1;
+}
+
+// Specifies the road load force coefficients with which to calculate road load.
+message RoadLoadForce {
+  // Constant coefficient to velocity. e.g: Rolling Resistance.
+  FloatWithUncertainty constant = 1;
+
+  // Linear coefficient to velocity. e.g: Rotational Loss.
+  FloatWithUncertainty linear = 2;
+
+  // Quadratic coefficient to velocity. e.g: Air Drag
+  FloatWithUncertainty quadratic = 3;
+}
+
+// Specifies the maximum regenerative capabilities of the vehicle.
+// When applying the model, maximum regeneration is capped by the lesser of
+// the function represented by regeneration_rate_at_energy_level and
+// regeneration_rate_at_time.
+message MaxRegenPower {
+  // Regenerative capabilities at different energy levels.
+  // Provided in increasing order of energy_level_wh.
+  repeated RegenerationRateAtEnergyLevel regeneration_rate_at_energy_level = 1;
+
+  // Regenerative capabilities at successive times in the future.
+  // Provided in increasing order of relative_time_sec.
+  repeated RegenerationRateAtTime regeneration_rate_at_time = 2;
+}
+
+// Specifies the maximum regeneration rate for a particular energy level.
+message RegenerationRateAtEnergyLevel {
+  // Energy level of the battery.
+  int32 energy_level_wh = 1;
+
+  // Maximum rate of power in watts that can be regenerated at above energy
+  // level.
+  uint32 regeneration_rate_watts = 2;
+}
+
+// Specifies the maximum regeneration rate at a particular future time.
+message RegenerationRateAtTime {
+  // Time relative to when this model instance is transmitted from the vehicle
+  // to Maps.
+  int32 relative_time_sec = 1;
+
+  // Maximum rate of power in watts that can be regenerated at
+  // relative_time_sec.
+  uint32 regeneration_rate_watts = 2;
+}
+
+// Models losses in the drivetrain in converting electrical power from the
+// battery terminals into mechanical power at the wheels.
+message DrivetrainLosses {
+  // Expected loss (in watts) in converting electrical power at the battery
+  // terminals to mechanical power at the wheels. This is a 2-level nested list,
+  // where the outer list is indexed by speed, and each inner list is indexed by
+  // power. There is freedom to supply loss values at different granularity
+  // along both the speed and power axis, but the total number of values must
+  // not exceed 500 (e.g. 20 x 25).
+  repeated LossSeriesAtSpeed drivetrain_power_loss = 7;
+
+  reserved 1, 2, 3, 4, 5, 6;
+}
+
+// Expected power loss at a given road speed as a series of LossAtPower
+// messages.
+message LossSeriesAtSpeed {
+  // Road speed.
+  float speed_meters_per_second = 1;
+
+  // Expected loss at different mechanical power demands at the wheels.
+  // Provided in ascending order of power.
+  repeated LossAtPower loss_at_power = 2;
+}
+
+// Expected power loss at a given power demand.
+message LossAtPower {
+  // Power demand. Positive values imply an electrical output from the battery,
+  // negative values imply an electrical input.
+  sint32 power_watts = 1;
+
+  // Expected power loss at this particular power demand.
+  IntWithUncertainty loss_watts = 2;
+}
+
+// Models losses within the vehicle's battery due to internal resistances and
+// other electro-chemical inefficiencies.
+message BatteryLosses {
+  // Expected losses within the vehicle's battery.
+  // Provided in ascending order of power demand at the battery's terminal.
+  repeated LossAtPower battery_power_loss = 4;
+
+  reserved 1, 2, 3;
+}
+
+// Represents a change in power drain at a point in time. The power drain is
+// linearly interpolated between each successive DrainAtTime value. Road
+// segments that are traversed beyond the last DrainAtTime.relative_time_sec
+// will assume a constant drain as specified by the last
+// DrainAtTime.drain_watts. >15min past the final DrainAtTime value, we will
+// fallback to using VEM.auxiliary_drain_at_temp if supplied.
+message DrainAtTime {
+  // Time relative to when this model instance is transmitted from the vehicle
+  // to Maps.
+  int32 relative_time_sec = 1;
+
+  // The expected power drain at the battery terminals at this point in time.
+  IntWithUncertainty drain_watts = 3;
+
+  reserved 2;
+}
+
+// Specifies the expected auxiliary drain at a particular temperature.
+message DrainAtTemperature {
+  // Temperature for which this drain will occur at.
+  float temp_celsius = 1;
+
+  // Energy drain attributed to cabin HVAC.
+  IntWithUncertainty hvac_drain_watts = 2;
+
+  // Optional, if battery conditioning is supported by EV.
+  IntWithUncertainty battery_conditioning_drain_watts = 3;
+
+  // Total expected drain at this temperature including all other auxiliary
+  // drains.
+  IntWithUncertainty total_drain_watts = 4;
+}
+
+// Specifies Charging curves for different methods of charging.
+message ChargingCurves {
+  message ChargingCurveAtPower {
+    // The power of charging in watts.
+    int32 input_power_watts = 1;
+
+    message TimeToFullBattery {
+      // Energy required to reach full battery capacity.
+      int32 energy_to_full_wh = 1;
+
+      // Time required to reach full battery capacity.
+      int32 time_to_full_secs = 2;
+    }
+
+    // Expected times required to reach full battery capacity.
+    // Provided in ascending order of energy required to full battery cacpacity.
+    repeated TimeToFullBattery time_to_full_battery = 2;
+  }
+
+  // These fields together describe a two dimensional charging curve, with input
+  // power and energy to full as the two input variables and time to full as the
+  // single output variable.
+  // Provided in ascending order of charging power.
+  // Optional, only required if battery preconditioning parameters are not
+  // provided.
+  repeated ChargingCurveAtPower charging_curve_at_power = 1;
+
+  message ChargingCurvesAtTemperature {
+    // Battery temperature in Celsius.
+    float battery_temp_celsius = 1;
+
+    // The charging curves for the given battery temperature.
+    repeated ChargingCurveAtPower charging_curve_at_power = 2;
+  }
+
+  // These fields describe a three dimensional charging curve that map
+  // [battery temperature, input power, energy to full] -> [time to full].
+  // Provided in order of ascending battery temperature.
+  // Optional, only required if battery preconditioning parameters are provided.
+  repeated ChargingCurvesAtTemperature charging_curves_at_temperature = 2;
+}
+
+// Estimated time to reach a target battery level.
+message ChargingTime {
+  // Target battery level in watt hours.
+  int32 target_battery_level_wh = 1;
+
+  // Expected time remaining.
+  IntWithUncertainty time_remaining_secs = 2;
+}
+
+// Parameters that describe the battery preconditioning model used by the
+// vehicle. This will affect the calculation of the recommended charging time
+// and predicted energy usage.
+message BatteryPreconditioning {
+  message TargetTemperatureAtPower {
+    // Charging port speed in Watts.
+    uint32 input_power_watts = 1;
+
+    // Ideal battery temperature at the given charging port speed.
+    float target_battery_temp_celsius = 2;
+  }
+
+  // These fields describe a lookup table for ideal battery temperatures at
+  // different charging port speeds.
+  // Provided in ascending order of input_power_watts.
+  // In-between values are obtained via linear interpolation.
+  // Required.
+  repeated TargetTemperatureAtPower target_temp_at_input_power = 1;
+
+  // The expected power drain while preconditioning is active, in Watts.
+  // Used along with energy_required_for_preconditioning to determine the time
+  // required to precondition the battery.
+  // Required.
+  uint32 battery_conditioning_power_watts = 2;
+
+  message EnergyRequiredForPreconditioning {
+    // Target battery temperature in Celsius.
+    float target_battery_temp_celsius = 1;
+
+    // Energy required to achieve the target temperature from the previous
+    // target temperature.
+    uint32 additional_energy_required_wh = 2;
+  }
+
+  // Describes the energy required to precondition the battery up a given
+  // target temperature. Each additional_energy_required_wh field represents the
+  // energy required to achieve the current target_battery_temp from the
+  // previous target_battery_temp.
+  // Provided in ascending order of target_battery_temp_celsius.
+  // In-between values are obtained via linear interpolation.
+  // Required.
+  repeated EnergyRequiredForPreconditioning
+      energy_required_for_preconditioning = 3;
+
+  // The minimum battery level at which preconditioning can take place.
+  // Optional. If not provided, the minimum battery level threshold is assumed
+  // to be 0.
+  uint32 minimum_battery_level_threshold_for_preconditioning_wh = 4;
+
+  message MaximumTemperatureIncreaseAtStation {
+    // Charging port speed in watts.
+    uint32 input_power_watts = 1;
+
+    // Maximum battery temperature increase at the given charging port speed.
+    float maximum_battery_temp_increase_celsius = 2;
+  }
+
+  // These fields provide a hard limit on the maximum battery temperature
+  // increase that can be achieved at a charging station at a given input power.
+  // Provided in ascending order of input_power_watts.
+  // In-between values are obtained by floor interpolation i.e. given an input
+  // power of x, we return the value corresponding to the closest
+  // input_power_watts that is less than or equal to x.
+  // Optional. If not provided, there is no limit on maximum temperature
+  // increase at a charging station i.e. we will assume that the battery can be
+  // heated to the ideal temperature at the upcoming station.
+  repeated MaximumTemperatureIncreaseAtStation
+      maximum_temp_increase_at_station = 5;
+}

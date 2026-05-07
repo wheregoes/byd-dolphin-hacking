@@ -72,7 +72,8 @@ adb shell am force-stop com.android.launcher3
 - **DiCarServer** (`com.byd.car.server`) is the central car service hub, runs as system UID 1000
 - **Content providers** expose vehicle data (maintenance, energy consumption, tyre pressure)
 - **Protobuf definitions** in DiCarServer define CAN bus message schemas
-- **Lock/unlock/AVAS sounds** are NOT controlled by the head unit (BCM/MCU domain)
+- **AVAS/lock sounds** have writable CAN signals from Android (custom sound routing under investigation)
+- **Horn** is hardware-controlled (physical relay, not software)
 - **Boot animation** exists at `/system/media/` but requires root to replace
 - **Theme system** exists via `com.byd.automultipletheme` with wallpaper/theme APIs
 
@@ -93,5 +94,6 @@ adb shell am force-stop com.android.launcher3
 - Cannot write to `/system` partition (read-only, dm-verity)
 - Cannot modify boot animation without root
 - Cannot install GApps (system partition 100% full)
-- Lock/unlock/horn/AVAS sounds controlled by BCM, not Android
+- AVAS/lock/exterior sounds have CAN signals but custom values need DiCarServer decompilation
+- Horn is hardware-controlled (physical relay)
 - Some content providers require system-level signing to query

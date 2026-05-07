@@ -1,0 +1,94 @@
+// Copyright 2020 Google Inc.
+// All Rights Reserved.
+// Vehicle energy forecast. See implementation guide:
+// https://docs.partner.android.com/gas/integrate/maps/maps_vehicle/implement
+
+//edition = "2023";
+syntax = "proto3";
+
+package maps.automotive.vehicle_energy;
+
+//option features.field_presence = IMPLICIT;
+option java_multiple_files = true;
+option java_package = "com.google.maps.automotive.proto";
+
+message VehicleEnergyForecast {
+  // Arrival energy at the next stop on the trip, or final destination if there
+  // are no stops. Arrival energy may be negative if the next stop is deemed
+  // unreachable.
+  EnergyAtDistance energy_at_next_stop = 1 [deprecated = true];
+
+  // Distance until the EV's battery has no more available energy for running on
+  // electric power only, without charging. Only provided iff the trip is long
+  // enough to exhaust the vehicle's battery energy.
+  EnergyAtDistance distance_to_empty = 2;
+
+  // Indicates the quality of the energy forecast.
+  enum ForecastQuality {
+    UNKNOWN = 0;
+
+    // Forecast calculated with live-traffic data.
+    WITH_LIVE_TRAFFIC = 1;
+
+    // Forecast calculated without live-traffic data.
+    WITHOUT_LIVE_TRAFFIC = 2;
+  }
+
+  // The quality of the energy forecast.
+  ForecastQuality forecast_quality = 3;
+
+  // Information about the next charging stop if the vehicle is expected to
+  // charge at the next destination on the trip or unset otherwise.
+  ChargingStationInfo next_charging_stop = 4 [deprecated = true];
+
+  // Details of each stop along the users active trip, in order of arrival.
+  repeated StopDetails stop_details = 5;
+
+  // List of authorization IDs associated with the energy forecast data.
+  repeated DataAuthorization data_authorizations = 6;
+}
+
+message StopDetails {
+  // Expected battery energy remaining upon arrival of this stop.
+  //
+  // Distance and time values are relative to the previous stop, or the
+  // vehicle's current location if this is the first stop in the trip.
+  EnergyAtDistance expected_arrival_energy = 1;
+
+  // Charging-related information if the user is expected to
+  // charge at this stop on their trip or unset otherwise.
+  ChargingStationInfo charging_info = 2;
+}
+
+message EnergyAtDistance {
+  // Distance (in meters) from the current location along the active route.
+  int32 distance_meters = 1;
+
+  // Available battery energy level (in watt-hours) upon arrival @
+  // distance_meters.
+  int32 arrival_battery_energy_wh = 2;
+
+  // Estimated time until arrival at distance_meters along the route.
+  int32 time_to_arrival_seconds = 4;
+
+  reserved 3;
+}
+
+message ChargingStationInfo {
+  // Minimum available battery energy level (in watt-hours) upon departure of
+  // this station in order to complete the trip.
+  int32 minimum_departure_energy_wh = 1;
+
+  // Maximum rated power output (in watts) at this station. Non-zero iff the
+  // user is expected to charge at this stop.
+  int32 maximum_rated_power_watts = 2;
+
+  // Estimated charging time to reach the minimum departure level. Non-zero iff
+  // the user is expected to charge at this stop.
+  int32 estimated_charging_time_seconds = 3;
+}
+
+message DataAuthorization {
+  // Identifier for this authorization.
+  string id = 1;
+}

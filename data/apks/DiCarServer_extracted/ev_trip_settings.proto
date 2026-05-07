@@ -1,0 +1,48 @@
+// Copyright 2022 Google Inc.
+// All Rights Reserved.
+//
+// Settings for trips in an Electric Vehicle.
+
+syntax = "proto3";
+
+package maps.automotive.maps_settings;
+
+option java_multiple_files = true;
+option java_package = "com.google.maps.automotive.proto";
+
+// Settings for the state of the car's charge.
+message StateOfChargeSettings {
+  // The minimum charge percentage we target at arrival at charging stops of
+  // an EV trip. If not provided or 0, the server default value is used.
+  int32 min_charging_stop_arrival_charge_percentage = 1;
+
+  // The minimum charge percentage we target at arrival at the final
+  // destination of an EV trip with at least one charging stop. If not provided
+  // or 0, the server default is used.
+  int32 min_destination_arrival_charge_percentage = 2;
+
+  // The low battery threshold percentage to surface an alert to the user
+  // suggesting a charging station search.
+  // This alert is only shown when maps is open and users are not in guided
+  // navigation.
+  // Allowed values are in the range of 5 to 25 inclusive.
+  // Optional. If not provided (or set to 0) then a maps will use a default
+  // value.
+  optional int32 low_battery_alert_when_not_navigating_threshold_percentage = 3;
+}
+
+// Settings used by the graph search algorithm when auto-adding charging stops.
+message AutoAddChargingStopsSettings {
+  // The stopping penalty (in minutes) that is applied towards adding a charging
+  // stop in the auto-add charging stops flow.
+  // Valid values are non-negative.
+  // Optional. If not provided, the server default value is used.
+  optional int32 stopping_penalty_at_charging_stop_minutes = 1;
+}
+
+// Settings for trips in an Electric Vehicle
+message EvTripSettings {
+  StateOfChargeSettings state_of_charge_settings = 1;
+
+  AutoAddChargingStopsSettings auto_add_charging_stops_settings = 2;
+}

@@ -1,0 +1,369 @@
+// Copyright 2018 Google Inc.
+// All Rights Reserved.
+//
+// Maps customizable settings data model protocol buffer definitions.
+//
+// NOTE: This proto is currently experimental and subject to change.
+
+//edition = "2023";
+syntax = "proto3";
+
+package maps.automotive.maps_settings;
+
+//option features.field_presence = IMPLICIT;
+option java_multiple_files = true;
+option java_package = "com.google.maps.automotive.proto";
+
+// Whether Maps should present or suppress a feature.
+enum FeatureSuppression {
+  // Let Maps choose whether to display the feature.
+  DEFAULT = 0;
+
+  // Never display the feature.
+  SUPPRESS = 1;
+}
+
+// Defines the colors and styling Maps uses.
+message Theme {
+  // Style defines if default Maps (standard) styling or muted (ambient) styling
+  // is used. If a Style field is not populated, the STANDARD style is used by
+  // default.
+  enum Style {
+    // Use the standard/default Maps colors.
+    STANDARD = 0;
+
+    // Use the muted Maps colors.
+    AMBIENT = 1;
+  }
+
+  // Controls the style for non-turn card elements.
+  Style maps_style = 1;
+
+  // Controls the style of the turn card.
+  Style turn_card_style = 2;
+
+  // Controls the use of dark/light mode. If a DarkMode field is not populated,
+  // SYSTEM is used by default.
+  enum DarkMode {
+    // Respects the car's Android system dark mode value for all elements.
+    SYSTEM = 0;
+
+    // Always uses dark colours for all elements.
+    ALWAYS_DARK = 1;
+
+    // Always uses dark colours for UI elements, but basemap elements continue
+    // to respect the car's Android system dark mode value.
+    ALWAYS_DARK_UI = 2;
+  }
+
+  // Controls the use of light/dark colors.
+  DarkMode dark_mode = 3;
+}
+
+// ApplicationUiSettings represents the visibility of UI elements, the color of
+// the next-turn card and audible notifications in Maps.
+message ApplicationUiSettings {
+  reserved 6;
+
+  // Whether to suppress on-screen indication of speed limit. Use to avoid
+  // duplication of UI elements.
+  FeatureSuppression road_speed_limit_visibility = 1;
+
+  // Whether to suppress on-screen indication of upcoming safety camera
+  // locations. Use to avoid duplication of UI elements.
+  FeatureSuppression upcoming_safety_camera_visibility = 2;
+
+  // Whether to suppress exceeding speed limit audio notifications. Use to avoid
+  // duplication of notifications.
+  FeatureSuppression exceeding_speed_limit_audibility = 3;
+
+  // Whether to suppress upcoming safety camera sound notifications. Use to
+  // avoid duplication of notifications.
+  FeatureSuppression upcoming_safety_camera_audibility = 4;
+
+  // Primary color of the next-turn card.
+  enum TurnCardColor {
+    // Use the standard Maps turn card.
+    DEFAULT = 0;
+
+    // Use muted Maps turn card.
+    NEUTRAL = 1;
+  }
+
+  // Deprecated, use each screen's Theme.turn_card_style field instead.
+  TurnCardColor turn_card_color = 5 [deprecated = true];
+}
+
+// What level of interaction is allowed in a certain activity.
+enum TouchScreenInteractability {
+  // Default value if the client does not set a specific interactability level
+  // (for backwards compatibility).
+  INTERACTABILITY_UNSPECIFIED = 0;
+
+  // All interactions with the touch screen on the area that the activity is
+  // displayed are forwarded to the activity to react to the interactions.
+  ALL_INTERACTIONS_AVAILABLE = 1;
+
+  // Only tap-like interactons (taps, double taps, long press) on the area that
+  // the activity is displayed are forwarded to the activity to react to the
+  // interactions.
+  // Gestures, such as drag or scale are not forwarded to the activity.
+  ONLY_SINGLE_FINGER_TAP_AVAILABLE = 2;
+
+  // All touch events will be blocked and the activity will not receive any
+  // tap or gesture signal.
+  NO_INTERACTION_AVAILABLE = 3;
+}
+
+// Settings for maps activities to magnify the user interface.
+// For example, this can be used to meet minimum size requirements for fonts
+// and touch targets.
+message DisplayScaling {
+  // Amount to magnify the user interface of an activity.  Range [1 - 1.4].
+  // Values outside of this range will be adjusted to the closest in-range
+  // value. A value of 1, means no change and a value of 1.4 will make
+  // on-screen display elements 40% larger.
+  float display_magnification = 1;// [features.field_presence = EXPLICIT];
+}
+
+// Controls settings related to how Maps renders in the center display area, for
+// example, in the Center Display Screen in the car. Refer to the GAS glossary:
+// https://docs.partner.android.com/gas/requirements
+// None of these settings affect the instrument cluster display.
+message CenterDisplayScreenSettings {
+  // Style names define the colors and brightness of the basemap and surrounding
+  // UI. Some map style may not always be available; each field can only be set
+  // to valid values. If an unknown value is used, Maps will instead use the
+  // Maps default value.
+  enum MapStyle {
+    // Maps chooses a default style from the list below.
+    MAP_STYLE_DEFAULT = 0;
+
+    // Standard Maps style, with light colors during the day (or in areas
+    // with substantial external light) and dark colors during the night
+    // (or in areas with minimal external light).
+    STANDARD = 1;
+
+    // Style with muted colors, designed to be used when the standard style
+    // might stand out too much against surrounding visual elements in vehicle
+    // interior. Light colors are used during the day (or in areas with
+    // substantial external light) and dark colors during the night (or in
+    // areas with minimal external light).
+    AMBIENT = 2;
+  }
+
+  // This value is used for the limited_widget_settings in addition to the
+  // main Maps activity. This has been deprecated in favour of the theme field.
+  // If the theme field is present, this value is ignored.
+  MapStyle map_style = 1 [deprecated = true];
+
+  // Controls the colors and style used in the center display. If this field is
+  // present, both map_style and the ApplicationUiSettings' turn_card_color
+  // field values are ignored for the center display.
+  Theme theme = 11;
+
+  // Controls the settings related to the Medium-sized widget.
+  message LimitedWidgetSettings {
+    TouchScreenInteractability touch_screen_interactability = 1;
+
+    // Scaling to apply to the center display limited map activity.
+    DisplayScaling display_scaling = 2;
+  }
+
+  LimitedWidgetSettings limited_widget_settings = 5;
+
+  // The StatusBarStyle controls styling of the top status bar.
+  enum StatusBarStyle {
+    // Maps chooses a default style from the list below.
+    DEFAULT = 0;
+
+    // Maps will not change the status bar style. Status bar styling is fully
+    // the responsibility of the OEM.
+    DEFAULT_SYSTEM = 1;
+
+    // Maps will set the status bar color to a dark translucent color. The
+    // map will be drawn underneath the status bar.
+    //
+    // The OEM must ensure that:
+    //  1. The Automotive implementation supports the Android APIs that give
+    //     the app control of the status bar color. More specifically:
+    //     WindowManager.LayoutParams#FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS and
+    //     Window#setStatusBarColor
+    //  2. The Automotive implementation supports the APIs that allow the app to
+    //     draw full screen while being notified of insets:
+    //     View#SYSTEM_UI_FLAG_LAYOUT_STABLE and View#SYSTEM_UI_FLAG_FULLSCREEN
+    //  3. The top value in WindowInsets reflects the height of the top status
+    //     bar.
+    //
+    // Note this style will be applied on a best-effort basis, though there are
+    // cases where the style might not apply (e.g. when in Incognito mode) and
+    // Maps will fallback to the default style.
+    DARK_TRANSLUCENT = 2;
+  }
+
+  StatusBarStyle status_bar_style = 6;
+
+  // A rectangular bound on the screen that Maps can safely render interactive
+  // components on.
+  message SafeMapBounds {
+    // 0, 0 is at the top left of the screen.
+    // x coord (px) of the leftmost side of the safe rectangle.
+    int32 left = 1;
+
+    // y coord (px) of the topmost side of the safe rectangle
+    int32 top = 2;
+
+    // x coord (px) of the rightmost side of the safe rectangle
+    int32 right = 3;
+
+    // y coord (px) of the bottommost side of the safe rectangle
+    int32 bottom = 4;
+  }
+
+  SafeMapBounds safe_map_bounds = 7;
+
+  // Controls whether to suppress satellite mode functionality. If DEFAULT,
+  // users are given the option to enable satellite mode (to render the basemap
+  // with satellite tiles). If SUPPRESSED, satellite mode is not available to
+  // users.
+  FeatureSuppression satellite_mode_availability = 8;
+
+  // Controls whether to suppress pan restriction when zoomed in Japan. If
+  // DEFAULT, users won't be restricted from panning the map. If SUPPRESSED,
+  // users in Japan are restricted from panning the map while in navigation and
+  // zoom level is larger than 14 (more zoomed in). The feature follows Japan
+  // Automobile Manufacturers Association guidelines and is only applied to
+  // users in Japan, non-Japanese users are not affected.
+  FeatureSuppression allow_map_pan_when_zoomed_in_jp = 9;
+
+  // Scaling to apply to the center display main map activity.
+  DisplayScaling display_scaling = 10;
+
+  reserved 2, 3, 4;  // Backwards compatibility
+}
+
+// Controls settings related to how Maps renders in the instrument cluster.
+message InstrumentClusterSettings {
+  // The style to use for the map. Style names are defined at top of file.
+  enum MapStyle {
+    // See MainMapSettings.MapStyle.MAP_STYLE_DEFAULT
+    MAP_STYLE_DEFAULT = 0;
+
+    // See MainMapSettings.MapStyle.STANDARD
+    STANDARD = 1;
+
+    // See MainMapSettings.MapStyle.AMBIENT
+    AMBIENT = 2;
+
+    // Standard Maps style, with dark colors at all times.
+    STANDARD_ALWAYS_DARK = 3;
+
+    // Style with muted colors, with dark colors all the time.
+    AMBIENT_ALWAYS_DARK = 4;
+  }
+
+  // This has been deprecated in favour of the theme field. If the theme field
+  // is present, this value is ignored.
+  MapStyle map_style = 3 [deprecated = true];
+
+  // Controls the colors and style used in the cluster display. If this field is
+  // present, both map_style and the ApplicationUiSettings' turn_card_color
+  // field values are ignored for the cluster display.
+  Theme theme = 9;
+
+  // Camera type in instrument cluster map.
+  enum Camera {
+    // Use Maps default camera type in instrument cluster.
+    DEFAULT_CAMERA_TYPE = 0;
+
+    // Camera faces the general direction of travel and the map is tilted to
+    // allow the user to see further towards the horizon. The zoom level is
+    // automatically adjusted based on speed of travel and upcoming maneuvers,
+    // if navigating a route.
+    PERSPECTIVE_VIEW = 1;
+
+    // Provides an overhead view of the map, with the map fixed north up.
+    FLAT_NORTH_UP = 2;
+
+    // Provides an overhead view of the map, with the map rotating to ensure
+    // that the bearing is at top of the map, i.e. vehicle's front always points
+    // up.
+    FLAT_BEARING_UP = 3;
+  }
+
+  Camera camera = 5;
+
+  // Sets of features that an OEM can choose to be displayed in the instrument
+  // cluster.
+  enum FeatureSet {
+    // Shows only the map in instrument cluster. This is the default setting.
+    DEFAULT_MAP_ONLY = 0;
+
+    // Show the map and turn-by-turn information optionally overlaid on top
+    // of the map whenever the user starts navigation.
+    MAP_AND_NAVIGATION_STATE = 1;
+  }
+
+  FeatureSet feature_set = 6;
+
+  // Scaling to apply to the cluster main map activity.
+  DisplayScaling display_scaling = 7;
+
+  // Settings for the cluster turn card activity.
+  message TurnCardSettings {
+    // Scaling to apply to the cluster turn card activity.
+    DisplayScaling display_scaling = 1;
+  }
+
+  TurnCardSettings turn_card_settings = 8;
+
+  reserved 1, 2, 4;  // Backwards compatibility
+}
+
+// Controls settings used to apply custom styles to Maps.
+message CustomStyleSettings {
+  // The ID of the custom style to be applied to Maps. This must be an ID
+  // provided by Google and allow-listed for use in the current vehicle.
+  // Using a custom style overrides the selection of Ambient/Standard styling
+  // for all Activities, if the specified custom style is invalid, Maps will use
+  // the default custom style associated with this vehicle if applicable, or
+  // else default back to whatever styling is selected (Ambient/Standard) in
+  // this proto.
+  string custom_style_id = 1;
+}
+
+// Controls additional features that OEMs can trigger.
+message AdditionalFeatureSettings {
+  // Each additional feature message contains a string token ID and extra fields
+  // for each feature.
+  repeated AdditionalFeature additional_features = 1;
+}
+
+message AdditionalFeature {
+  // The IDs of any additional features to be enabled in Maps. These must be IDs
+  // provided by Google corresponding to specific additional functionality, and
+  // allow-listed for use in the current vehicle.
+  string id = 1;
+}
+
+// The Maps Settings represent all of the ways in which an OEM can customize,
+// configure or modify certain settings of Maps. These settings primarily offer
+// the ability to select UI and map stylings and to suppress certain features.
+// MapsSettings are sent from the OEM to Google Maps.
+message MapsSettings {
+  // Settings for visibility and color of UI elements in Maps and
+  // audible notifications.
+  ApplicationUiSettings application_ui_settings = 1;
+
+  // Settings for displaying Maps in the Center Display Screen.
+  CenterDisplayScreenSettings center_display_screen_settings = 2;
+
+  // Settings for displaying Maps in the instrument cluster.
+  InstrumentClusterSettings instrument_cluster_settings = 3;
+
+  // Settings for customizing the look and feel of Maps using custom styles.
+  CustomStyleSettings custom_style_settings = 4;
+
+  // Settings for additional features that OEMs can trigger.
+  AdditionalFeatureSettings additional_feature_settings = 5;
+}

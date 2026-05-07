@@ -1,0 +1,4 @@
+com.byd.audio.AudioFeatureHandler
+com.byd.carsettings.CarSettingsHandler
+com.byd.auto.HalFeatureHandler
+com.byd.car.ExpandFeatureHandler

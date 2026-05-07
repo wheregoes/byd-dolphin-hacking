@@ -1,0 +1,99 @@
+// Copyright 2020 Google Inc.
+// All Rights Reserved.
+//
+// Proto messages describing the assistive driving state of a vehicle.
+//
+// For the full detail on this API, see attached Assisted Driving Developer
+// Guide.
+//
+// Version 0.1
+
+syntax = "proto3";
+
+package maps.automotive.assisted_driving_state;
+
+option java_multiple_files = true;
+option java_package = "com.google.maps.automotive.proto";
+
+// The current, instantaneous assisted driving state of the vehicle. Provided
+// every time the state of the vehicle changes, as well as retrieved once per
+// minute
+message AssistedDrivingState {
+  // The possible states indiciating the activation level of a vehicles
+  // assistive driving system.
+  enum State {
+    // No state is known. This implies the system was not able to provide a
+    // state (for example, system failure or missing integration). A client
+    // should never intentionally send this value but instead send which other
+    // of the values best models the situation.
+    UNKNOWN = 0;
+
+    // Assisted driving is not supported by this vehicle. The vehicle will not
+    // assist with driving control without being taken to a dealer for
+    // modification, or maybe would never be capable of assisted driving. For
+    // example, this may be a model of car that never supports assisted driving
+    // features; or perhaps one that usually does, but the owner has not
+    // purchased a sufficient trim level to enable it
+    UNSUPPORTED = 1;
+
+    // The vehicle is capable of assisted driving, but it is not capable at the
+    // moment because some temporary condition is blocking the availability.
+    // This condition is something that could possibly be remedied by a driver
+    // or through maintenance activity. For example, among others, this could be
+    // a malfunctioning sensor; a blocked sensor; or a lack of a necessary paid
+    // subscription.
+    TEMPORARILY_UNAVAILABLE = 2;
+
+    // The vehicle is capable of assisted driving, and activation is most likely
+    // possible during the current drive. This does not include the case where
+    // assisted driving features are immediately available to the user (covered
+    // by IMMEDIATELY_ENGAGEABLE). It does includes cases where activation is
+    // not possible immediately due to conditions that are likely to be resolved
+    // during a drive.
+    //
+    // For example this may include situations like:
+    //   * no network connectivity,
+    //   * vehicle not centered in lane, or
+    //   * vehicle not in a a location where assisted driving is supported.
+    AVAILABLE = 3;
+
+    // The vehicle is ready to turn on assisted driving right now and an attempt
+    // by the driver to turn it on will succeed. Usually this means a single
+    // user action would enable the vehicles assisted driving feature and the
+    // vehicle would take control. For example, the vehicle could be showing
+    // availability by a dash light and if the driver presses a specific button,
+    // the vehicle would start assisted driving.
+    IMMEDIATELY_ENGAGEABLE = 4;
+
+    // Assisted driving is currently turned on and the vehicle is in control of
+    // driving functions to the level it is capable of.
+    ENGAGED = 5;
+
+    // Assisted driving mode is turned on, but the vehicle is not in control
+    // because the driver has temporarily taken control. It is expected that
+    // once the driver has finished some short action, control will be returned
+    // to the vehicle. For example, this could be the user taking control to
+    // change lanes, with the vehicle resuming assisted driving once settled in
+    // the new lane.
+    DRIVER_SUSPENDED = 6;
+
+    // The vehicle has forced disengagement of assisted driving, the vehicle is
+    // not in control and is transitioning to the 'assisted driving off' state.
+    // This state represent the transition from a 'turned on' state (ENGAGED or
+    // DRIVER_SUSPENDED) to a 'turned off' state (TEMPORARILY_UNAVAILABLE,
+    // AVAILABLE or IMMEDIATELY_ENGAGEABLE).
+    //
+    // For example, if lane marker visibility dropped below a certain threshold,
+    // the car might warn the driver, then after a few seconds, disengage the
+    // assisted driving feature. At that point this state would be entered,
+    // during which the driver is being warned that they have been handed back
+    // control forcibly. If visibility improved, perhaps the user could then
+    // re-engage the feature. If no improvement, then this would transition to
+    // some 'off' state; perhaps TEMPORARILY_UNAVAILABLE.
+    FORCE_DISENGAGED = 7;
+  }
+
+  // The state of assisted driving capabilities in the vehicle at time of
+  // transmission
+  State state = 1;
+}

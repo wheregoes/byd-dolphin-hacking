@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package maps.automotive.payment_network;
+
+option java_multiple_files = true;
+option java_package = "com.google.maps.automotive.proto";
+
+// Settings message to communicate charging payment network related information.
+// PaymentNetworkSettings are sent from the OEM to Google Maps.
+message PaymentNetworkSettings {
+  message PaymentNetwork {
+    // A Google provided ID for a charging payment network, will be of the form
+    // "<oem_id>:<network_id>". IDs are issued by Google upon request.
+    string payment_network_id = 1;
+  }
+
+  // List of charging payment networks with which the driver is expected to be
+  // able to pay.
+  repeated PaymentNetwork subscribed_oem_payment_network = 1;
+
+  // Represents the vehicle's Plug and Charge capability (if any).
+  enum PlugAndChargeCapability {
+    UNKNOWN_PLUG_AND_CHARGE_CAPABILITY = 0;
+    ISO_15118_2 = 1;
+    ISO_15118_20 = 2;
+  }
+
+  // Whether the vehicle supports Plug and Charge, and which protocol it
+  // supports.
+  optional PlugAndChargeCapability plug_and_charge_capability = 2;
+}
