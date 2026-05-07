@@ -84,7 +84,7 @@ adb shell am force-stop com.android.launcher3
 - **Vehicle Prompt Sound Source** switchable between Normal (1) and Tech (2) profiles via 0xAA000194
 - **Multiple sound sources writable**: BD, INS, Radar sound sources all accept CAN writes
 - **DSP OTA sound package** mechanism exists (0x99000223) — potential vector for custom sounds
-- **AVAH test tones** play through AVAS speaker (0x6E970010) — proves hardware path is functional
+- **AVAH test tones CONFIRMED WORKING** — 1kHz tone audible on AVAS external speaker (0x6E970010)
 - **A2B bus architecture** confirmed: SoC → I2S → MCU DSP → A2B bus → amplifiers
 - **Tesla Boombox equivalent** — MCU rejects direct routing (0x32B1C042), but test/diagnostic paths may bypass
 - **Custom lock/power-on sounds NOT possible** — MCU firmware rejects (0xAA000321, 0xAA000243)

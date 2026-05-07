@@ -128,7 +128,17 @@ Source: `com.byd.feature.audio.Audio` and `com.byd.feature.test.Test` classes in
 | Signal | Hex ID | Device | Value | Notes |
 |--------|--------|--------|-------|-------|
 | DSP_TYPE | 0x99000215 | 1002 | 3 | DSP hardware revision |
+| AMPLIFIER_TYPE | 0x99000214 | 1002 | 0 | Amplifier type |
 | OTA_REMOTE_CONFIG_DSP_SOUND_SOURCE_PACKAGE | 0x99000223 | 1002 | ? | DSP sound bank OTA update status |
+
+#### AVAH Test Tones (CONFIRMED WORKING - audible on AVAS speaker)
+
+| Signal | Hex ID | Device | R/W | MCU Result | Notes |
+|--------|--------|--------|-----|------------|-------|
+| TEST_CMD_TEST_AUDIO_AVAH | 0x6EA70010 | 1002 | R | OK | Returns 65535 (0xFFFF) |
+| TEST_CMD_TEST_AUDIO_AVAH_SET | 0x6E970010 | 1002 | W | **SUCCESS** | **CONFIRMED**: 0=stop, 1=1kHz, 2=2kHz, 3=3kHz |
+
+Prerequisite: AVAS must be enabled in Vehicle Settings > Notification. Tone is continuous until stopped.
 
 #### Other Working Audio Signals
 
@@ -189,7 +199,11 @@ The AVAS is **partially controlled from the Android head unit**. DiCarServer has
 
 **Vehicle Prompt Sound Source**: A separate sound profile system accessible via `STATISTICS_SOUND_SOURCE_INFO` (0x99000194 read, 0xAA000194 write). Values: 1=Normal, 2=Tech. When set to "Tech", the engine simulator sub-menu is hidden in Vehicle Settings. This is read as a byte array — byte offset 5 contains the current value.
 
-**AVAH test tones**: `TEST_CMD_TEST_AUDIO_AVAH_SET` (0x6E970010) generates test tones on the AVAS speaker. Both GET and SET have **real non-zero feature IDs** (1855389712 SET, 1856438288 GET) — fully implemented in the HAL. Values: 0=stop, 1=1kHz, 2=2kHz, 3=3kHz. **This proves the AVAS hardware is functional and commandable from the SoC.** Testing this will confirm the AVAS speaker works.
+**AVAH test tones — CONFIRMED WORKING**: `TEST_CMD_TEST_AUDIO_AVAH_SET` (0x6E970010) plays test tones on the AVAS external speaker. Both GET and SET have **real non-zero feature IDs** (1855389712 SET, 1856438288 GET) — fully implemented in the HAL. Values: 0=stop, 1=1kHz, 2=2kHz, 3=3kHz. **Tested and verified**: 1kHz tone is audible from outside the car through the AVAS speaker.
+
+**Prerequisites**: AVAS must be **enabled** in Vehicle Settings > Notification. When AVAS is disabled, the amplifier is powered off and no sound is produced even though the MCU accepts the command (returns SUCCESS).
+
+**Behavior**: The tone is continuous until stopped with value 0, or by toggling the AVAS switch off in settings. The `app_process` command takes ~3 seconds to start, so toggling AVAS off in settings is faster for emergency stop.
 
 **Sound source channels**: The DSP manages parallel channels, each with a SET/STATE signal pair. All channels select MCU-stored presets — none routes SoC audio:
 
@@ -299,7 +313,7 @@ Changeable to different presets through infotainment settings.
 
 | Sound | Reason |
 |-------|--------|
-| Custom AVAS / Boombox | MCU firmware doesn't implement external speaker routing (0x32B1C042 FAILED) |
+| Custom AVAS / Boombox | Direct routing (0x32B1C042) FAILED, but AVAH test tones (0x6E970010) WORK — partial access confirmed |
 | Custom lock chirp | BCM generates lock sound directly — Android only receives lock events, doesn't play the sound |
 | Custom power-on sound | MCU firmware doesn't implement (0xAA000243 FAILED) |
 | Horn | Physical relay, hardware-controlled |
