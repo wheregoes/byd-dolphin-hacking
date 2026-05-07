@@ -217,7 +217,13 @@ The AVAS is **partially controlled from the Android head unit**. DiCarServer has
 | INS | 0x1B100045 | 0x4C600035 |
 | BD | 0x1C100026 | 0x4FD0001E |
 
-**Boombox / custom sound verdict**: `AUDIO_AVAS_AUDIO_SOURCE_TO_EXTERNAL_SPEAKER_SET` (0x32B1C042) exists but the Dolphin's MCU firmware does not implement it (returns FAILED). No Android audio device represents the AVAS speaker. The A2B bus connecting DSP to amplifiers is MCU-mastered — the SoC cannot address A2B endpoints directly. However, the AVAH test tone path works, proving the hardware itself is functional. The remaining question is whether any combination of test/diagnostic signals can unlock arbitrary audio routing.
+**Navigation I2S path tested**: The SoC has two I2S output buses to the MCU:
+1. `TERT_MI2S_RX` — main audio → cabin speakers
+2. `QUAT_MI2S_RX` — navigation guidance → cabin speakers (NOT AVAS)
+
+Playing audio with `USAGE_ASSISTANCE_NAVIGATION_GUIDANCE` (AudioAttributes usage=12) routes through `QUAT_MI2S_RX`, but the MCU sends it to the cabin speakers only. Tested with 440Hz tone — audible on cabin speakers, silent on AVAS. CAN commands to re-route (`0x32B1C042`, `0x1C10000E`, `0x1B100043`, `0xAA000301`) all return FAILED. `AUDIO_SOC_NOTIFY_MCU_CONTROL_DSP_SET` (0xAA000145) returns SUCCESS but does not change routing.
+
+**Boombox / custom sound verdict**: The only confirmed path to the AVAS speaker is the AVAH test tone (0x6E970010, values 1-3 = sine waves). The MCU generates these internally in its DSP — no Android audio data reaches the AVAS speaker. The A2B bus connecting DSP to amplifiers is MCU-mastered. Without MCU firmware modification, arbitrary audio on the AVAS speaker is not possible.
 
 **DSP OTA sound source**: `OTA_REMOTE_CONFIG_DSP_SOUND_SOURCE_PACKAGE` (0x99000223) is **read-only** (0x99 prefix = MCU→SOC). It reports the current DSP sound package status — there is no corresponding 0xAA write signal. However, the `BYDAutoOtaDevice` class provides `sendOTAData(byte[])` which pushes arbitrary binary data through `setBuffer()` → JNI → `libbydauto.so` → SPI → MCU. The OTA pipeline is: `StartOTA()` → `sendOTAData(byte[])` → `FinishOTA()`. OTA permissions: `android.permission.BYDAUTO_OTA_SET`. The MCU likely validates signatures/checksums.
 
