@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Background rounded rect -->
+    <path
+        android:fillColor="#FF0D1520"
+        android:pathData="M0,0h48v48H0z" />
+    <!-- Subtle gradient overlay bottom -->
+    <path
+        android:fillColor="#1500D4AA"
+        android:pathData="M0,24h48v24H0z" />
+    <!-- Door frame outer -->
+    <path
+        android:fillColor="#FF00D4AA"
+        android:pathData="M10,6 L10,42 L28,42 L28,6 Z M12.5,8.5 L25.5,8.5 L25.5,39.5 L12.5,39.5 Z" />
+    <!-- Door panel inner fill -->
+    <path
+        android:fillColor="#FF0F1A2A"
+        android:pathData="M12.5,8.5 L25.5,8.5 L25.5,39.5 L12.5,39.5 Z" />
+    <!-- Door handle -->
+    <path
+        android:fillColor="#FF4A9EFF"
+        android:pathData="M22,22 C23.1,22 24,22.9 24,24 C24,25.1 23.1,26 22,26 C20.9,26 20,25.1 20,24 C20,22.9 20.9,22 22,22 Z" />
+    <!-- Sound wave 1 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF4A9EFF"
+        android:strokeWidth="2"
+        android:pathData="M31,19 C33,20.5 34.2,22.8 34.2,25 C34.2,27.2 33,29.5 31,31" />
+    <!-- Sound wave 2 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF4A9EFF"
+        android:strokeWidth="2"
+        android:strokeAlpha="0.6"
+        android:pathData="M35,15 C38.2,17.5 40,21 40,25 C40,29 38.2,32.5 35,35" />
+</vector>

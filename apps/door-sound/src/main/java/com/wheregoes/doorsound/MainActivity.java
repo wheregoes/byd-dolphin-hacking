@@ -40,6 +40,8 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        getWindow().setStatusBarColor(0xFF0A0A0F);
+        getWindow().setNavigationBarColor(0xFF0A0A0F);
 
         switchEnabled = findViewById(R.id.switch_enabled);
         switchDoorOpen = findViewById(R.id.switch_door_open);

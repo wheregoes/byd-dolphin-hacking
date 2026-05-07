@@ -14,7 +14,7 @@
 
     <application
         android:label="Door Sound"
-        android:icon="@drawable/ic_notification"
+        android:icon="@drawable/ic_launcher"
         android:debuggable="true"
         android:supportsRtl="true">
 
@@ -22,7 +22,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
-            android:theme="@android:style/Theme.Material.Light.DarkActionBar">
+            android:theme="@android:style/Theme.Material.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

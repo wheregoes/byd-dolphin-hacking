@@ -2,34 +2,43 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FF0D1117"
-    android:padding="20dp"
-    android:fillViewport="true">
+    android:background="#FF0A0A0F"
+    android:fillViewport="true"
+    android:overScrollMode="never">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="24dp">
 
-        <!-- App Title -->
-        <TextView
+        <!-- Header -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Door Sound"
-            android:textColor="#FF4FC3F7"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="4dp" />
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="32dp">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Custom sounds for your BYD"
-            android:textColor="#88FFFFFF"
-            android:textSize="14sp"
-            android:gravity="center"
-            android:layout_marginBottom="24dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Door Sound"
+                android:textColor="#FFE0E0E0"
+                android:textSize="26sp"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.05" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Custom sounds for your BYD"
+                android:textColor="#FF9E9E9E"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif-light"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
 
         <!-- Master Toggle -->
         <LinearLayout
@@ -38,8 +47,11 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="@drawable/card_background_accent"
-            android:padding="20dp"
-            android:layout_marginBottom="20dp">
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="18dp"
+            android:layout_marginBottom="32dp">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -51,16 +63,18 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/enabled"
-                    android:textColor="#FFFFFFFF"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textColor="#FFE0E0E0"
+                    android:textSize="17sp"
+                    android:fontFamily="sans-serif-medium" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Listen for door events"
-                    android:textColor="#88FFFFFF"
-                    android:textSize="13sp" />
+                    android:textColor="#FF9E9E9E"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-light"
+                    android:layout_marginTop="2dp" />
             </LinearLayout>
 
             <Switch
@@ -77,7 +91,10 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="@drawable/card_background"
-            android:padding="20dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="18dp"
             android:layout_marginBottom="16dp">
 
             <LinearLayout
@@ -85,16 +102,16 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="14dp">
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/door_open_sound"
-                    android:textColor="#FF4FC3F7"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
+                    android:textColor="#FF00D4AA"
+                    android:textSize="16sp"
+                    android:fontFamily="sans-serif-medium" />
 
                 <Switch
                     android:id="@+id/switch_door_open"
@@ -109,9 +126,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/no_file_selected"
-                android:textColor="#66FFFFFF"
-                android:textSize="13sp"
-                android:layout_marginBottom="12dp"
+                android:textColor="#FF9E9E9E"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-light"
+                android:layout_marginBottom="14dp"
                 android:singleLine="true"
                 android:ellipsize="middle" />
 
@@ -120,14 +138,15 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="14dp">
+                android:layout_marginBottom="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/volume"
-                    android:textColor="#99FFFFFF"
-                    android:textSize="13sp"
+                    android:textColor="#FF9E9E9E"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-light"
                     android:layout_marginEnd="10dp" />
 
                 <SeekBar
@@ -135,16 +154,18 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:progressTint="#FF4FC3F7"
-                    android:thumbTint="#FF4FC3F7" />
+                    android:progressTint="#FF4A9EFF"
+                    android:progressBackgroundTint="#FF2A2A3E"
+                    android:thumbTint="#FFFFFFFF"
+                    android:layout_marginEnd="8dp" />
 
                 <TextView
                     android:id="@+id/text_door_open_volume"
-                    android:layout_width="32dp"
+                    android:layout_width="28dp"
                     android:layout_height="wrap_content"
-                    android:textColor="#FFFFFFFF"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
+                    android:textColor="#FFE0E0E0"
+                    android:textSize="13sp"
+                    android:fontFamily="sans-serif-medium"
                     android:gravity="center" />
             </LinearLayout>
 
@@ -156,23 +177,25 @@
                 <Button
                     android:id="@+id/btn_door_open_select"
                     android:layout_width="0dp"
-                    android:layout_height="44dp"
+                    android:layout_height="42dp"
                     android:layout_weight="1"
                     android:text="@string/select_file"
-                    android:textColor="#FFFFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="#FF4A9EFF"
+                    android:textSize="13sp"
                     android:textAllCaps="false"
+                    android:fontFamily="sans-serif-medium"
                     android:background="@drawable/btn_primary"
                     android:layout_marginEnd="10dp" />
 
                 <Button
                     android:id="@+id/btn_door_open_clear"
-                    android:layout_width="80dp"
-                    android:layout_height="44dp"
+                    android:layout_width="72dp"
+                    android:layout_height="42dp"
                     android:text="@string/clear"
-                    android:textColor="#FFFF5252"
-                    android:textSize="14sp"
+                    android:textColor="#FFFF6B6B"
+                    android:textSize="13sp"
                     android:textAllCaps="false"
+                    android:fontFamily="sans-serif-medium"
                     android:background="@drawable/btn_clear" />
             </LinearLayout>
         </LinearLayout>
@@ -183,24 +206,27 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="@drawable/card_background"
-            android:padding="20dp"
-            android:layout_marginBottom="20dp">
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="18dp"
+            android:layout_marginBottom="32dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="14dp">
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/door_close_sound"
-                    android:textColor="#FF4FC3F7"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
+                    android:textColor="#FF00D4AA"
+                    android:textSize="16sp"
+                    android:fontFamily="sans-serif-medium" />
 
                 <Switch
                     android:id="@+id/switch_door_close"
@@ -215,9 +241,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/no_file_selected"
-                android:textColor="#66FFFFFF"
-                android:textSize="13sp"
-                android:layout_marginBottom="12dp"
+                android:textColor="#FF9E9E9E"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-light"
+                android:layout_marginBottom="14dp"
                 android:singleLine="true"
                 android:ellipsize="middle" />
 
@@ -226,14 +253,15 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="14dp">
+                android:layout_marginBottom="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/volume"
-                    android:textColor="#99FFFFFF"
-                    android:textSize="13sp"
+                    android:textColor="#FF9E9E9E"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-light"
                     android:layout_marginEnd="10dp" />
 
                 <SeekBar
@@ -241,16 +269,18 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:progressTint="#FF4FC3F7"
-                    android:thumbTint="#FF4FC3F7" />
+                    android:progressTint="#FF4A9EFF"
+                    android:progressBackgroundTint="#FF2A2A3E"
+                    android:thumbTint="#FFFFFFFF"
+                    android:layout_marginEnd="8dp" />
 
                 <TextView
                     android:id="@+id/text_door_close_volume"
-                    android:layout_width="32dp"
+                    android:layout_width="28dp"
                     android:layout_height="wrap_content"
-                    android:textColor="#FFFFFFFF"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
+                    android:textColor="#FFE0E0E0"
+                    android:textSize="13sp"
+                    android:fontFamily="sans-serif-medium"
                     android:gravity="center" />
             </LinearLayout>
 
@@ -262,23 +292,25 @@
                 <Button
                     android:id="@+id/btn_door_close_select"
                     android:layout_width="0dp"
-                    android:layout_height="44dp"
+                    android:layout_height="42dp"
                     android:layout_weight="1"
                     android:text="@string/select_file"
-                    android:textColor="#FFFFFFFF"
-                    android:textSize="14sp"
+                    android:textColor="#FF4A9EFF"
+                    android:textSize="13sp"
                     android:textAllCaps="false"
+                    android:fontFamily="sans-serif-medium"
                     android:background="@drawable/btn_primary"
                     android:layout_marginEnd="10dp" />
 
                 <Button
                     android:id="@+id/btn_door_close_clear"
-                    android:layout_width="80dp"
-                    android:layout_height="44dp"
+                    android:layout_width="72dp"
+                    android:layout_height="42dp"
                     android:text="@string/clear"
-                    android:textColor="#FFFF5252"
-                    android:textSize="14sp"
+                    android:textColor="#FFFF6B6B"
+                    android:textSize="13sp"
                     android:textAllCaps="false"
+                    android:fontFamily="sans-serif-medium"
                     android:background="@drawable/btn_clear" />
             </LinearLayout>
         </LinearLayout>
@@ -289,15 +321,18 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="@drawable/card_background"
-            android:padding="20dp">
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="18dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/service_status"
-                android:textColor="#FF4FC3F7"
-                android:textSize="17sp"
-                android:textStyle="bold"
+                android:textColor="#FF00D4AA"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium"
                 android:layout_marginBottom="12dp" />
 
             <LinearLayout
@@ -305,12 +340,12 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="6dp">
+                android:layout_marginBottom="8dp">
 
                 <View
                     android:id="@+id/status_dot"
-                    android:layout_width="10dp"
-                    android:layout_height="10dp"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
                     android:background="@drawable/status_dot_stopped"
                     android:layout_marginEnd="10dp" />
 
@@ -319,16 +354,18 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/status_stopped"
-                    android:textColor="#FFAAAAAA"
-                    android:textSize="14sp" />
+                    android:textColor="#FF9E9E9E"
+                    android:textSize="13sp"
+                    android:fontFamily="sans-serif-light" />
             </LinearLayout>
 
             <TextView
                 android:id="@+id/text_last_event"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#66FFFFFF"
-                android:textSize="13sp" />
+                android:textColor="#FF9E9E9E"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-light" />
         </LinearLayout>
 
     </LinearLayout>
