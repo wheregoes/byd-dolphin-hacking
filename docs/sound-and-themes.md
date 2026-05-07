@@ -410,14 +410,25 @@ No content validation in Java layer — raw bytes pass through. MCU validates on
 | 0x48 | MCU → SOC | Engine device reads |
 | 0x3E | SOC → MCU | Engine device writes |
 
-### Unexplored Test Signals
+### Factory Test Signals
 
-| Signal | Hex ID | Direction | Notes |
-|--------|--------|-----------|-------|
-| TEST_FLASH_MUSIC_VAL_SET | 0xAA000151 | SOC→MCU | "Flash music value" — may write sound data to MCU flash |
-| TEST_DSP_STANDBY_STATE_SET | 0xAA000113 | SOC→MCU | DSP standby control |
-| TEST_MCU_REPORT_DSP_VERSION_SET | 0xAA000247 | SOC→MCU | Request DSP version |
-| CAR_CONFIG_ITEM_AVAS_AUDIO | 0x12020005 | config | AVAS audio vehicle configuration |
+| Signal | Hex ID | Direction | Feature ID | Notes |
+|--------|--------|-----------|------------|-------|
+| TEST_FLASH_MUSIC_VAL_SET | 0xAA000151 | SOC→MCU | -1442840239 | Integer selector for pre-stored sound slot in MCU flash (NOT audio upload) |
+| TEST_AUDIO_AVAS_SET | 0xAA000104 | SOC→MCU | -1442840316 | Fully implemented, non-zero feature ID |
+| TEST_MCU_AVAS_CONFIGURATION_SET | 0xAA000171 | SOC→MCU | 0 (stub) | Works via hex fallback path |
+| TEST_FM_SPEAK_SET | 0xAA00011A | SOC→MCU | -1442840294 | Implemented |
+| TEST_MCU_SPEAK_SET | 0xAA000142 | SOC→MCU | 0 (stub) | NOT implemented on Dolphin |
+| TEST_PA_CONTROL_SET | 0xAA000148 | SOC→MCU | 0 (stub) | NOT implemented on Dolphin |
+| TEST_DSP_STANDBY_STATE_SET | 0xAA000113 | SOC→MCU | ? | DSP standby control |
+| TEST_MCU_REPORT_DSP_VERSION_SET | 0xAA000247 | SOC→MCU | ? | Request DSP version |
+| CAR_CONFIG_ITEM_AVAS_AUDIO | 0x12020005 | config | ? | AVAS audio vehicle configuration |
+
+Note: Feature ID = 0 means "stub" — the signal is not wired in `BYDAutoFeatureIds` but can still be sent via the hex string fallback in AudioMapper/TestMapper.
+
+### No Audio File Transfer Mechanism
+
+Confirmed: There is NO mechanism in the BYD Dolphin's software to upload custom audio files (WAV, PCM, etc.) to the MCU/DSP. All sounds in the MCU are programmed at the firmware level during manufacturing. The `setBuffer()` API sends raw bytes but is used for metadata (song titles, OTA firmware chunks) — not audio samples. The `TEST_FLASH_MUSIC_VAL_SET` signal is an integer selector for pre-stored sound slots, not a data transfer channel.
 
 ## Theme System
 
