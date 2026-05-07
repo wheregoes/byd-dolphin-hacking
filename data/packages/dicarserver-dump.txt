@@ -1,0 +1,626 @@
+Permissions:
+  Permission [com.byd.car.server.PROVIDER] (ce2b259):
+    sourcePackage=com.byd.car.server
+    uid=1000 gids=null type=0 prot=normal
+    perm=Permission{8b33e1e com.byd.car.server.PROVIDER}
+    packageSetting=PackageSetting{a306e99 com.byd.car.server/1000}
+
+Registered ContentProviders:
+  com.byd.car.server/com.byd.vem.VehicleContentProvider:
+    Provider{a72c6ff com.byd.car.server/com.byd.vem.VehicleContentProvider}
+  com.byd.car.server/com.gpack.service.provider.VehicleServiceProvider:
+    Provider{3ba9ccc com.byd.car.server/com.gpack.service.provider.VehicleServiceProvider}
+  com.byd.car.server/.provider.CarServiceProvider:
+    Provider{4031b15 com.byd.car.server/.provider.CarServiceProvider}
+
+ContentProvider Authorities:
+  [com.gpack.service.provider.VehicleServiceProvider]:
+    Provider{3ba9ccc com.byd.car.server/com.gpack.service.provider.VehicleServiceProvider}
+      applicationInfo=ApplicationInfo{ed11e2a com.byd.car.server}
+  [com.byd.car.server.provider.CarServiceProvider]:
+    Provider{4031b15 com.byd.car.server/.provider.CarServiceProvider}
+      applicationInfo=ApplicationInfo{4b6d41b com.byd.car.server}
+  [com_byd_map_ui]:
+    Provider{a72c6ff com.byd.car.server/com.byd.vem.VehicleContentProvider}
+      applicationInfo=ApplicationInfo{4b6d41b com.byd.car.server}
+  [google_maps_assisted_driving]:
+    Provider{a72c6ff com.byd.car.server/com.byd.vem.VehicleContentProvider}
+      applicationInfo=ApplicationInfo{4b6d41b com.byd.car.server}
+  [google_maps_energy]:
+    Provider{a72c6ff com.byd.car.server/com.byd.vem.VehicleContentProvider}
+      applicationInfo=ApplicationInfo{4b6d41b com.byd.car.server}
+  [com_byd_vem_data]:
+    Provider{a72c6ff com.byd.car.server/com.byd.vem.VehicleContentProvider}
+      applicationInfo=ApplicationInfo{4b6d41b com.byd.car.server}
+  [google_maps_settings]:
+    Provider{a72c6ff com.byd.car.server/com.byd.vem.VehicleContentProvider}
+      applicationInfo=ApplicationInfo{4b6d41b com.byd.car.server}
+  [google_maps_vehicle_profile]:
+    Provider{a72c6ff com.byd.car.server/com.byd.vem.VehicleContentProvider}
+      applicationInfo=ApplicationInfo{4b6d41b com.byd.car.server}
+
+Key Set Manager:
+  [com.byd.car.server]
+      Signing KeySets: 1
+
+Packages:
+  Package [com.byd.car.server] (a306e99):
+    userId=1000
+    sharedUser=SharedUserSetting{e5ab9b8 android.uid.system/1000}
+    pkg=Package{d875391 com.byd.car.server}
+    codePath=/system/priv-app/DiCarServer
+    resourcePath=/system/priv-app/DiCarServer
+    legacyNativeLibraryDir=/system/priv-app/DiCarServer/lib
+    primaryCpuAbi=arm64-v8a
+    secondaryCpuAbi=null
+    versionCode=1 minSdk=24 targetSdk=33
+    versionName=1.0
+    splits=[base]
+    apkSigningVersion=2
+    applicationInfo=ApplicationInfo{4b6d41b com.byd.car.server}
+    flags=[ SYSTEM HAS_CODE PERSISTENT ]
+    privateFlags=[ PRIVATE_FLAG_ACTIVITIES_RESIZE_MODE_RESIZEABLE_VIA_SDK_VERSION ALLOW_AUDIO_PLAYBACK_CAPTURE DEFAULT_TO_DEVICE_PROTECTED_STORAGE DIRECT_BOOT_AWARE PRIVILEGED ]
+    dataDir=/data/user_de/0/com.byd.car.server
+    supportsScreens=[small, medium, large, xlarge, resizeable, anyDensity]
+    timeStamp=2008-12-31 22:00:00
+    firstInstallTime=2008-12-31 22:00:00
+    lastUpdateTime=2008-12-31 22:00:00
+    signatures=PackageSignatures{13af2f6 version:2, signatures:[22216e4d], past signatures:[]}
+    installPermissionsFixed=true
+    pkgFlags=[ SYSTEM HAS_CODE PERSISTENT ]
+    declared permissions:
+      com.byd.car.server.PROVIDER: prot=normal, INSTALLED
+    requested permissions:
+      android.permission.WRITE_EXTERNAL_STORAGE: restricted=true
+      android.permission.READ_EXTERNAL_STORAGE: restricted=true
+    install permissions:
+      android.permission.REAL_GET_TASKS: granted=true
+      android.permission.ACCESS_CACHE_FILESYSTEM: granted=true
+      android.permission.BIND_INCALL_SERVICE: granted=true
+      android.permission.BYDAUTO_PANORAMA_GET: granted=true
+      android.permission.BYDAUTO_PANORAMA_SET: granted=true
+      android.permission.WRITE_SETTINGS: granted=true
+      android.permission.BYDAUTO_LIGHT_GET: granted=true
+      android.permission.RECOVERY: granted=true
+      android.permission.DEVICE_ACC: granted=true
+      com.android.launcher3.permission.READ_SETTINGS: granted=true
+      android.permission.BIND_ATTENTION_SERVICE: granted=true
+      android.permission.BYDAUTO_POWER_GET: granted=true
+      android.permission.BYDAUTO_POWER_SET: granted=true
+      android.permission.BYDAUTO_ENGINE_GET: granted=true
+      android.permission.BYDAUTO_ENGINE_SET: granted=true
+      android.permission.BYDAUTO_ENERGY_GET: granted=true
+      android.permission.BYDAUTO_ENERGY_SET: granted=true
+      android.permission.MODIFY_AUDIO_SETTINGS: granted=true
+      android.permission.BYDAUTO_OTA_GET: granted=true
+      android.permission.BYDAUTO_OTA_SET: granted=true
+      android.permission.ACCESS_NOTIFICATION_POLICY: granted=true
+      android.permission.MODIFY_AUDIO_ROUTING: granted=true
+      android.permission.BYDAUTO_SENSOR_GET: granted=true
+      android.permission.INSTALL_LOCATION_PROVIDER: granted=true
+      com.byd.wallpaper.permission.READ_SETTINGS: granted=true
+      android.permission.SYSTEM_ALERT_WINDOW: granted=true
+      android.permission.BROADCAST_PHONE_ACCOUNT_REGISTRATION: granted=true
+      android.permission.CLEAR_APP_USER_DATA: granted=true
+      android.permission.MONITOR_INPUT: granted=true
+      android.permission.BROADCAST_CALLLOG_INFO: granted=true
+      android.permission.INSTALL_PACKAGES: granted=true
+      android.permission.RECV_CLEAN_APN2_DATA: granted=true
+      android.permission.BYDAUTO_VIDEO_GET: granted=true
+      android.permission.BYDAUTO_VIDEO_SET: granted=true
+      android.permission.SHUTDOWN: granted=true
+      android.permission.BYDAUTO_GEARBOX_GET: granted=true
+      android.permission.NFC: granted=true
+      android.permission.BYDAUTO_CPUTEMPRATURE_SET: granted=true
+      com.byd.card.permission.READ_CARD: granted=true
+      android.permission.NETWORK_SETTINGS: granted=true
+      android.permission.CHANGE_OVERLAY_PACKAGES: granted=true
+      android.permission.BYDAUTO_CHARGING_GET: granted=true
+      android.permission.BYDAUTO_CHARGING_SET: granted=true
+      android.permission.CALL_PRIVILEGED: granted=true
+      android.permission.CHANGE_NETWORK_STATE: granted=true
+      android.permission.MASTER_CLEAR: granted=true
+      android.permission.FOREGROUND_SERVICE: granted=true
+      android.permission.MANAGE_DYNAMIC_SYSTEM: granted=true
+      android.permission.RECEIVE_BOOT_COMPLETED: granted=true
+      com.android.launcher3.permission.RECEIVE_LAUNCH_BROADCASTS: granted=true
+      com.byd.intelligententry.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION: granted=true
+      android.permission.MANAGE_ROLE_HOLDERS: granted=true
+      android.permission.DEVICE_POWER: granted=true
+      com.android.launcher3.permission.WRITE_SETTINGS: granted=true
+      android.permission.REMOVE_TASKS: granted=true
+      android.permission.EXPAND_STATUS_BAR: granted=true
+      android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS: granted=true
+      android.permission.READ_PROFILE: granted=true
+      android.permission.BLUETOOTH: granted=true
+      android.permission.BYDAUTO_AC_GET: granted=true
+      android.permission.BYDAUTO_AC_SET: granted=true
+      android.permission.WRITE_MEDIA_STORAGE: granted=true
+      android.permission.WRITE_BLOCKED_NUMBERS: granted=true
+      android.permission.GET_TASKS: granted=true
+      android.permission.BYDAUTO_SAFETY_BELT_GET: granted=true
+      android.permission.ACCESS_SURFACE_FLINGER: granted=true
+      android.permission.INTERNET: granted=true
+      android.permission.BYDAUTO_GB_GET: granted=true
+      android.permission.BYDACQUISITION_SEND_BUFFER: granted=true
+      android.permission.BLUETOOTH_ADMIN: granted=true
+      android.permission.CONTROL_VPN: granted=true
+      android.permission.BYDAUTO_TIME_GET: granted=true
+      android.permission.BYDAUTO_TIME_SET: granted=true
+      android.permission.BLUETOOTH_STACK: granted=true
+      com.codeaurora.permission.SUBSIDYLOCK: granted=true
+      com.qualcomm.permission.IZAT: granted=true
+      android.permission.BIND_CONNECTION_SERVICE: granted=true
+      com.byd.customkey.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION: granted=true
+      android.permission.ACCESS_INSTANT_APPS: granted=true
+      android.permission.BYDAUTO_SETTING_GET: granted=true
+      android.permission.BYDAUTO_SETTING_SET: granted=true
+      android.permission.CONTROL_REMOTE_APP_TRANSITION_ANIMATIONS: granted=true
+      android.permission.MANAGE_USB: granted=true
+      com.androidauto.provider.permission.deviceInfo: granted=true
+      android.permission.INTERACT_ACROSS_USERS_FULL: granted=true
+      android.permission.BIND_APPWIDGET: granted=true
+      android.permission.STOP_APP_SWITCHES: granted=true
+      com.byd.mediacenter.STARTSERVER: granted=true
+      android.permission.PACKAGE_USAGE_STATS: granted=true
+      android.permission.WRITE_PROFILE: granted=true
+      android.permission.MOUNT_UNMOUNT_FILESYSTEMS: granted=true
+      android.permission.WRITE_SECURE_SETTINGS: granted=true
+      android.permission.BIND_NOTIFICATION_LISTENER_SERVICE: granted=true
+      android.permission.BYDAUTO_SPEED_GET: granted=true
+      android.permission.BYDAUTO_SPEED_SET: granted=true
+      android.permission.SET_ACTIVITY_WATCHER: granted=true
+      android.permission.READ_BLOCKED_NUMBERS: granted=true
+      com.qualcomm.permission.wfd.QC_WFD: granted=true
+      android.permission.STATUS_BAR_SERVICE: granted=true
+      com.byd.otaupdate.permission.VEHICLE_OTA_UPDATE: granted=true
+      android.permission.ACCESS_LOCATION_EXTRA_COMMANDS: granted=true
+      android.permission.READ_PRIVILEGED_PHONE_STATE: granted=true
+      android.permission.TRIGGER_TIME_ZONE_RULES_CHECK: granted=true
+      android.permission.BROADCAST_STICKY: granted=true
+      android.permission.BLUETOOTH_PRIVILEGED: granted=true
+      android.permission.SUBSTITUTE_NOTIFICATION_APP_NAME: granted=true
+      android.intent.category.MASTER_CLEAR.permission.C2D_MESSAGE: granted=true
+      android.permission.BIND_JOB_SERVICE: granted=true
+      android.permission.OBSERVE_ROLE_HOLDERS: granted=true
+      android.permission.CONFIRM_FULL_BACKUP: granted=true
+      android.permission.CAPTURE_SECURE_VIDEO_OUTPUT: granted=true
+      android.permission.SET_TIME: granted=true
+      android.permission.BYDAUTO_ADAS_GET: granted=true
+      android.permission.BYDAUTO_ADAS_SET: granted=true
+      android.permission.CHANGE_WIFI_STATE: granted=true
+      android.permission.GPS_ALTITUDE_CHANGE: granted=true
+      android.permission.BYDAUTO_RADAR_GET: granted=true
+      android.permission.BYDAUTO_RADAR_SET: granted=true
+      android.permission.MANAGE_USERS: granted=true
+      android.permission.SET_PREFERRED_APPLICATIONS: granted=true
+      android.permission.DELETE_CACHE_FILES: granted=true
+      android.permission.ACCESS_NETWORK_STATE: granted=true
+      com.qualcomm.permission.ACCESS_GTPWIFI_CROWDSOURCING_API: granted=true
+      android.permission.CHANGE_CONFIGURATION: granted=true
+      android.permission.LOCAL_MAC_ADDRESS: granted=true
+      com.qualcomm.permission.ACCESS_GTPWWAN_API: granted=true
+      android.permission.READ_LOGS: granted=true
+      android.permission.INTERACT_ACROSS_USERS: granted=true
+      android.permission.SET_WALLPAPER: granted=true
+      android.permission.BOOT_BUSINESS: granted=true
+      android.permission.BYDAUTO_STATISTIC_GET: granted=true
+      android.permission.BYDAUTO_STATISTIC_SET: granted=true
+      android.permission.BYDAUTO_RADIO_GET: granted=true
+      android.permission.BYDAUTO_RADIO_SET: granted=true
+      android.permission.START_XCALL: granted=true
+      android.permission.READ_NETWORK_USAGE_HISTORY: granted=true
+      android.permission.BYDAUTO_PM2P5_GET: granted=true
+      android.permission.KILL_BACKGROUND_PROCESSES: granted=true
+      android.permission.CONNECTIVITY_USE_RESTRICTED_NETWORKS: granted=true
+      android.permission.BYDAUTO_RSE_GET: granted=true
+      com.byd.wallpaper.permission.WRITE_SETTINGS: granted=true
+      com.byd.mediacenter.READ_PROVIDER: granted=true
+      android.permission.REBOOT: granted=true
+      android.permission.MOUNT_FORMAT_FILESYSTEMS: granted=true
+      android.permission.REQUEST_DELETE_PACKAGES: granted=true
+      android.permission.RECV_CLEAN_XCALL_DATA: granted=true
+      android.permission.MANAGE_DOCUMENTS: granted=true
+      android.permission.MANAGE_NETWORK_POLICY: granted=true
+      com.qualcomm.permission.ACCESS_GTPWIFI_API: granted=true
+      android.permission.SEND_SHOW_SUSPENDED_APP_DETAILS: granted=true
+      android.permission.CONNECTIVITY_INTERNAL: granted=true
+      android.permission.SET_WALLPAPER_HINTS: granted=true
+      com.qualcomm.permission.ACCESS_GTPWWAN_CROWDSOURCING_API: granted=true
+      android.permission.SEND_CLEAN_XCALL_DATA: granted=true
+      android.permission.OVERRIDE_WIFI_CONFIG: granted=true
+      com.byd.cota.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION: granted=true
+      android.permission.FORCE_STOP_PACKAGES: granted=true
+      android.permission.HIDE_NON_SYSTEM_OVERLAY_WINDOWS: granted=true
+      android.permission.CAPTURE_VIDEO_OUTPUT: granted=true
+      android.permission.HANDLE_CALL_INTENT: granted=true
+      android.permission.VIBRATE: granted=true
+      com.byd.card.permission.WRITE_CARD: granted=true
+      android.permission.BYDAUTO_INSTRUMENT_GET: granted=true
+      android.permission.BYDAUTO_INSTRUMENT_SET: granted=true
+      android.permission.MANAGE_ACTIVITY_STACKS: granted=true
+      android.permission.SEND_CLEAN_APN2_DATA: granted=true
+      android.permission.ACCESS_LOG_SERVICE: granted=true
+      android.permission.MODIFY_NETWORK_ACCOUNTING: granted=true
+      com.android.launcher3.permission.RECEIVE_FIRST_LOAD_BROADCAST: granted=true
+      android.permission.ACCESS_WIFI_STATE: granted=true
+      android.permission.BYDDIAGNOSTIC_SEND_BUFFER: granted=true
+      com.android.launcher3.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION: granted=true
+      android.permission.BYDAUTO_AUDIO_GET: granted=true
+      android.permission.BYDAUTO_AUDIO_SET: granted=true
+      android.permission.BYDAUTO_LOCATION_GET: granted=true
+      android.permission.BYDAUTO_LOCATION_SET: granted=true
+      android.permission.MODIFY_PHONE_STATE: granted=true
+      com.qtxa.hidps.permission.MODULE_RECEIVER: granted=true
+      android.permission.BYDAUTO_REMINDER_GET: granted=true
+      android.permission.STATUS_BAR: granted=true
+      android.permission.READ_FRAME_BUFFER: granted=true
+      android.permission.BYDAUTO_RESCUE_GET: granted=true
+      android.permission.BYDAUTO_RESCUE_SET: granted=true
+      android.permission.DUMP: granted=true
+      android.permission.READ_DEVICE_CONFIG: granted=true
+      android.permission.BYDAUTO_BODYWORK_GET: granted=true
+      android.permission.BYDAUTO_BODYWORK_SET: granted=true
+      android.permission.LOCATION_HARDWARE: granted=true
+      android.permission.BYDAUTO_MULTIMEDIA_GET: granted=true
+      android.permission.BYDAUTO_MULTIMEDIA_SET: granted=true
+      android.permission.WAKE_LOCK: granted=true
+      android.permission.INJECT_EVENTS: granted=true
+      android.permission.BIND_NETWORK_RECOMMENDATION_SERVICE: granted=true
+      android.permission.MEDIA_CONTENT_CONTROL: granted=true
+    User 0: ceDataInode=31241 installed=true hidden=false suspended=false stopped=false notLaunched=false enabled=0 instant=false virtual=false
+isSystemUserPackagesBlacklistSupported: false
+
+Shared users:
+  SharedUser [android.uid.system] (e5ab9b8):
+    userId=1000
+    Packages
+      PackageSetting{41f1ac com.byd.vrsettings/1000}
+      PackageSetting{fc3414 com.android.server.telecom/1000}
+      PackageSetting{121ae0a com.byd.wallpaperhome/1000}
+      PackageSetting{133159d com.byd.intelligententry/1000}
+      PackageSetting{1aabbe0 com.qualcomm.qti.services.secureui/1000}
+      PackageSetting{228cbb4 com.byd.btlogtool/1000}
+      PackageSetting{229a00d com.byd.mediapreview/1000}
+      PackageSetting{27089e4 com.byd.cameramanager/1000}
+      PackageSetting{2b54236 com.byd.cdr/1000}
+      PackageSetting{2e1c0d9 com.byd.countrycodetool/1000}
+      PackageSetting{3137d3f com.byd.materialinfo/1000}
+      PackageSetting{3708dd3 com.byd.appserver/1000}
+      PackageSetting{37de968 com.byd.minikaraoke/1000}
+      PackageSetting{3b27c98 com.byd.ditrainer/1000}
+      PackageSetting{41a567b com.qualcomm.qti.workloadclassifier/1000}
+      PackageSetting{4242b69 com.byd.cota/1000}
+      PackageSetting{42c342f com.byd.smarttravel/1000}
+      PackageSetting{4b96226 com.byd.clientstatuscollectionservice/1000}
+      PackageSetting{4dcd5a2 com.byd.byddatachecktool/1000}
+      PackageSetting{4fc9fb9 com.android.localtransport/1000}
+      PackageSetting{51fc3c5 com.byd.providers.appops/1000}
+      PackageSetting{56f624f com.idd.hidps/1000}
+      PackageSetting{5727d80 com.qualcomm.qti.qtisystemservice/1000}
+      PackageSetting{589b211 com.byd.widget.mediacenter/1000}
+      PackageSetting{58a3bc8 com.byd.otgupdate/1000}
+      PackageSetting{5d5072d com.xdja.containerservice/1000}
+      PackageSetting{614eb86 com.byd.airconditioning/1000}
+      PackageSetting{64f4c47 com.byd.byddevelopmenttools/1000}
+      PackageSetting{651e44b com.example.amapservice/1000}
+      PackageSetting{660ef20 com.qualcomm.wfd.service/1000}
+      PackageSetting{68776fa com.android.voicereminder/1000}
+      PackageSetting{6bcf51c com.android.networkstack.inprocess/1000}
+      PackageSetting{72b92aa com.byd.carsettings/1000}
+      PackageSetting{79e6050 com.android.providers.settings/1000}
+      PackageSetting{7c43a12 com.byd.WifiHotspotConnect/1000}
+      PackageSetting{7dd3009 com.byd.cloudserviceapp/1000}
+      PackageSetting{83cdea1 com.byd.xcall/1000}
+      PackageSetting{86a8233 com.byd.filemanager/1000}
+      PackageSetting{87b1ddc com.byd.authservice/1000}
+      PackageSetting{8e046b0 com.byd.customkey/1000}
+      PackageSetting{9249195 com.android.launcher3/1000}
+      PackageSetting{927e929 com.byd.mediatesttool/1000}
+      PackageSetting{a082f76 com.byd.mdconmanager/1000}
+      PackageSetting{a306e99 com.byd.car.server/1000}
+      PackageSetting{a508ffe com.byd.vrassistant/1000}
+      PackageSetting{a585e23 android/1000}
+      PackageSetting{a858cf1 com.byd.bydbootguide/1000}
+      PackageSetting{aa7c3dd com.byd.CanDataCollect/1000}
+      PackageSetting{ab1f6bb com.byd.logswitch/1000}
+      PackageSetting{abe7e75 com.byd.trafficmonitor/1000}
+      PackageSetting{b88f96a com.android.wallpaperbackup/1000}
+      PackageSetting{b8a911a com.byd.gesture.global/1000}
+      PackageSetting{ba7e55e com.byd.screensaver/1000}
+      PackageSetting{bce0a05 com.android.inputdevices/1000}
+      PackageSetting{c11f984 com.byd.androidauto/1000}
+      PackageSetting{c34baa4 com.byd.bydlogtool/1000}
+      PackageSetting{c61b74e com.byd.mediacontroller/1000}
+      PackageSetting{c9eca44 com.byd.clientconfigurationservice/1000}
+      PackageSetting{ca0e35f com.dsi.ant.server/1000}
+      PackageSetting{d1dd537 com.android.location.fused/1000}
+      PackageSetting{d4a04ab com.byd.providers.carsettings/1000}
+      PackageSetting{d57aa03 com.android.keychain/1000}
+      PackageSetting{d9cc731 com.android.dynsystem/1000}
+      PackageSetting{da79249 com.byd.carplay.ui/1000}
+      PackageSetting{db1f462 com.byd.diagnosticinfo/1000}
+      PackageSetting{db96e9b com.byd.upgradeserver/1000}
+      PackageSetting{dbef4ae com.byd.cdrservice/1000}
+      PackageSetting{dc5a56d com.byd.media.autoplay/1000}
+      PackageSetting{deddf57 com.byd.customserver/1000}
+      PackageSetting{e2826f8 com.byd.mediacenter/1000}
+      PackageSetting{e3a8e67 com.byd.bydcamera/1000}
+      PackageSetting{e465e4d com.byd.cpdwarn/1000}
+      PackageSetting{e8f348b com.byd.bluetoothprovider/1000}
+      PackageSetting{eb874bd com.byd.otaupdate/1000}
+      PackageSetting{ec29461 com.qualcomm.location/1000}
+      PackageSetting{ec857d1 com.byd.avc/1000}
+      PackageSetting{eeb4c74 com.byd.bluetoothcall/1000}
+      PackageSetting{f34a0d6 com.byd.btsetting/1000}
+      PackageSetting{f365977 com.byd.musicwidget/1000}
+      PackageSetting{f4608c6 com.byd.gpsinfo/1000}
+      PackageSetting{f497ab2 com.byd.drivingrestriction/1000}
+      PackageSetting{f7729f0 com.byd.acquisitioncontrol/1000}
+      PackageSetting{fc9006f com.byd.providers.carstatus/1000}
+    install permissions:
+      android.permission.REAL_GET_TASKS: granted=true
+      android.permission.ACCESS_CACHE_FILESYSTEM: granted=true
+      android.permission.BIND_INCALL_SERVICE: granted=true
+      android.permission.BYDAUTO_PANORAMA_GET: granted=true
+      android.permission.BYDAUTO_PANORAMA_SET: granted=true
+      android.permission.WRITE_SETTINGS: granted=true
+      android.permission.BYDAUTO_LIGHT_GET: granted=true
+      android.permission.RECOVERY: granted=true
+      android.permission.DEVICE_ACC: granted=true
+      com.android.launcher3.permission.READ_SETTINGS: granted=true
+      android.permission.BIND_ATTENTION_SERVICE: granted=true
+      android.permission.BYDAUTO_POWER_GET: granted=true
+      android.permission.BYDAUTO_POWER_SET: granted=true
+      android.permission.BYDAUTO_ENGINE_GET: granted=true
+      android.permission.BYDAUTO_ENGINE_SET: granted=true
+      android.permission.BYDAUTO_ENERGY_GET: granted=true
+      android.permission.BYDAUTO_ENERGY_SET: granted=true
+      android.permission.MODIFY_AUDIO_SETTINGS: granted=true
+      android.permission.BYDAUTO_OTA_GET: granted=true
+      android.permission.BYDAUTO_OTA_SET: granted=true
+      android.permission.ACCESS_NOTIFICATION_POLICY: granted=true
+      android.permission.MODIFY_AUDIO_ROUTING: granted=true
+      android.permission.BYDAUTO_SENSOR_GET: granted=true
+      android.permission.INSTALL_LOCATION_PROVIDER: granted=true
+      com.byd.wallpaper.permission.READ_SETTINGS: granted=true
+      android.permission.SYSTEM_ALERT_WINDOW: granted=true
+      android.permission.BROADCAST_PHONE_ACCOUNT_REGISTRATION: granted=true
+      android.permission.CLEAR_APP_USER_DATA: granted=true
+      android.permission.MONITOR_INPUT: granted=true
+      android.permission.BROADCAST_CALLLOG_INFO: granted=true
+      android.permission.INSTALL_PACKAGES: granted=true
+      android.permission.RECV_CLEAN_APN2_DATA: granted=true
+      android.permission.BYDAUTO_VIDEO_GET: granted=true
+      android.permission.BYDAUTO_VIDEO_SET: granted=true
+      android.permission.SHUTDOWN: granted=true
+      android.permission.BYDAUTO_GEARBOX_GET: granted=true
+      android.permission.NFC: granted=true
+      android.permission.BYDAUTO_CPUTEMPRATURE_SET: granted=true
+      com.byd.card.permission.READ_CARD: granted=true
+      android.permission.NETWORK_SETTINGS: granted=true
+      android.permission.CHANGE_OVERLAY_PACKAGES: granted=true
+      android.permission.BYDAUTO_CHARGING_GET: granted=true
+      android.permission.BYDAUTO_CHARGING_SET: granted=true
+      android.permission.CALL_PRIVILEGED: granted=true
+      android.permission.CHANGE_NETWORK_STATE: granted=true
+      android.permission.MASTER_CLEAR: granted=true
+      android.permission.FOREGROUND_SERVICE: granted=true
+      android.permission.MANAGE_DYNAMIC_SYSTEM: granted=true
+      android.permission.RECEIVE_BOOT_COMPLETED: granted=true
+      com.android.launcher3.permission.RECEIVE_LAUNCH_BROADCASTS: granted=true
+      com.byd.intelligententry.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION: granted=true
+      android.permission.MANAGE_ROLE_HOLDERS: granted=true
+      android.permission.DEVICE_POWER: granted=true
+      com.android.launcher3.permission.WRITE_SETTINGS: granted=true
+      android.permission.REMOVE_TASKS: granted=true
+      android.permission.EXPAND_STATUS_BAR: granted=true
+      android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS: granted=true
+      android.permission.READ_PROFILE: granted=true
+      android.permission.BLUETOOTH: granted=true
+      android.permission.BYDAUTO_AC_GET: granted=true
+      android.permission.BYDAUTO_AC_SET: granted=true
+      android.permission.WRITE_MEDIA_STORAGE: granted=true
+      android.permission.WRITE_BLOCKED_NUMBERS: granted=true
+      android.permission.GET_TASKS: granted=true
+      android.permission.BYDAUTO_SAFETY_BELT_GET: granted=true
+      android.permission.ACCESS_SURFACE_FLINGER: granted=true
+      android.permission.INTERNET: granted=true
+      android.permission.BYDAUTO_GB_GET: granted=true
+      android.permission.BYDACQUISITION_SEND_BUFFER: granted=true
+      android.permission.BLUETOOTH_ADMIN: granted=true
+      android.permission.CONTROL_VPN: granted=true
+      android.permission.BYDAUTO_TIME_GET: granted=true
+      android.permission.BYDAUTO_TIME_SET: granted=true
+      android.permission.BLUETOOTH_STACK: granted=true
+      com.codeaurora.permission.SUBSIDYLOCK: granted=true
+      com.qualcomm.permission.IZAT: granted=true
+      android.permission.BIND_CONNECTION_SERVICE: granted=true
+      com.byd.customkey.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION: granted=true
+      android.permission.ACCESS_INSTANT_APPS: granted=true
+      android.permission.BYDAUTO_SETTING_GET: granted=true
+      android.permission.BYDAUTO_SETTING_SET: granted=true
+      android.permission.CONTROL_REMOTE_APP_TRANSITION_ANIMATIONS: granted=true
+      android.permission.MANAGE_USB: granted=true
+      com.androidauto.provider.permission.deviceInfo: granted=true
+      android.permission.INTERACT_ACROSS_USERS_FULL: granted=true
+      android.permission.BIND_APPWIDGET: granted=true
+      android.permission.STOP_APP_SWITCHES: granted=true
+      com.byd.mediacenter.STARTSERVER: granted=true
+      android.permission.PACKAGE_USAGE_STATS: granted=true
+      android.permission.WRITE_PROFILE: granted=true
+      android.permission.MOUNT_UNMOUNT_FILESYSTEMS: granted=true
+      android.permission.WRITE_SECURE_SETTINGS: granted=true
+      android.permission.BIND_NOTIFICATION_LISTENER_SERVICE: granted=true
+      android.permission.BYDAUTO_SPEED_GET: granted=true
+      android.permission.BYDAUTO_SPEED_SET: granted=true
+      android.permission.SET_ACTIVITY_WATCHER: granted=true
+      android.permission.READ_BLOCKED_NUMBERS: granted=true
+      com.qualcomm.permission.wfd.QC_WFD: granted=true
+      android.permission.STATUS_BAR_SERVICE: granted=true
+      com.byd.otaupdate.permission.VEHICLE_OTA_UPDATE: granted=true
+      android.permission.ACCESS_LOCATION_EXTRA_COMMANDS: granted=true
+      android.permission.READ_PRIVILEGED_PHONE_STATE: granted=true
+      android.permission.TRIGGER_TIME_ZONE_RULES_CHECK: granted=true
+      android.permission.BROADCAST_STICKY: granted=true
+      android.permission.BLUETOOTH_PRIVILEGED: granted=true
+      android.permission.SUBSTITUTE_NOTIFICATION_APP_NAME: granted=true
+      android.intent.category.MASTER_CLEAR.permission.C2D_MESSAGE: granted=true
+      android.permission.BIND_JOB_SERVICE: granted=true
+      android.permission.OBSERVE_ROLE_HOLDERS: granted=true
+      android.permission.CONFIRM_FULL_BACKUP: granted=true
+      android.permission.CAPTURE_SECURE_VIDEO_OUTPUT: granted=true
+      android.permission.SET_TIME: granted=true
+      android.permission.BYDAUTO_ADAS_GET: granted=true
+      android.permission.BYDAUTO_ADAS_SET: granted=true
+      android.permission.CHANGE_WIFI_STATE: granted=true
+      android.permission.GPS_ALTITUDE_CHANGE: granted=true
+      android.permission.BYDAUTO_RADAR_GET: granted=true
+      android.permission.BYDAUTO_RADAR_SET: granted=true
+      android.permission.MANAGE_USERS: granted=true
+      android.permission.SET_PREFERRED_APPLICATIONS: granted=true
+      android.permission.DELETE_CACHE_FILES: granted=true
+      android.permission.ACCESS_NETWORK_STATE: granted=true
+      com.qualcomm.permission.ACCESS_GTPWIFI_CROWDSOURCING_API: granted=true
+      android.permission.CHANGE_CONFIGURATION: granted=true
+      android.permission.LOCAL_MAC_ADDRESS: granted=true
+      com.qualcomm.permission.ACCESS_GTPWWAN_API: granted=true
+      android.permission.READ_LOGS: granted=true
+      android.permission.INTERACT_ACROSS_USERS: granted=true
+      android.permission.SET_WALLPAPER: granted=true
+      android.permission.BOOT_BUSINESS: granted=true
+      android.permission.BYDAUTO_STATISTIC_GET: granted=true
+      android.permission.BYDAUTO_STATISTIC_SET: granted=true
+      android.permission.BYDAUTO_RADIO_GET: granted=true
+      android.permission.BYDAUTO_RADIO_SET: granted=true
+      android.permission.START_XCALL: granted=true
+      android.permission.READ_NETWORK_USAGE_HISTORY: granted=true
+      android.permission.BYDAUTO_PM2P5_GET: granted=true
+      android.permission.KILL_BACKGROUND_PROCESSES: granted=true
+      android.permission.CONNECTIVITY_USE_RESTRICTED_NETWORKS: granted=true
+      android.permission.BYDAUTO_RSE_GET: granted=true
+      com.byd.wallpaper.permission.WRITE_SETTINGS: granted=true
+      com.byd.mediacenter.READ_PROVIDER: granted=true
+      android.permission.REBOOT: granted=true
+      android.permission.MOUNT_FORMAT_FILESYSTEMS: granted=true
+      android.permission.REQUEST_DELETE_PACKAGES: granted=true
+      android.permission.RECV_CLEAN_XCALL_DATA: granted=true
+      android.permission.MANAGE_DOCUMENTS: granted=true
+      android.permission.MANAGE_NETWORK_POLICY: granted=true
+      com.qualcomm.permission.ACCESS_GTPWIFI_API: granted=true
+      android.permission.SEND_SHOW_SUSPENDED_APP_DETAILS: granted=true
+      android.permission.CONNECTIVITY_INTERNAL: granted=true
+      android.permission.SET_WALLPAPER_HINTS: granted=true
+      com.qualcomm.permission.ACCESS_GTPWWAN_CROWDSOURCING_API: granted=true
+      android.permission.SEND_CLEAN_XCALL_DATA: granted=true
+      android.permission.OVERRIDE_WIFI_CONFIG: granted=true
+      com.byd.cota.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION: granted=true
+      android.permission.FORCE_STOP_PACKAGES: granted=true
+      android.permission.HIDE_NON_SYSTEM_OVERLAY_WINDOWS: granted=true
+      android.permission.CAPTURE_VIDEO_OUTPUT: granted=true
+      android.permission.HANDLE_CALL_INTENT: granted=true
+      android.permission.VIBRATE: granted=true
+      com.byd.card.permission.WRITE_CARD: granted=true
+      android.permission.BYDAUTO_INSTRUMENT_GET: granted=true
+      android.permission.BYDAUTO_INSTRUMENT_SET: granted=true
+      android.permission.MANAGE_ACTIVITY_STACKS: granted=true
+      android.permission.SEND_CLEAN_APN2_DATA: granted=true
+      android.permission.ACCESS_LOG_SERVICE: granted=true
+      android.permission.MODIFY_NETWORK_ACCOUNTING: granted=true
+      com.android.launcher3.permission.RECEIVE_FIRST_LOAD_BROADCAST: granted=true
+      android.permission.ACCESS_WIFI_STATE: granted=true
+      android.permission.BYDDIAGNOSTIC_SEND_BUFFER: granted=true
+      com.android.launcher3.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION: granted=true
+      android.permission.BYDAUTO_AUDIO_GET: granted=true
+      android.permission.BYDAUTO_AUDIO_SET: granted=true
+      android.permission.BYDAUTO_LOCATION_GET: granted=true
+      android.permission.BYDAUTO_LOCATION_SET: granted=true
+      android.permission.MODIFY_PHONE_STATE: granted=true
+      com.qtxa.hidps.permission.MODULE_RECEIVER: granted=true
+      android.permission.BYDAUTO_REMINDER_GET: granted=true
+      android.permission.STATUS_BAR: granted=true
+      android.permission.READ_FRAME_BUFFER: granted=true
+      android.permission.BYDAUTO_RESCUE_GET: granted=true
+      android.permission.BYDAUTO_RESCUE_SET: granted=true
+      android.permission.DUMP: granted=true
+      android.permission.READ_DEVICE_CONFIG: granted=true
+      android.permission.BYDAUTO_BODYWORK_GET: granted=true
+      android.permission.BYDAUTO_BODYWORK_SET: granted=true
+      android.permission.LOCATION_HARDWARE: granted=true
+      android.permission.BYDAUTO_MULTIMEDIA_GET: granted=true
+      android.permission.BYDAUTO_MULTIMEDIA_SET: granted=true
+      android.permission.WAKE_LOCK: granted=true
+      android.permission.INJECT_EVENTS: granted=true
+      android.permission.BIND_NETWORK_RECOMMENDATION_SERVICE: granted=true
+      android.permission.MEDIA_CONTENT_CONTROL: granted=true
+    User 0: 
+      gids=[2001, 3002, 1023, 1015, 3003, 3001, 1002, 3010, 3011, 1021, 1000, 2002, 1010, 1007, 3006]
+      runtime permissions:
+        android.permission.READ_CALL_LOG: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.ACCESS_FINE_LOCATION: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.BYDAUTO_AUDIO_COMMON: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.BYDAUTO_BODYWORK_COMMON: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.ANSWER_PHONE_CALLS: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.BYDAUTO_AC_COMMON: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.RECEIVE_WAP_PUSH: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.RECEIVE_SMS: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.BYDAUTO_CHARGING_COMMON: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.BYDAUTO_INSTRUMENT_COMMON: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.READ_EXTERNAL_STORAGE: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.BYDAUTO_PANORAMA_COMMON: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.ACCESS_COARSE_LOCATION: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.READ_PHONE_STATE: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.SEND_SMS: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.BYDAUTO_SETTING_COMMON: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.CALL_PHONE: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.WRITE_CONTACTS: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.CAMERA: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.WRITE_CALL_LOG: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.PROCESS_OUTGOING_CALLS: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.GET_ACCOUNTS: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT]
+        android.permission.WRITE_EXTERNAL_STORAGE: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.BYDAUTO_DOOR_LOCK_COMMON: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.RECORD_AUDIO: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.READ_CONTACTS: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.ACCESS_BACKGROUND_LOCATION: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+        android.permission.ACCESS_MEDIA_LOCATION: granted=true, flags=[ SYSTEM_FIXED|GRANTED_BY_DEFAULT|RESTRICTION_SYSTEM_EXEMPT|RESTRICTION_UPGRADE_EXEMPT]
+
+Package Changes:
+  Sequence number=35
+  User 0:
+    seq=1, package=com.bydinfotainment
+    seq=2, package=com.byd.auto_emanual
+    seq=3, package=com.byd.browser
+    seq=4, package=br.com.rory.electro
+    seq=5, package=com.android.packageinstaller
+    seq=6, package=com.gpack.agent
+    seq=7, package=com.spotify.music
+    seq=8, package=com.spotify.music.overlay
+    seq=11, package=com.aurora.store
+    seq=13, package=com.android.vending
+    seq=16, package=com.ace.ex.file.manager
+    seq=23, package=com.google.android.youtube
+    seq=25, package=com.google.android.gms
+    seq=34, package=com.whatsapp
+
+
+Dexopt state:
+  [com.byd.car.server]
+    path: /system/priv-app/DiCarServer/DiCarServer.apk
+      arm64: [status=verify] [reason=boot]
+
+
+Compiler stats:
+  [com.byd.car.server]
+    (No recorded stats)
+
+Active APEX packages:
+
+
+Inactive APEX packages:
+
+
+Factory APEX packages:
+
+
+  APEX session state:

@@ -1,0 +1,5 @@
+*.apk
+telemetry-logs/
+__pycache__/
+*.pyc
+.env
