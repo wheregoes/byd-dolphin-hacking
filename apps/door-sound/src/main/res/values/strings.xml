@@ -7,11 +7,25 @@
     <string name="select_file">Select File</string>
     <string name="clear">Clear</string>
     <string name="no_file_selected">No file selected</string>
-    <string name="door_open_sound">Door Open Sound</string>
-    <string name="door_close_sound">Door Close Sound</string>
+    <string name="door_open_sound">Door Open</string>
+    <string name="door_close_sound">Door Close</string>
+    <string name="lock_sound">Lock</string>
+    <string name="unlock_sound">Unlock</string>
     <string name="volume">Vol:</string>
     <string name="service_status">Status</string>
     <string name="status_running">Running</string>
     <string name="status_stopped">Stopped</string>
     <string name="last_event">Last Event</string>
+    <string name="tab_inside">Inside Speaker</string>
+    <string name="tab_outside">Outside Speaker</string>
+    <string name="preview">Preview</string>
+    <string name="pattern">Pattern:</string>
+    <string-array name="pattern_names">
+        <item>None</item>
+        <item>Ding-Dong</item>
+        <item>Dong-Ding</item>
+        <item>Triple Beep</item>
+        <item>Rapid Alternation</item>
+        <item>Long Chime</item>
+    </string-array>
 </resources>

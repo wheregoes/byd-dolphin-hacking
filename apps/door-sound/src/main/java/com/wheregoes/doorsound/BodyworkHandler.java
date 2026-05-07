@@ -22,7 +22,13 @@ public class BodyworkHandler extends AbsBYDAutoBodyworkListener {
     }
 
     @Override
-    public void onAutoSystemStateChanged(int state) {}
+    public void onAutoSystemStateChanged(int state) {
+        if (state == 1) {
+            service.handleLock();
+        } else if (state == 0) {
+            service.handleUnlock();
+        }
+    }
 
     @Override
     public void onPowerLevelChanged(int level) {}

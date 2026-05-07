@@ -34,12 +34,31 @@ public class DoorSoundService extends Service {
     private static final int RESTARTER_JOB_ID = 1001;
     static final String PREF_NAME = "door_sound_prefs";
     static final String KEY_ENABLED = "enabled";
+
     static final String KEY_DOOR_OPEN_PATH = "door_open_path";
     static final String KEY_DOOR_CLOSE_PATH = "door_close_path";
+    static final String KEY_LOCK_PATH = "lock_path";
+    static final String KEY_UNLOCK_PATH = "unlock_path";
+
     static final String KEY_DOOR_OPEN_ENABLED = "door_open_enabled";
     static final String KEY_DOOR_CLOSE_ENABLED = "door_close_enabled";
+    static final String KEY_LOCK_ENABLED = "lock_enabled";
+    static final String KEY_UNLOCK_ENABLED = "unlock_enabled";
+
     static final String KEY_DOOR_OPEN_VOLUME = "door_open_volume";
     static final String KEY_DOOR_CLOSE_VOLUME = "door_close_volume";
+    static final String KEY_LOCK_VOLUME = "lock_volume";
+    static final String KEY_UNLOCK_VOLUME = "unlock_volume";
+
+    static final String KEY_OUTSIDE_DOOR_OPEN_ENABLED = "outside_door_open_enabled";
+    static final String KEY_OUTSIDE_DOOR_OPEN_PATTERN = "outside_door_open_pattern";
+    static final String KEY_OUTSIDE_DOOR_CLOSE_ENABLED = "outside_door_close_enabled";
+    static final String KEY_OUTSIDE_DOOR_CLOSE_PATTERN = "outside_door_close_pattern";
+    static final String KEY_OUTSIDE_LOCK_ENABLED = "outside_lock_enabled";
+    static final String KEY_OUTSIDE_LOCK_PATTERN = "outside_lock_pattern";
+    static final String KEY_OUTSIDE_UNLOCK_ENABLED = "outside_unlock_enabled";
+    static final String KEY_OUTSIDE_UNLOCK_PATTERN = "outside_unlock_pattern";
+
     static final int DEFAULT_VOLUME = 10;
     static final String KEY_LAST_EVENT = "last_event";
 
@@ -51,6 +70,7 @@ public class DoorSoundService extends Service {
     private MediaPlayer activePlayer;
     private Handler mainHandler;
     private int savedVolume = -1;
+    private AvasPlayer avasPlayer;
 
     public static boolean isRunning() {
         return sRunning;
@@ -64,6 +84,8 @@ public class DoorSoundService extends Service {
         createNotificationChannel();
         startForeground(NOTIFICATION_ID, buildNotification());
         acquireWakeLock();
+        avasPlayer = new AvasPlayer(new BydPermissionContext(this));
+        logToFile("AVAS player available: " + avasPlayer.isAvailable());
         registerBodyworkListener();
         scheduleRestarter();
         sRunning = true;
@@ -85,6 +107,7 @@ public class DoorSoundService extends Service {
         sRunning = false;
         unregisterBodyworkListener();
         releasePlayer();
+        if (avasPlayer != null) avasPlayer.stop();
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
         }
@@ -145,12 +168,28 @@ public class DoorSoundService extends Service {
         logToFile("EVENT: Door OPEN area=" + area + " (" + getDoorName(area) + ")");
         setLastEvent(getDoorName(area) + " opened");
         playSoundIfEnabled(KEY_DOOR_OPEN_ENABLED, KEY_DOOR_OPEN_PATH, KEY_DOOR_OPEN_VOLUME);
+        playPatternIfEnabled(KEY_OUTSIDE_DOOR_OPEN_ENABLED, KEY_OUTSIDE_DOOR_OPEN_PATTERN);
     }
 
     void handleDoorClose(int area) {
         logToFile("EVENT: Door CLOSE area=" + area + " (" + getDoorName(area) + ")");
         setLastEvent(getDoorName(area) + " closed");
         playSoundIfEnabled(KEY_DOOR_CLOSE_ENABLED, KEY_DOOR_CLOSE_PATH, KEY_DOOR_CLOSE_VOLUME);
+        playPatternIfEnabled(KEY_OUTSIDE_DOOR_CLOSE_ENABLED, KEY_OUTSIDE_DOOR_CLOSE_PATTERN);
+    }
+
+    void handleLock() {
+        logToFile("EVENT: Vehicle LOCKED");
+        setLastEvent("Vehicle locked");
+        playSoundIfEnabled(KEY_LOCK_ENABLED, KEY_LOCK_PATH, KEY_LOCK_VOLUME);
+        playPatternIfEnabled(KEY_OUTSIDE_LOCK_ENABLED, KEY_OUTSIDE_LOCK_PATTERN);
+    }
+
+    void handleUnlock() {
+        logToFile("EVENT: Vehicle UNLOCKED");
+        setLastEvent("Vehicle unlocked");
+        playSoundIfEnabled(KEY_UNLOCK_ENABLED, KEY_UNLOCK_PATH, KEY_UNLOCK_VOLUME);
+        playPatternIfEnabled(KEY_OUTSIDE_UNLOCK_ENABLED, KEY_OUTSIDE_UNLOCK_PATTERN);
     }
 
     private void playSoundIfEnabled(String enableKey, String pathKey, String volumeKey) {
@@ -164,6 +203,18 @@ public class DoorSoundService extends Service {
         int volume = prefs.getInt(volumeKey, DEFAULT_VOLUME);
         logToFile("Playing sound: volume=" + volume + " path=" + new File(path).getName());
         mainHandler.post(new SoundPlayer(this, path, volume));
+    }
+
+    private void playPatternIfEnabled(String enableKey, String patternKey) {
+        SharedPreferences prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
+        if (!prefs.getBoolean(KEY_ENABLED, false)) return;
+        if (!prefs.getBoolean(enableKey, false)) return;
+
+        int pattern = prefs.getInt(patternKey, AvasPlayer.PATTERN_NONE);
+        if (pattern >= 0 && avasPlayer != null && avasPlayer.isAvailable()) {
+            logToFile("Playing AVAS pattern: " + pattern);
+            avasPlayer.play(pattern);
+        }
     }
 
     void releasePlayer() {

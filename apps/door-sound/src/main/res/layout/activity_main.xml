@@ -19,7 +19,7 @@
             android:orientation="vertical"
             android:gravity="center_horizontal"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="32dp">
+            android:layout_marginBottom="24dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -40,6 +40,40 @@
                 android:layout_marginTop="4dp" />
         </LinearLayout>
 
+        <!-- Tab Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/tab_inactive"
+            android:padding="3dp"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:id="@+id/tab_inside"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="@string/tab_inside"
+                android:textColor="#FFFFFFFF"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:background="@drawable/tab_active" />
+
+            <TextView
+                android:id="@+id/tab_outside"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="@string/tab_outside"
+                android:textColor="#FF9E9E9E"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:background="@android:color/transparent" />
+        </LinearLayout>
+
         <!-- Master Toggle -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -51,7 +85,7 @@
             android:paddingRight="20dp"
             android:paddingTop="18dp"
             android:paddingBottom="18dp"
-            android:layout_marginBottom="32dp">
+            android:layout_marginBottom="24dp">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -85,234 +119,56 @@
                 android:thumb="@drawable/switch_thumb" />
         </LinearLayout>
 
-        <!-- Door Open Sound -->
+        <!-- ==================== INSIDE SPEAKER CONTENT ==================== -->
         <LinearLayout
+            android:id="@+id/content_inside"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@drawable/card_background"
-            android:paddingLeft="20dp"
-            android:paddingRight="20dp"
-            android:paddingTop="18dp"
-            android:paddingBottom="18dp"
-            android:layout_marginBottom="16dp">
+            android:visibility="visible">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="14dp">
+            <!-- Door Open -->
+            <include layout="@layout/card_inside_event"
+                android:id="@+id/card_inside_door_open" />
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/door_open_sound"
-                    android:textColor="#FF00D4AA"
-                    android:textSize="16sp"
-                    android:fontFamily="sans-serif-medium" />
+            <!-- Door Close -->
+            <include layout="@layout/card_inside_event"
+                android:id="@+id/card_inside_door_close" />
 
-                <Switch
-                    android:id="@+id/switch_door_open"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:track="@drawable/switch_track"
-                    android:thumb="@drawable/switch_thumb" />
-            </LinearLayout>
+            <!-- Lock -->
+            <include layout="@layout/card_inside_event"
+                android:id="@+id/card_inside_lock" />
 
-            <TextView
-                android:id="@+id/text_door_open_file"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/no_file_selected"
-                android:textColor="#FF9E9E9E"
-                android:textSize="12sp"
-                android:fontFamily="sans-serif-light"
-                android:layout_marginBottom="14dp"
-                android:singleLine="true"
-                android:ellipsize="middle" />
+            <!-- Unlock -->
+            <include layout="@layout/card_inside_event"
+                android:id="@+id/card_inside_unlock" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/volume"
-                    android:textColor="#FF9E9E9E"
-                    android:textSize="12sp"
-                    android:fontFamily="sans-serif-light"
-                    android:layout_marginEnd="10dp" />
-
-                <SeekBar
-                    android:id="@+id/seek_door_open_volume"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:progressTint="#FF4A9EFF"
-                    android:progressBackgroundTint="#FF2A2A3E"
-                    android:thumbTint="#FFFFFFFF"
-                    android:layout_marginEnd="8dp" />
-
-                <TextView
-                    android:id="@+id/text_door_open_volume"
-                    android:layout_width="28dp"
-                    android:layout_height="wrap_content"
-                    android:textColor="#FFE0E0E0"
-                    android:textSize="13sp"
-                    android:fontFamily="sans-serif-medium"
-                    android:gravity="center" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btn_door_open_select"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1"
-                    android:text="@string/select_file"
-                    android:textColor="#FF4A9EFF"
-                    android:textSize="13sp"
-                    android:textAllCaps="false"
-                    android:fontFamily="sans-serif-medium"
-                    android:background="@drawable/btn_primary"
-                    android:layout_marginEnd="10dp" />
-
-                <Button
-                    android:id="@+id/btn_door_open_clear"
-                    android:layout_width="72dp"
-                    android:layout_height="42dp"
-                    android:text="@string/clear"
-                    android:textColor="#FFFF6B6B"
-                    android:textSize="13sp"
-                    android:textAllCaps="false"
-                    android:fontFamily="sans-serif-medium"
-                    android:background="@drawable/btn_clear" />
-            </LinearLayout>
         </LinearLayout>
 
-        <!-- Door Close Sound -->
+        <!-- ==================== OUTSIDE SPEAKER CONTENT ==================== -->
         <LinearLayout
+            android:id="@+id/content_outside"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@drawable/card_background"
-            android:paddingLeft="20dp"
-            android:paddingRight="20dp"
-            android:paddingTop="18dp"
-            android:paddingBottom="18dp"
-            android:layout_marginBottom="32dp">
+            android:visibility="gone">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="14dp">
+            <!-- Door Open -->
+            <include layout="@layout/card_outside_event"
+                android:id="@+id/card_outside_door_open" />
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/door_close_sound"
-                    android:textColor="#FF00D4AA"
-                    android:textSize="16sp"
-                    android:fontFamily="sans-serif-medium" />
+            <!-- Door Close -->
+            <include layout="@layout/card_outside_event"
+                android:id="@+id/card_outside_door_close" />
 
-                <Switch
-                    android:id="@+id/switch_door_close"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:track="@drawable/switch_track"
-                    android:thumb="@drawable/switch_thumb" />
-            </LinearLayout>
+            <!-- Lock -->
+            <include layout="@layout/card_outside_event"
+                android:id="@+id/card_outside_lock" />
 
-            <TextView
-                android:id="@+id/text_door_close_file"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/no_file_selected"
-                android:textColor="#FF9E9E9E"
-                android:textSize="12sp"
-                android:fontFamily="sans-serif-light"
-                android:layout_marginBottom="14dp"
-                android:singleLine="true"
-                android:ellipsize="middle" />
+            <!-- Unlock -->
+            <include layout="@layout/card_outside_event"
+                android:id="@+id/card_outside_unlock" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/volume"
-                    android:textColor="#FF9E9E9E"
-                    android:textSize="12sp"
-                    android:fontFamily="sans-serif-light"
-                    android:layout_marginEnd="10dp" />
-
-                <SeekBar
-                    android:id="@+id/seek_door_close_volume"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:progressTint="#FF4A9EFF"
-                    android:progressBackgroundTint="#FF2A2A3E"
-                    android:thumbTint="#FFFFFFFF"
-                    android:layout_marginEnd="8dp" />
-
-                <TextView
-                    android:id="@+id/text_door_close_volume"
-                    android:layout_width="28dp"
-                    android:layout_height="wrap_content"
-                    android:textColor="#FFE0E0E0"
-                    android:textSize="13sp"
-                    android:fontFamily="sans-serif-medium"
-                    android:gravity="center" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btn_door_close_select"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1"
-                    android:text="@string/select_file"
-                    android:textColor="#FF4A9EFF"
-                    android:textSize="13sp"
-                    android:textAllCaps="false"
-                    android:fontFamily="sans-serif-medium"
-                    android:background="@drawable/btn_primary"
-                    android:layout_marginEnd="10dp" />
-
-                <Button
-                    android:id="@+id/btn_door_close_clear"
-                    android:layout_width="72dp"
-                    android:layout_height="42dp"
-                    android:text="@string/clear"
-                    android:textColor="#FFFF6B6B"
-                    android:textSize="13sp"
-                    android:textAllCaps="false"
-                    android:fontFamily="sans-serif-medium"
-                    android:background="@drawable/btn_clear" />
-            </LinearLayout>
         </LinearLayout>
 
         <!-- Status -->
