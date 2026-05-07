@@ -9,6 +9,44 @@ Signal flow:
 Android App → DiCarServer → BYDAutoAudioDevice HAL → MCU (CANFD) → BCM/Amplifier/External Speaker
 ```
 
+### CAN Bus Access Tool (BydAudioQuery)
+
+**We can read and write CAN bus properties directly via ADB** using `scripts/BydAudioQuery.java`. The tool uses `app_process` on the device to call `BYDAutoManager.getInt/setInt` via reflection, bypassing the BYDAutoAudioDevice permission checks.
+
+Build & run:
+```bash
+# Compile (requires JDK + Android build-tools)
+javac -source 11 -target 11 -d /tmp/bydquery scripts/BydAudioQuery.java
+d8 --output /tmp/bydquery /tmp/bydquery/BydAudioQuery.class
+adb push /tmp/bydquery/classes.dex /data/local/tmp/bydquery.dex
+
+# Read all sound properties
+adb shell "CLASSPATH=/data/local/tmp/bydquery.dex app_process /data/local/tmp BydAudioQuery"
+
+# Read specific property (device 1002=audio, 1003=engine)
+adb shell "CLASSPATH=/data/local/tmp/bydquery.dex app_process /data/local/tmp BydAudioQuery get 0x4c60002d"
+
+# Write property
+adb shell "CLASSPATH=/data/local/tmp/bydquery.dex app_process /data/local/tmp BydAudioQuery set <featureId> <value> [deviceType]"
+```
+
+### Verified CAN Bus Property IDs (CANFD)
+
+| Signal | Hex ID | Dec ID | Device | R/W | Live Value |
+|--------|--------|--------|--------|-----|------------|
+| AUDIO_AVAS_SOUND_SOURCE_STATE | 0x4c60002d | 1281359917 | 1002 | R | 0 |
+| AUDIO_AVAS_SOUND_SOURCE_SET_SET | 0x1b10003d | 454033469 | 1002 | W | (accepts 0,1) |
+| AUDIO_AVAS_SOURCE_TYPE | 0x99000162 | -1728052894 | 1002 | R | 0 |
+| ENGINE_SIMULATOR_SOURCE_TYPE | 0x48f00010 | 1223688208 | 1003 | R | 1 |
+| ENGINE_SIMULATOR_SOURCE_TYPE_SET | 0x3e300038 | 1043333176 | 1003 | W | (1=normal,2=sport,3=?) |
+| AUDIO_ANC_SOUND_SOURCE_SET | 0x1b100035 | 454033461 | 1002 | W | -10011 |
+| AUDIO_ANC_SOUND_SOURCE_STATE | 0x4c600025 | 1281359909 | 1002 | R | 0 |
+
+### CAN Bus Write Test Results
+
+- **Engine simulator source: CONFIRMED WORKING.** Changed from 1→2 and back, verified via both CAN bus read and content provider.
+- **AVAS source: SET returns SUCCESS (0) but state reads 0.** The MCU accepts the command, but AVAS state may only update while driving (0-30 km/h). Needs further testing while the car is moving.
+
 ### AVAS (Acoustic Vehicle Alerting System)
 
 The AVAS is **partially controlled from the Android head unit**, not solely by a standalone ECU as previously documented. DiCarServer contains these CAN bus signals:
