@@ -36,8 +36,11 @@ Research, reverse engineering, and tooling for the BYD Dolphin 25/26 infotainmen
 ├── apk-analysis/                  # Extracted APK assets
 │   ├── VehicleCarType.json        # Vehicle model ID mapping
 │   └── vehicleType.json           # Vehicle body type mapping
-└── scripts/                       # Utility scripts
-    └── car-telemetry.py           # Car data polling and logging
+├── scripts/                       # Utility scripts
+│   ├── BydAudioQuery.java         # CAN bus read/write tool (runs on-device via app_process)
+│   └── car-telemetry.py           # Car data polling and logging
+└── data/apks/                     # Extracted APKs from system
+    └── DiCarServer_extracted/     # DiCarServer assets (config protos, vehicle types)
 ```
 
 ## Quick Start
@@ -72,7 +75,12 @@ adb shell am force-stop com.android.launcher3
 - **DiCarServer** (`com.byd.car.server`) is the central car service hub, runs as system UID 1000
 - **Content providers** expose vehicle data (maintenance, energy consumption, tyre pressure)
 - **Protobuf definitions** in DiCarServer define CAN bus message schemas
-- **AVAS/lock sounds** have writable CAN signals from Android (custom sound routing under investigation)
+- **CAN bus read/write** works via ADB (`scripts/BydAudioQuery.java` using `app_process` + reflection)
+- **Engine simulator sound** is CAN-writable: 3 presets (normal/sport/?) confirmed working
+- **AVAS preset selection** is CAN-writable (0x1B10003D), but only 2 built-in presets
+- **Tesla Boombox equivalent NOT possible** — MCU firmware rejects external speaker routing (0x32B1C042)
+- **Custom lock/power-on sounds NOT possible** — MCU firmware rejects (0xAA000321, 0xAA000243)
+- **Test/diagnostic AVAS signals work** — MCU accepts TEST_AUDIO_AVAS_SET and TEST_MCU_AVAS_CONFIGURATION_SET
 - **Horn** is hardware-controlled (physical relay, not software)
 - **Boot animation** exists at `/system/media/` but requires root to replace
 - **Theme system** exists via `com.byd.automultipletheme` with wallpaper/theme APIs
@@ -94,6 +102,7 @@ adb shell am force-stop com.android.launcher3
 - Cannot write to `/system` partition (read-only, dm-verity)
 - Cannot modify boot animation without root
 - Cannot install GApps (system partition 100% full)
-- AVAS/lock/exterior sounds have CAN signals but custom values need DiCarServer decompilation
+- No custom AVAS / Boombox — MCU firmware rejects external speaker routing commands
+- No custom lock/power-on sounds — MCU firmware rejects these commands
 - Horn is hardware-controlled (physical relay)
 - Some content providers require system-level signing to query

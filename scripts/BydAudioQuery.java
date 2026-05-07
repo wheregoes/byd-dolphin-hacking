@@ -33,42 +33,30 @@ public class BydAudioQuery {
                 return;
             }
 
-            // Full audio/sound property dump
-            System.out.println("=== AVAS ===");
-            p(getInt, mgr, DEV_AUDIO, 1281359917,  "AVAS_SOUND_SOURCE_STATE");
-            p(getInt, mgr, DEV_AUDIO, 454033469,   "AVAS_SOUND_SOURCE_SET");
-            p(getInt, mgr, DEV_AUDIO, -1728052894, "AVAS_SOURCE_TYPE");
+            // IDs from com.byd.feature.audio.Audio and com.byd.feature.test.Test
+
+            System.out.println("=== AVAS (read) ===");
+            p(getInt, mgr, DEV_AUDIO, 0x4C60002D, "AVAS_SOUND_SOURCE_STATE");
+            p(getInt, mgr, DEV_AUDIO, 0x99000162, "AVAS_SOURCE_TYPE");
+            p(getInt, mgr, DEV_AUDIO, 0x35201042, "AVAS_FAULT_STATUS");
+
+            System.out.println("\n=== AVAS -> External Speaker ===");
+            p(getInt, mgr, DEV_AUDIO, 0x35203032, "AVAS_EXT_SPEAKER_STATUS");
 
             System.out.println("\n=== Exterior Speaker ===");
-            // Try common offsets near known AVAS IDs
-            // These are calculated from the CANFD static init pattern
-            p(getInt, mgr, DEV_AUDIO, 1281359935, "EXTERIOR_SPEAKER_SWITCH_STATUS (est)");
-            p(getInt, mgr, DEV_AUDIO, 454033477,  "EXTERIOR_SPEAKER_SWITCH_SET (est)");
-
-            System.out.println("\n=== Lock Car Sound ===");
-            // Search near known audio feature IDs
-            p(getInt, mgr, DEV_AUDIO, 454033470,  "LOCK_CAR_SOUND_EFFECT (est1)");
-            p(getInt, mgr, DEV_AUDIO, 454033471,  "LOCK_CAR_SOUND_EFFECT (est2)");
+            p(getInt, mgr, DEV_AUDIO, 0x35201040, "EXT_SPEAKER_SWITCH_STATUS");
+            p(getInt, mgr, DEV_AUDIO, 0x35201036, "EXT_SPEAKER_CONFIG");
+            p(getInt, mgr, DEV_AUDIO, 0x3520103F, "EXT_PROMPT_TONE_STATUS");
 
             System.out.println("\n=== Engine Simulator ===");
-            p(getInt, mgr, DEV_ENGINE, 1223688208, "ENGINE_SIMULATOR_SOURCE_TYPE");
-            p(getInt, mgr, DEV_ENGINE, 1043333176, "ENGINE_SIMULATOR_SOURCE_TYPE_SET");
-            p(getInt, mgr, DEV_ENGINE, 1043333152, "ENGINE_VOICE_SIMULATOR_STATE_SET");
+            p(getInt, mgr, DEV_ENGINE, 0x48F00010, "ENGINE_SIM_SOURCE_TYPE");
 
-            System.out.println("\n=== CAR_CONFIG ===");
-            p(getInt, mgr, DEV_AUDIO, -1728052894, "AVAS_SOURCE_TYPE (config)");
+            System.out.println("\n=== ESS / ANC ===");
+            p(getInt, mgr, DEV_AUDIO, 0x4FD00030, "ESS_AMPLIFIER_CONFIG");
+            p(getInt, mgr, DEV_AUDIO, 0x4C600025, "ANC_SOUND_SOURCE_STATE");
 
-            System.out.println("\n=== Power-On Sound ===");
-            // Try to read power on sound state
-            p(getInt, mgr, DEV_AUDIO, 454033472,  "START_PLAY_POWER_ON (est1)");
-            p(getInt, mgr, DEV_AUDIO, 454033473,  "START_PLAY_POWER_ON (est2)");
-
-            System.out.println("\n=== ESS ===");
-            p(getInt, mgr, DEV_AUDIO, 1339031600, "ESS_AMPLIFIER_CONFIG");
-
-            System.out.println("\n=== ANC ===");
-            p(getInt, mgr, DEV_AUDIO, 454033461,  "ANC_SOUND_SOURCE_SET");
-            p(getInt, mgr, DEV_AUDIO, 1281359909, "ANC_SOUND_SOURCE_STATE");
+            System.out.println("\n=== Test/Diagnostic ===");
+            p(getInt, mgr, DEV_AUDIO, 0x6EA70010, "TEST_AUDIO_AVAH");
 
         } catch (Exception e) {
             System.out.println("ERROR: " + e);
@@ -81,7 +69,7 @@ public class BydAudioQuery {
             int v = (int) m.invoke(mgr, dev, fid);
             System.out.println(name + " [0x" + Integer.toHexString(fid) + "] = " + v);
         } catch (Exception e) {
-            System.out.println(name + " = ERR");
+            System.out.println(name + " [0x" + Integer.toHexString(fid) + "] = ERR: " + e.getCause());
         }
     }
 
