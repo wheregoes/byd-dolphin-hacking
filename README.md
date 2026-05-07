@@ -85,7 +85,7 @@ adb shell am force-stop com.android.launcher3
 | Aurora Store | Alternative app store | Installed |
 | MicroG GmsCore | Google Play Services replacement | Installed |
 | MicroG Vending | Lightweight Play Store | Installed |
-| Spotify | Pre-installed bloatware | Disabled |
+| Spotify | Pre-installed bloatware | Uninstalled (user 0) |
 | Guard Manager | Car security/guard app | Installed |
 
 ## Limitations (No Root)
