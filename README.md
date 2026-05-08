@@ -55,6 +55,8 @@ Research, reverse engineering, and tooling for the BYD Dolphin 25/26 infotainmen
 │   ├── AvasVolume.java            # AVAS volume control probe (FM vol, PA gain, enabler gain)
 │   ├── AvasVolume2.java           # AVAS volume probe v2 (AVAH values, setBuffer encoding, presets)
 │   ├── SysMix.java                # tinymix wrapper for app_process (needs root)
+│   ├── BydUpgradeProbe.java       # upgrade_server Binder probe (permission/error testing)
+│   ├── BydCotaProbe.java          # COTA cloud API probe (auth, config queries)
 │   └── car-telemetry.py           # Car data polling and logging
 ├── data/native-libs/              # Pulled native libraries for analysis
 │   ├── auto.default.so            # HAL module (MsgCodec, SPI protocol, 1MB)
@@ -122,6 +124,8 @@ adb shell am force-stop com.android.launcher3
 - **COTA cloud API** — `idilink-{area}.byd.auto` with HMAC-SHA256 auth, APP_ID `39701099963858720`
 - **USB update requires online auth** — Brazil (55) not whitelisted; vehicles <60km mileage bypass auth
 - **Car was recently OTA-updated** — `persist.sys.rebootreason=recovery-update`, build date Jul 25 2025
+- **upgrade_server has NO permission check** — all 3 update methods (IVI/MCU/OS) accept calls from UID 2000 (shell). Firmware updates triggerable from adb with a valid package
+- **COTA API secret cracked** — `[REDACTED_API_SECRET]`, HMAC-SHA256 auth accepted by BYD servers. Area resolution API returns valid data
 - **Custom lock/power-on sounds NOT possible** — MCU firmware rejects (0xAA000321, 0xAA000243)
 - **Test/diagnostic AVAS signals work** — MCU accepts TEST_AUDIO_AVAS_SET and TEST_MCU_AVAS_CONFIGURATION_SET
 - **Horn** is hardware-controlled (physical relay, not software)

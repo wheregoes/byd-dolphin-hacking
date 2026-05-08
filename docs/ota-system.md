@@ -282,20 +282,88 @@ Critical permissions granted:
 | OTGUpdate.apk | 280KB | `/tmp/otgupdate-decompiled/` |
 | upgradeserver-sdk.jar | 15KB | `/tmp/upgradeserver-decompiled/` |
 
+## Probe Results (2026-05-07)
+
+### upgrade_server Binder Service — NO PERMISSION CHECK
+
+The `upgrade_server` service accepts calls from UID 2000 (shell) with **no SecurityException**.
+All three update methods responded normally to raw Parcel transactions:
+
+```
+updateIVI (tx=1): transact returned true, NO EXCEPTION
+updateMcu (tx=2): transact returned true, NO EXCEPTION
+updateOS  (tx=3): transact returned true, NO EXCEPTION
+```
+
+This means firmware updates could be triggered from `adb shell` via `app_process` with
+a valid signed update package. The service does not check caller UID.
+
+Script: `scripts/BydUpgradeProbe.java` → compile to dex, run via `app_process`
+
+### COTA API — Auth Cracked, Server Responsive
+
+**Secret key** derived from HahaUtil obfuscation (character shifting):
+```
+[REDACTED_API_SECRET]
+```
+
+**Area resolution** — HTTP 200 from `idilink-private-global.iov.byd.auto`:
+```json
+{"resultCode":"000000","resultData":{"envInfo":"br"}}
+```
+
+**COTA HTTPS server** (`idilink-br.byd.auto`, IP 34.39.197.215) — server responds
+but SSL handshake intermittently times out over the car's 3G/HSPA connection.
+One successful HTTP 200 response confirmed our HMAC-SHA256 auth is accepted.
+
+**Request body format** for `vehicle-data-api/data/groupConfigs`:
+```json
+{"appInfos":[{"appPkgName":"com.byd.cota.globalapp","configVer":0}, ...]}
+```
+
+Script: `scripts/BydCotaProbe.java` → compile to dex, run via `app_process`
+
+### FOTA Server — Blocked Without Root
+
+`fota-vehicle-global.iov.byd.auto` resolves to `10.168.126.4` (BYD private network).
+Ports 6113, 5113, 443 all timeout on plain TCP — requires mutual TLS with
+IMEI-derived client certificates stored in the OTAUpdate app's private data.
+
+### OTA Broadcasts — Protected
+
+`com.byd.padota.broadcast.automatic` is a **protected broadcast** — UID 2000 (shell)
+gets SecurityException. The intents `com.byd.carsetting.broadcast` and
+`com.byd.otaupdate.broadcast.otg` can be sent but produce no observable OTA activity.
+
+### Vehicle Identity (from probes)
+
+| Property | Value |
+|----------|-------|
+| VIN (device ID) | `[YOUR_DEVICE_ID]` |
+| ICCID | `[YOUR_ICCID]` |
+| IMEI | `[YOUR_IMEI]` |
+| MCC/MNC | 72405 (Claro BR) |
+| Area prefix | `br` |
+| Region | ROW |
+| Media type | `6125f` (overseas platform) |
+| Car type | 127 |
+
 ## What Can Be Done Without Root
 
 1. **Read OTA status** via system properties (`persist.sys.byd.otaupdate`, etc.)
 2. **View build/version info** to understand current firmware state
 3. **Access COTA external storage** at `/sdcard/Android/data/com.byd.cota/files/`
-4. **Send OTA broadcast intents** (but actions require system-level processing)
-5. **Decompile and analyze** all OTA APKs (pulled from `/system/`)
-6. **Monitor OTA activity** via `logcat` filtering for OTA-related tags
+4. **Call upgrade_server** — service has NO permission check, accepts calls from shell UID
+5. **Query COTA area API** — HTTP endpoint works, auth cracked
+6. **Query COTA config API** — HTTPS intermittent over 3G but auth accepted
+7. **Decompile and analyze** all OTA APKs (pulled from `/system/`)
+8. **Monitor OTA activity** via `logcat` filtering for OTA-related tags
 
 ## What Requires Root
 
 1. **Access `/data/ota_package/`** — see download cache and install history
 2. **Access COTA private data** — databases, shared preferences, cached configs
-3. **Call `upgrade_server` methods** — `updateMcu()`, `updateIVI()`, `updateOS()`
-4. **Trigger USB update manually** — requires system-level broadcast sender
-5. **Read OTA certificates** — TLS client certs derived from IMEI
+3. **Extract FOTA client certificates** — IMEI-derived TLS certs for FOTA API
+4. **Call FOTA APIs** — mutual TLS required, certs in app private data
+5. **Send protected OTA broadcasts** — `com.byd.padota.broadcast.automatic`
 6. **Modify OTA properties** — `persist.sys.byd.otaupdate`, `persist.sys.byd.cyclicupdate`
