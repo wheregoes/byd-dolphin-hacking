@@ -742,11 +742,95 @@ get **stuck** — can only be stopped by toggling AVAS off/on in Vehicle Setting
 - Rapid beep patterns (3x 300ms with 300ms gaps)
 
 **Under investigation**:
-- Whether setBuffer frequency control works with enablers (user reported hearing
-  tone changes in some test sequences — needs systematic isolation)
-- Whether different enabler value combinations affect the tone pitch
 - Minimum required enabler subset (which of the 6 are actually needed?)
 - Whether enablers are needed on a fresh MCU (before any probing)
+
+### AVAS Volume Testing — Fixed in MCU Firmware (2026-05-07)
+
+Exhaustive testing confirms the AVAS speaker volume is **hardcoded in MCU firmware**
+and cannot be changed from the SoC. Every available volume-related signal was tested
+with no effect on output level.
+
+**Test scripts**: `scripts/AvasVolume.java`, `scripts/AvasVolume2.java`
+
+| Approach | Signal(s) | Values Tested | Result |
+|----------|-----------|---------------|--------|
+| FM Volume | 0xAA000156 | 5, 10, 15, 20, 30, 50, 100 | No volume change |
+| PA Gain | 0xAA000148 | 1, 2, 3, 5, 10, 15 | No volume change |
+| MCU Speak gain | 0xAA000142 | 1, 5, 10, 15 | No volume change |
+| FM Speak gain | 0xAA00011A | 1, 5, 10, 15 | No volume change |
+| AVAS Config gain | 0xAA000171 | 1, 2, 3, 5, 10 | No volume change |
+| Combined max | All enablers=15, FM_VOL=100 | Max everything | No volume change |
+| AVAH value | 0x6E970010 | 1-255 (10 values) | No volume change |
+| setBuffer vol encoding | Various byte patterns | [0xFF], [0x01,0xFF], etc. | No volume change |
+| AVAS presets | 0x1B10003D | 0-5 | No volume change |
+
+**Conclusion**: The AVAS amplifier gain is set by the MCU DSP firmware at a fixed level.
+CAN bus signals control on/off and tone selection only, not amplitude. Changing volume
+would require MCU firmware modification.
+
+### I2S Combination Attack — SoC Audio Cannot Reach AVAS (2026-05-07)
+
+Tested whether combining CAN bus enabler commands with I2S audio playback could
+route SoC-generated audio to the AVAS external speaker. All attempts failed.
+
+**Test script**: `scripts/AvasRoute.java`
+
+#### Dual I2S Architecture
+
+The SoC has two I2S output buses to the MCU:
+
+```
+SoC (SM6125)                    MCU DSP
+├── TERT_MI2S_RX (MultiMedia1) ──► Main Audio Mix ──► A2B ──► Cabin Speakers
+├── QUAT_MI2S_RX (MultiMedia2) ──► Navigation Mix ──► A2B ──► Cabin Speakers (ONLY)
+└── CAN/SPI ────────────────────► Routing Control + AVAH Tone Generator
+```
+
+BYD custom audio flags found in `audio_policy_configuration.xml`:
+`AUDIO_OUTPUT_FLAG_NAVI | AUDIO_OUTPUT_FLAG_UE | AUDIO_OUTPUT_FLAG_GAODE`
+
+The "UE" flag matches the CAN signal `UE_MUTE` (0xAA000346).
+
+#### Test Results
+
+| Test | Method | External Speaker | Cabin Speaker |
+|------|--------|-----------------|---------------|
+| Audio only (no enablers) | AudioTrack USAGE_NAVIGATION (440Hz) | Silent | 440Hz loud |
+| Enablers + AVAH + Audio | Enablers on, AVAH=1, play 440Hz | 1kHz only (AVAH tone) | 440Hz loud |
+| Enablers (no AVAH) + Audio | Enablers on, play 440Hz | Silent | 440Hz loud |
+| AVAH first, then audio | AVAH on, play 440Hz, stop AVAH | 1kHz stops, 440Hz NOT on ext | 440Hz continues |
+| UE unmute + Audio | 0xAA000346=0, play 440Hz | Silent | 440Hz loud |
+| UE + DSP control + Audio | 0xAA000346=0, 0xAA000145=1, play 440Hz | Silent | 440Hz loud |
+| UE + Enablers + Audio | UE unmute + all enablers + 440Hz | Silent | 440Hz loud |
+| UE + Enablers + AVAH + Audio | Everything on + 440Hz | 1kHz only | 440Hz loud |
+| Kitchen sink (ALL signals) | Every known CAN signal + 440Hz | 1kHz only | 440Hz loud |
+| PCM streaming via setBuffer | Rapid 128-byte buffers at 8ms intervals | 1kHz only (unchanged) | N/A |
+
+**Kitchen sink signals tested simultaneously**: UE unmute (0xAA000346=0), SOC control DSP
+(0xAA000145=1), debug mode (0x6E990008=1), loopback (0xAA000301=1), ext speaker switch
+(0x1C10000E=1), AVAS to external (0x32B1C042=1), AVAS preset (0x1B10003D=1).
+
+**AudioTrack method**: Java reflection to create `AudioTrack` with
+`USAGE_ASSISTANCE_NAVIGATION_GUIDANCE` (usage=12), `CONTENT_TYPE_SONIFICATION` (contentType=4),
+48kHz stereo 16-bit PCM. Routes through `QUAT_MI2S_RX` (MultiMedia2).
+
+**PCM streaming method**: 250 buffers of 128 bytes, 8ms apart (8kHz unsigned 8-bit PCM,
+440Hz sine wave). MCU accepts all buffers (SUCCESS) but content does not affect output.
+
+**Conclusion**: The MCU DSP has a **hard separation** between I2S audio input (routed only
+to cabin speakers) and the AVAH internal tone generator (routed to AVAS speaker). No
+combination of CAN commands changes this routing. Custom audio on the AVAS speaker
+requires either MCU firmware modification or root access to explore ALSA mixer controls.
+
+### tinymix Access — Blocked Without Root (2026-05-07)
+
+Attempted to run `tinymix` (ALSA mixer control tool, exists at `/system/bin/tinymix`)
+via `app_process` wrapper (`scripts/SysMix.java`). Result: "Failed to open mixer".
+
+**Root cause**: `app_process` runs as UID 2000 (shell), not UID 1000 (system).
+ALSA devices at `/dev/snd/controlC0` are owned by `system:audio`. SELinux context
+`u:r:shell:s0` blocks access. Root is required to enumerate or modify ALSA mixer controls.
 
 ### Privilege Escalation Assessment
 
@@ -839,13 +923,15 @@ from shell context. The unlocked bootloader + Magisk via fastboot is the viable 
 
 | Test | Status | Notes |
 |------|--------|-------|
-| Diagnose AVAH tone failure | **CRITICAL** | Tone stopped working after test commands, survives power cycle |
-| **Root via Magisk + fastboot** | **READY** | Bootloader unlocked; need USB access for fastboot |
-| Reverse EEPROM config change | Not started | Need root + direct SPI to reset MCU config |
-| Direct /dev/spidev_ivi access | Blocked | Needs root (UID 1000+), ADB shell is UID 2000 |
-| OTA pipeline for DSP sound package | Partially probed | Data path works but DSP sound source rejects buffer |
+| AVAH tone failure | **RESOLVED** | Fixed with enabler commands (see AVAH Enabler Commands section) |
+| AVAS volume increase | **CLOSED** | Hardcoded in MCU firmware; all CAN approaches tested, none work |
+| Custom audio on AVAS | **CLOSED** | I2S audio cannot reach AVAS; MCU has hard separation. Requires root or firmware mod |
+| I2S combination attacks | **CLOSED** | All Phase 1 pre-root tests failed (combo, UE, kitchen sink, PCM streaming) |
+| PCM streaming via setBuffer | **CLOSED** | MCU ignores buffer data content, only respects setInt value for tone selection |
+| tinymix enumeration | **BLOCKED** | Requires root; app_process (UID 2000) cannot access /dev/snd/* |
+| Root via Magisk + fastboot | **NOT PURSUED** | Bootloader unlocked, Magisk viable, but user chose not to root |
 | AVAS presets while driving (0x1B10003D) | Not tested | Values 0-5+ — must test at low speed |
-| PCM streaming via rapid setBuffer | Inconclusive | Buffers accepted but unclear if content affects output |
+| OTA pipeline for DSP sound package | Partially probed | Data path works but DSP sound source rejects buffer |
 
 ## Theme System
 

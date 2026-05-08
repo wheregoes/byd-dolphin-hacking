@@ -187,6 +187,53 @@ adb shell su -c dmesg
 # Use BydSpiDirect.java or write a native tool that runs as root
 ```
 
+## Magisk vs KernelSU Comparison
+
+| Factor | Magisk | KernelSU |
+|--------|--------|----------|
+| **Kernel requirement** | Any kernel | GKI 5.10+ (or manual kernel build) |
+| **Our kernel (4.14.117)** | **Compatible** | **NOT compatible** — non-GKI, too old |
+| **Installation** | Patch boot.img, flash via fastboot | Patch kernel image or build LKM module |
+| **BYD known issues** | DiLink 5.0 has issues (ours is 3.x/4.0) | No BYD data at all |
+| **Community support** | Massive, mature (since 2016) | Newer, less BYD-specific knowledge |
+| **Reversibility** | Flash original boot.img → fully stock | Same, but requires custom kernel revert |
+| **Detection by car systems** | Possible but manageable with MagiskHide | Built-in hiding, but untested on BYD |
+
+**Verdict**: Magisk is the only viable option. KernelSU requires GKI kernel 5.10+, and
+our car runs kernel 4.14.117-perf (non-GKI, pre-GKI era). Using KernelSU would require
+BYD's kernel source code (not published) and building a custom kernel — extremely risky.
+
+**BYD-specific Magisk notes**:
+- GitHub issues #6717 and #9470 report Magisk problems on **DiLink 5.0** — our car
+  appears to be DiLink 3.x/4.0, which predates these problems
+- Recommended version: **Magisk v25210** (stable, tested on BYD) rather than latest v30.4
+- Car uses A/B partition slots — Magisk handles this natively
+
+## Stock Firmware Availability
+
+**No matching stock firmware found.** Available BYD Dolphin firmware on GitHub
+(BYDcar repos) is **Di3.0_13.1.22.xxx** for the **msm8953** chipset. Our car runs
+**QCM6125** with firmware **13.5.x** — completely different platform. Flashing
+msm8953 firmware would brick the car.
+
+| Source | Firmware | Chipset | Match? |
+|--------|----------|---------|--------|
+| GitHub BYDcar repos | Di3.0_13.1.22.xxx | msm8953 | **NO** |
+| Our car (0x99000001) | 13.5.2.2312260.1 | QCM6125 (SM6125) | — |
+| Our car DSP (0x99000002) | 13.5.5.2505300.2 | — | — |
+
+**Implication**: Boot image MUST be extracted from the device before patching. There
+is no downloadable stock firmware to fall back to if the backup is lost.
+
+On-device OTA packages (`com.byd.cota`, `com.byd.otaupdate`, `com.byd.otgupdate`)
+may have cached update packages, but their private storage is not accessible without root.
+
+## Root Status
+
+**Not pursued.** The bootloader is unlocked and Magisk root is technically viable,
+but the user chose not to root the vehicle. All non-root approaches to custom AVAS
+audio have been exhausted (see `sound-and-themes.md` for full test results).
+
 ## Notes
 
 - The cross-compiler toolchain is at `/tmp/aarch64-toolchain/extracted/usr/bin/`

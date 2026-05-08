@@ -50,6 +50,10 @@ Research, reverse engineering, and tooling for the BYD Dolphin 25/26 infotainmen
 │   ├── BydDebugProbe.java         # Debug range scanner, setDouble/intArray tests
 │   ├── BydSpiDirect.java          # Direct SPI access tool (needs root)
 │   ├── BydLockSoundMonitor.java   # Supplementary lock sound player (prototype)
+│   ├── AvasRoute.java             # I2S + CAN combination attack test (QUAT_MI2S_RX → AVAS)
+│   ├── AvasVolume.java            # AVAS volume control probe (FM vol, PA gain, enabler gain)
+│   ├── AvasVolume2.java           # AVAS volume probe v2 (AVAH values, setBuffer encoding, presets)
+│   ├── SysMix.java                # tinymix wrapper for app_process (needs root)
 │   └── car-telemetry.py           # Car data polling and logging
 ├── data/native-libs/              # Pulled native libraries for analysis
 │   ├── auto.default.so            # HAL module (MsgCodec, SPI protocol, 1MB)
@@ -97,7 +101,7 @@ adb shell am force-stop com.android.launcher3
 - **Vehicle Prompt Sound Source** switchable between Normal (1) and Tech (2) profiles via 0xAA000194
 - **Multiple sound sources writable**: BD, INS, Radar sound sources all accept CAN writes
 - **DSP OTA sound package** mechanism exists (0x99000223) — potential vector for custom sounds
-- **AVAH test tones** — were working on AVAS speaker (0x6E970010), currently broken after test commands
+- **AVAH test tones** — working on AVAS speaker (0x6E970010) with enabler commands, plays 1/2/3kHz tones
 - **A2B bus architecture** confirmed: SoC → I2S → MCU DSP → A2B bus → amplifiers
 - **Full SPI stack mapped**: App → BYDAutoManager → Binder → autoservice → auto.default.so (HAL) → /dev/spidev_ivi → MCU
 - **No per-packet signing** on regular commands — only MD5 for OTA. Direct SPI access possible
@@ -106,6 +110,12 @@ adb shell am force-stop com.android.launcher3
 - **Audio debug mode** (0x6E990008=1) does NOT unlock routing — MCU firmware hardcodes rejection
 - **MCU accepts ALL int values** on AVAH without error — truncates internally
 - **Tesla Boombox equivalent** — MCU rejects direct routing (0x32B1C042), debug mode doesn't help
+- **AVAS volume is fixed** — tested FM vol, PA gain, enabler gain, AVAH values 1-255, setBuffer encoding, AVAS presets. All produce identical volume. Hardcoded in MCU firmware
+- **I2S audio cannot reach AVAS** — dual I2S buses (TERT+QUAT) both route to cabin only. Tested AVAH enablers + AudioTrack (QUAT_MI2S_RX), UE channel, kitchen sink, PCM streaming. MCU has hard separation between I2S input and AVAS tone generator
+- **BYD custom audio flags** — `AUDIO_OUTPUT_FLAG_NAVI|UE|GAODE` found in audio policy config. "UE" matches CAN signal UE_MUTE but unmuting does not enable external speaker routing
+- **tinymix blocked without root** — app_process runs as UID 2000, ALSA devices require UID 1000/audio group
+- **Magisk is the only root option** — KernelSU requires GKI kernel 5.10+ (ours is 4.14 non-GKI). Magisk v25210 recommended for BYD
+- **No matching stock firmware found** — GitHub firmware is for msm8953, car uses QCM6125 (13.5.x)
 - **Custom lock/power-on sounds NOT possible** — MCU firmware rejects (0xAA000321, 0xAA000243)
 - **Test/diagnostic AVAS signals work** — MCU accepts TEST_AUDIO_AVAS_SET and TEST_MCU_AVAS_CONFIGURATION_SET
 - **Horn** is hardware-controlled (physical relay, not software)
@@ -129,21 +139,21 @@ adb shell am force-stop com.android.launcher3
 
 ## Root Status
 
-**Bootloader is UNLOCKED** — root via Magisk is the viable path:
-1. Extract boot image via `fastboot` (USB required)
-2. Patch with Magisk
-3. Flash patched boot image back
-4. Reboot — full root with SELinux bypass
+**Bootloader is UNLOCKED** but root was **not pursued**. Magisk via fastboot is viable
+if needed in the future. KernelSU is NOT compatible (kernel 4.14 is non-GKI).
+No matching stock firmware exists online — boot image must be extracted from device first.
 
-See `docs/sound-and-themes.md` → "Privilege Escalation Assessment" for full details.
+See `docs/rooting-guide.md` for full procedure and `docs/sound-and-themes.md` →
+"Privilege Escalation Assessment" for security analysis.
 
 ## Limitations (No Root)
 
 - Cannot write to `/system` partition (read-only, dm-verity)
 - Cannot modify boot animation without root
 - Cannot install GApps (system partition 100% full)
-- No custom AVAS / Boombox — MCU firmware rejects external speaker routing commands
+- No custom AVAS / Boombox — MCU has hard separation between I2S audio and AVAS tone generator
+- AVAS volume is fixed in MCU firmware — no CAN signal changes it
 - No custom lock/power-on sounds — MCU firmware rejects these commands
 - Horn is hardware-controlled (physical relay)
 - Some content providers require system-level signing to query
-- AVAH test tone broken after probe commands — may need root + direct SPI to restore
+- tinymix/ALSA mixer inaccessible without root (UID 2000 vs system:audio)
