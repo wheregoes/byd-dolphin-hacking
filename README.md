@@ -28,6 +28,7 @@ Research, reverse engineering, and tooling for the BYD Dolphin 25/26 infotainmen
 │   ├── system-overview.md         # Hardware, partitions, architecture
 │   ├── bydauto-api.md             # BYDAUTO permission/API reference
 │   ├── content-providers.md       # Content provider URIs and schemas
+│   ├── nfc-digital-key.md          # NFC digital key reverse engineering and activation analysis
 │   ├── ota-system.md              # OTA update system (COTA/FOTA/OTG) reverse engineering
 │   ├── rooting-guide.md           # Magisk root via fastboot guide
 │   ├── sideloading-guide.md       # APK installation guide
@@ -57,6 +58,7 @@ Research, reverse engineering, and tooling for the BYD Dolphin 25/26 infotainmen
 │   ├── SysMix.java                # tinymix wrapper for app_process (needs root)
 │   ├── BydUpgradeProbe.java       # upgrade_server Binder probe (permission/error testing)
 │   ├── BydCotaProbe.java          # COTA cloud API probe (auth, config queries)
+│   ├── BydNfcKeyProbe.java        # NFC digital key CAN bus signal scanner and cloud broadcast tester
 │   └── car-telemetry.py           # Car data polling and logging
 ├── data/native-libs/              # Pulled native libraries for analysis
 │   ├── auto.default.so            # HAL module (MsgCodec, SPI protocol, 1MB)
@@ -134,6 +136,13 @@ adb shell am force-stop com.android.launcher3
 - **KGSL GPU driver accessible** — /dev/kgsl-3d0 world-writable, Adreno 610 ioctls respond, but context creation blocked
 - **Boot animation** exists at `/system/media/` but requires root to replace
 - **Theme system** exists via `com.byd.automultipletheme` with wallpaper/theme APIs
+- **NFC hardware present** — NXP chip (I2C), HAL running, but Android NFC service not started
+- **NFC digital key fully reverse-engineered** — `com.byd.intelligententry` has complete NFC_abroad key support
+- **MCU supports NFC** — `0x43600028` returns 3 (supported), but app needs value 1 (firmware gate)
+- **Cloud activation broadcast works from ADB** — `com.byd.cloudmanager.broadcast.23` received by IntelligentEntry
+- **NFC CAN bus writes accepted** — `0x2EF0002C` (switch), `0x43F04028` (init) writable
+- **NFC blocked by MCU firmware** — support flag returns 3 instead of 1, read-only signal
+- **Operation code buffer** — MCU returns "MCU_OFFLINE" for NFC subsystem
 
 ## Installed Modifications
 
