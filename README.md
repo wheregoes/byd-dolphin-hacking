@@ -28,6 +28,7 @@ Research, reverse engineering, and tooling for the BYD Dolphin 25/26 infotainmen
 │   ├── system-overview.md         # Hardware, partitions, architecture
 │   ├── bydauto-api.md             # BYDAUTO permission/API reference
 │   ├── content-providers.md       # Content provider URIs and schemas
+│   ├── ota-system.md              # OTA update system (COTA/FOTA/OTG) reverse engineering
 │   ├── rooting-guide.md           # Magisk root via fastboot guide
 │   ├── sideloading-guide.md       # APK installation guide
 │   └── sound-and-themes.md        # What can/cannot be customized
@@ -116,6 +117,11 @@ adb shell am force-stop com.android.launcher3
 - **tinymix blocked without root** — app_process runs as UID 2000, ALSA devices require UID 1000/audio group
 - **Magisk is the only root option** — KernelSU requires GKI kernel 5.10+ (ours is 4.14 non-GKI). Magisk v25210 recommended for BYD
 - **No matching stock firmware found** — GitHub firmware is for msm8953, car uses QCM6125 (13.5.x)
+- **OTA system fully mapped** — 3 packages (COTA/FOTA/OTG), upgrade_server Binder service, USB update path hardcoded to `/BYDUpdatePackage/msm8953_64/UpdateFull.zip`
+- **FOTA API identified** — `fota-vehicle-global.iov.byd.auto:6113` with mutual TLS (IMEI-derived cert), 17 endpoints mapped
+- **COTA cloud API** — `idilink-{area}.byd.auto` with HMAC-SHA256 auth, APP_ID `39701099963858720`
+- **USB update requires online auth** — Brazil (55) not whitelisted; vehicles <60km mileage bypass auth
+- **Car was recently OTA-updated** — `persist.sys.rebootreason=recovery-update`, build date Jul 25 2025
 - **Custom lock/power-on sounds NOT possible** — MCU firmware rejects (0xAA000321, 0xAA000243)
 - **Test/diagnostic AVAS signals work** — MCU accepts TEST_AUDIO_AVAS_SET and TEST_MCU_AVAS_CONFIGURATION_SET
 - **Horn** is hardware-controlled (physical relay, not software)
