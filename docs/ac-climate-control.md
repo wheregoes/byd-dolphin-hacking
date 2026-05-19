@@ -135,14 +135,43 @@ Example: set 22°C on main zone → `setAcTemperature(1, 44, 0, 0)` (44/2 = 22°
 
 `hasFeature("ACRemoteControl") = 1` — remote AC control confirmed supported. Timer values: 1-5 map to 10/15/20/25/30 minutes.
 
+### Verified SET Calls (tested on car)
+
+| Action | Call | Status |
+|--------|------|--------|
+| AC on | `start(0)` | **WORKS** |
+| AC off | `stop(0)` | **WORKS** |
+| Set temp | `setAcTemperature(1, tempCelsius, 1, 1)` | **WORKS** — direct Celsius, source=1, param4=1 |
+| Set fan | `set(1000, 0x1DE00030, level)` via base class | **WORKS** — level 0-7 |
+| Set wind mode | `setAcWindMode(mode, 1)` | **WORKS** — source=1 |
+| Set cycle mode | `setAcCycleMode(mode, 0)` | **WORKS** — source=0 or 1 |
+| Set control mode | `setAcControlMode(mode, 1)` | **WORKS** — 0=auto, 1=manual |
+
+**Important quirks:**
+- `setAcTemperature` requires `source=1` (voice) and `param4=1`. With `source=0` (UI_KEY) it returns INVALID_VALUE
+- `setAcWindLevel(level, source)` is **broken** — returns INVALID_VALUE for all source values. Must use base class `set(1000, 0x1DE00030, level)` instead
+- Temperature uses **direct Celsius** (not half-degree encoding) for the SET call
+- `getTemprature()` also returns direct Celsius, so GET and SET use the same encoding
+
+### AC CAN Bus Feature IDs (device type 1000)
+
+| Feature ID | Writable | Purpose |
+|-----------|----------|---------|
+| `0x1DE00008` | YES (returns 0) | Unknown — be careful |
+| `0x1DE00010` | no | |
+| `0x1DE00028` | YES (returns 0) | Unknown — affected wind level unexpectedly |
+| `0x1DE00030` | YES | **Wind/fan level** (0-7) |
+| `0x3D800030` | no | AC_TEMP_INSIDE_FILTERING (read-only) |
+
 ### Return Codes
 
-| Constant | Meaning |
-|----------|---------|
-| `AC_COMMAND_SUCCESS` | Command accepted |
-| `AC_COMMAND_FAILED` | Command rejected |
-| `AC_COMMAND_BUSY` | CAN bus busy |
-| `AC_COMMAND_TIMEOUT` | Command timed out |
+| Value | Constant | Meaning |
+|-------|----------|---------|
+| 0 | `AC_COMMAND_SUCCESS` | Command accepted |
+| -2147482648 | `AC_COMMAND_FAILED` | Command rejected |
+| -2147482647 | `AC_COMMAND_BUSY` | CAN bus busy |
+| -2147482646 | `AC_COMMAND_TIMEOUT` | Command timed out |
+| -2147482645 | `AC_COMMAND_INVALID_VALUE` | Invalid parameters |
 
 ### Event Listener
 
