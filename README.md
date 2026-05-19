@@ -15,6 +15,10 @@ Everything here was discovered through ADB exploration, APK decompilation, and C
 | RAM | ~3.5 GB |
 | ADB | WiFi, port 5555 |
 | Head Unit IP | 192.168.10.10 (car WiFi) |
+| Firmware | 13.1.32.2507250.1 (Jul 25 2025) |
+| MCU | 13.5.5.2505300.2 |
+
+> **Tested on firmware 13.1.32.2507250.1.** Older versions likely work. Newer firmware updates from BYD may change or break things — no guarantees.
 
 ## Getting Started
 
