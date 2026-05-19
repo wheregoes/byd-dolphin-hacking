@@ -1,5 +1,18 @@
 # NFC数字钥匙激活请求
 
+> **Template**: Fill in the `[BRACKETS]` below with your details before sending.
+> 
+> **You will need:**
+> - Your full name
+> - Phone number (international format, e.g. +55 XX XXXXXXXXX)
+> - Email address
+> - VIN — found on your vehicle registration or door jamb sticker
+> - Device ID — run `adb shell getprop persist.sys.cloud.last_vin` on the head unit
+> - License plate number
+> - Dealer name and city where you purchased the vehicle
+> - CPF (Brazil only)
+> - Firmware versions — check Settings > System > About on the head unit
+
 **收件人**: db@byd.com
 **抄送**: shouhoufuwu@byd.com
 **主题**: NFC Digital Key Activation Request — BYD Dolphin GS (Brazil) / NFC数字钥匙激活请求

@@ -64,7 +64,17 @@ public class BydCotaProbe {
             areaHost = "https://idilink-" + area + ".byd.auto";
         }
 
-        boolean infoOnly = args.length > 0 && args[0].equals("--info-only");
+        for (String arg : args) {
+            if (arg.startsWith("--vin=")) {
+                vin = arg.substring(6);
+                System.out.println("  VIN override: " + vin);
+            }
+        }
+
+        boolean infoOnly = false;
+        for (String arg : args) {
+            if (arg.equals("--info-only")) infoOnly = true;
+        }
         if (infoOnly) {
             System.out.println("--info-only: skipping API calls");
             return;
@@ -121,6 +131,10 @@ public class BydCotaProbe {
 
         vin = getProp("persist.sys.cloud.last_vin");
         if (vin.isEmpty()) vin = getProp("sys.virtual.vin");
+
+        carType = getProp("persist.sys.car.type");
+        String vehicleType = getProp("ro.vehicle.type");
+        if (!vehicleType.isEmpty()) uiGeneration = vehicleType;
     }
 
     static void gatherVehicleProperties() {
@@ -379,6 +393,7 @@ public class BydCotaProbe {
 
         Map<String, String> headers = buildHeaders("1.0");
         String body = "{\"appInfos\":["
+            + "{\"appPkgName\":\"com.byd.intelligententry\",\"configVer\":0},"
             + "{\"appPkgName\":\"com.byd.cota.globalapp\",\"configVer\":0},"
             + "{\"appPkgName\":\"com.byd.cluster\",\"configVer\":0},"
             + "{\"appPkgName\":\"com.byd.car.setting\",\"configVer\":0},"
@@ -386,7 +401,9 @@ public class BydCotaProbe {
             + "{\"appPkgName\":\"com.byd.automultipletheme\",\"configVer\":0},"
             + "{\"appPkgName\":\"com.byd.car.server\",\"configVer\":0},"
             + "{\"appPkgName\":\"com.byd.avasplayer\",\"configVer\":0},"
-            + "{\"appPkgName\":\"com.byd.cota\",\"configVer\":0}"
+            + "{\"appPkgName\":\"com.byd.cota\",\"configVer\":0},"
+            + "{\"appPkgName\":\"com.byd.cloudmanager\",\"configVer\":0},"
+            + "{\"appPkgName\":\"com.byd.nfc\",\"configVer\":0}"
             + "]}";
         System.out.println("  Request body: " + body);
         String resp = httpRequest(url, "POST", headers, body);
