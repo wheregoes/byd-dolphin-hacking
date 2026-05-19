@@ -50,11 +50,12 @@ adb connect 192.168.10.10:5555
 
 ```
 scripts/       On-device tools (CAN bus queries, MCU probes, AVAS player)
-apps/          Custom Android apps (Door Sound)
 docs/          Documentation and guides
 data/          Raw data dumps (system properties, packages, audio config)
 apk-analysis/  Extracted APK assets (vehicle type mappings)
 ```
+
+Custom Android apps (Door Sound, etc.) live in [byd-apps](https://github.com/wheregoes/byd-apps).
 
 ## Key Findings
 
