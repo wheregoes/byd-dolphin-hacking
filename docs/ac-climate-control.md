@@ -23,8 +23,8 @@ Device type: **1000** (confirmed via `getDevicetype()`).
 The primary method for reading temperatures. Note the **typo in the API name** — it's `getTemprature`, not `getTemperature`.
 
 ```java
-int cabinTemp = acDevice.getTemprature(4);  // inside/cabin temperature
-int driverSet = acDevice.getTemprature(1);  // driver set temperature
+int outsideTemp = acDevice.getTemprature(4);  // outside/ambient temperature
+int driverSet = acDevice.getTemprature(1);    // driver set temperature
 int passengerSet = acDevice.getTemprature(2); // passenger set temperature
 ```
 
@@ -36,7 +36,7 @@ int passengerSet = acDevice.getTemprature(2); // passenger set temperature
 | 1 | e.g. 25 | Driver set temperature (°C) |
 | 2 | e.g. 25 | Passenger set temperature (°C) |
 | 3 | 65535 (N/A) | Rear AC set temp (not available on Dolphin) |
-| 4 | e.g. 27 | **Cabin inside temperature (°C)** |
+| 4 | e.g. 27 | **Outside/ambient temperature (°C)** — confirmed via `BYDAutoInstrumentDevice.getOutCarTemperature()` returning same value |
 | 5-10 | -2147482645 (error) | Not mapped |
 
 Error codes:
@@ -45,6 +45,10 @@ Error codes:
 - `-1` — general error / permission denied
 
 This method **does not require special permissions** — it works from any app with the BYDAutoAcDevice instance.
+
+**Cabin/inside temperature is NOT available** — exhaustive probing (zones 0-100, 512 Manager feature IDs, InstrumentDevice, SensorDevice, EnergyDevice, PM2.5 device) found no cabin temperature API. The physical sensor exists in the AC hardware (for auto mode regulation) but BYD does not expose it to the Android layer. `BYDAutoInstrumentDevice` has `getOutCarTemperature()` but no `getInCarTemperature()`.
+
+**Manager.getInt returns -10011** for all AC feature IDs (0x1DE00000-0x1DE000FF, 0x3D800000-0x3D8000FF) when called from app context, even with `BydPermissionContext`. The bypass only works from system-level processes.
 
 ### AC State Getters
 
