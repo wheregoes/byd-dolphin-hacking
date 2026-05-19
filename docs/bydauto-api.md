@@ -54,6 +54,8 @@ android.permission.BYDAUTO_{SUBSYSTEM}_{GET|SET|COMMON}
 | `BYDAUTO_PM2P5_GET/SET/COMMON` | Cabin air quality (PM2.5 sensor) |
 | `BYDAUTO_CPUTEMPRATURE_SET` | Head unit CPU temperature management |
 
+**AC device type: 1000.** Access via `BYDAutoAcDevice.getInstance(context)`. Many getters work without permission checks — see [AC & Climate Control](ac-climate-control.md) for full API reference including `getTemprature(zone)` for cabin temperature.
+
 ### Sensors & Data
 
 | Permission | Description |

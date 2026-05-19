@@ -40,6 +40,7 @@ adb connect 192.168.10.10:5555
 | [System Overview](docs/system-overview.md) | Hardware, partitions, architecture |
 | [BYD Auto API](docs/bydauto-api.md) | BYDAUTO permissions and API reference |
 | [Content Providers](docs/content-providers.md) | Content provider URIs and schemas |
+| [AC & Climate Control](docs/ac-climate-control.md) | AC temperature reading, zone mapping, climate API, permission bypass |
 | [Sound & Themes](docs/sound-and-themes.md) | Audio architecture, CAN bus signals, what can/cannot be customized |
 | [NFC Digital Key](docs/nfc-digital-key.md) | NFC key reverse engineering and activation analysis |
 | [NFC Activation Email](docs/byd-nfc-activation-email.md) | Email templates for requesting NFC activation from BYD |
@@ -61,6 +62,8 @@ Custom Android apps (Door Sound, etc.) live in [byd-apps](https://github.com/whe
 
 ### What Works (No Root)
 
+- **AC temperature reading** — `getTemprature(zone)` reads cabin temp (zone 4), set temp (zone 1/2), no permission check needed
+- **Full AC API** — 40+ getter methods for AC state, fan speed, compressor mode, defrost, etc.
 - **CAN bus read/write** via ADB using `app_process` + reflection
 - **75+ BYD packages** with CAN bus access, 100+ custom BYDAUTO permissions
 - **Engine simulator sound** is CAN-writable — UI shows 3 presets but MCU accepts 1-255
