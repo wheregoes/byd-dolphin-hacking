@@ -51,6 +51,7 @@ adb connect 192.168.10.10:5555
 | [Sound & Themes](docs/sound-and-themes.md) | Audio architecture, CAN bus signals, what can/cannot be customized |
 | [NFC Digital Key](docs/nfc-digital-key.md) | NFC key reverse engineering and activation analysis |
 | [NFC Activation Email](docs/byd-nfc-activation-email.md) | Email templates for requesting NFC activation from BYD |
+| [Camera System](docs/camera-system.md) | Camera architecture, AVMCamera/bmmcamera API, 360 view system |
 | [OTA System](docs/ota-system.md) | OTA update system (COTA/FOTA/OTG) reverse engineering |
 | [Rooting Guide](docs/rooting-guide.md) | Magisk root via fastboot (optional, not required for apps) |
 
@@ -69,8 +70,10 @@ Custom Android apps (Door Sound, etc.) live in [byd-apps](https://github.com/whe
 
 ### What Works (No Root)
 
-- **AC temperature reading** — `getTemprature(zone)` reads cabin temp (zone 4), set temp (zone 1/2), no permission check needed
-- **Full AC API** — 40+ getter methods for AC state, fan speed, compressor mode, defrost, etc.
+- **AC temperature reading** — `getTemprature(zone)` reads outside temp (zone 4), set temp (zone 1/2), no permission check needed
+- **Full AC control** — 40+ getter methods + SET methods (start/stop, temperature, fan, wind mode) accessible via permission bypass
+- **AC remote control** — `hasFeature("ACRemoteControl") = 1`, remote AC supported with 10-30min timer
+- **Permission bypass** — `BydPermissionContext` (ContextWrapper) bypasses signature-level `BYDAUTO_*` permissions client-side
 - **CAN bus read/write** via ADB using `app_process` + reflection
 - **75+ BYD packages** with CAN bus access, 100+ custom BYDAUTO permissions
 - **Engine simulator sound** is CAN-writable — UI shows 3 presets but MCU accepts 1-255
@@ -78,6 +81,11 @@ Custom Android apps (Door Sound, etc.) live in [byd-apps](https://github.com/whe
 - **AVAH test tones** play on AVAS external speaker using factory diagnostic signals
 - **Content providers** expose vehicle data (battery, tyre pressure, maintenance)
 - **Sideloading** works via USB drive or ADB (see guide above)
+
+### Partially Working
+
+- **Door lock status** — main doors return INVALID (0), child lock readable. No dedicated `setDoorLockStatus()` method — generic `set()` with unknown feature IDs needed
+- **360 camera (Panorama)** — `BYDAutoPanoramaDevice` permissions enforced server-side, `BydPermissionContext` bypass fails. Cameras accessible via separate `AVMCamera`/`NormalCamera` from `bmmcamera.jar` (boot classpath)
 
 ### What Doesn't Work
 
@@ -89,6 +97,9 @@ Custom Android apps (Door Sound, etc.) live in [byd-apps](https://github.com/whe
 
 ### Architecture Discoveries
 
+- **Permission bypass**: `BydPermissionContext extends ContextWrapper` overrides `enforceCallingOrSelfPermission()` → auto-grants `BYDAUTO_*` permissions. Works for AC, DoorLock, Bodywork. Fails for Panorama (server-side IPC check)
+- **Camera system**: `AVMCamera`/`NormalCamera` in `bmmcamera.jar` (boot classpath), camera IDs: FRONT, REAR, PANO_H, PANO_L, RF, DMS, FACE, CARGO, BYD_APA. Separate from `BYDAutoPanoramaDevice`
+- **Cloud control flow**: BYD App → HTTPS → BYD Cloud → MQTT → native `cloudmanager` → CAN bus
 - **Full SPI stack**: App → BYDAutoManager → Binder → autoservice → auto.default.so → /dev/spidev_ivi → MCU
 - **A2B bus**: SoC → I2S → MCU DSP → A2B bus → amplifiers/AVAS
 - **OTA system**: COTA (cloud) + FOTA (firmware) + OTG (USB), upgrade_server has no permission check

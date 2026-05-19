@@ -93,28 +93,56 @@ All no-arg getters work without permission checks. Full list with sample values:
 
 ### AC Control Methods (SET)
 
-These require `BYDAUTO_AC_SET` permission:
+These require `BYDAUTO_AC_SET` permission (signature-level, bypassable via `BydPermissionContext`).
 
-| Method | Parameters | Description |
-|--------|-----------|-------------|
-| `start(int)` | mode | Start AC |
-| `stop(int)` | mode | Stop AC |
-| `setAcTemperature(int, int, int, int)` | zone, temp, ?, ? | Set temperature |
-| `setAcWindLevel(int, int)` | level, ? | Set fan speed |
-| `setAcWindMode(int, int)` | mode, ? | Set vent direction |
-| `setAcCycleMode(int, int)` | mode, ? | Set air recirculation |
-| `setAcControlMode(int, int)` | mode, ? | Set auto/manual |
-| `setAcCompressorMode(int, int)` | mode, ? | Set compressor |
-| `setAcMaxCoolingState(int)` | state | Toggle max cool |
-| `setAcVentilationState(int, int)` | state, ? | Toggle ventilation |
-| `setAcWarmState(int)` | state | Toggle heating |
-| `setAcDefrostState(int, int, int)` | zone, state, ? | Toggle defrost |
-| `setAcTemperatureControlMode(int, int)` | mode, ? | Set temp ctrl mode |
-| `setAutoCleanAirState(int)` | state | Toggle auto purification |
-| `setQuickCleanAirState(int)` | state | Toggle quick clean |
-| `setAcRemoteCtrlTime(int)` | minutes | Set remote AC timer |
-| `setAcRearPanelLockState(int)` | state | Lock rear panel |
-| `feelColdHot(int, int)` | ?, ? | Comfort adjustment |
+**Permission bypass:** Create a `ContextWrapper` that overrides `enforceCallingOrSelfPermission()` to auto-grant any `android.permission.BYDAUTO_*` permission. Pass to `getInstance()`:
+
+```java
+BYDAutoAcDevice acDevice = BYDAutoAcDevice.getInstance(new BydPermissionContext(context));
+acDevice.start(0);  // AC on (source=0 = UI_KEY)
+```
+
+| Method | Signature | Parameters | Description |
+|--------|-----------|-----------|-------------|
+| `start(int)` | `(int) → int` | source: 0=UI, 1=voice | Turn AC on |
+| `stop(int)` | `(int) → int` | source | Turn AC off |
+| `setAcTemperature(int, int, int, int)` | `(int,int,int,int) → int` | zone, temp, source, ? | Set temp (half-degree: 34=17°C, 66=33°C) |
+| `setAcWindLevel(int, int)` | `(int,int) → int` | level (0-7), source | Set fan speed |
+| `setAcWindMode(int, int)` | `(int,int) → int` | mode, source | Set vent direction (1=face, 5=foot, 0=defrost) |
+| `setAcCycleMode(int, int)` | `(int,int) → int` | mode, source | 0=recirculate, 1=outside air |
+| `setAcControlMode(int, int)` | `(int,int) → int` | mode, source | 0=auto, 1=manual |
+| `setAcCompressorMode(int, int)` | `(int,int) → int` | mode, source | Compressor on/off |
+| `setAcMaxCoolingState(int)` | `(int) → int` | state | Toggle max cool |
+| `setAcVentilationState(int, int)` | `(int,int) → int` | state, source | Toggle ventilation |
+| `setAcDefrostState(int, int, int)` | `(int,int,int) → int` | area, state, source | Toggle defrost |
+| `setAcTemperatureControlMode(int, int)` | `(int,int) → int` | mode, source | Set temp ctrl mode |
+| `setAutoCleanAirState(int)` | `(int) → int` | state | Toggle auto purification |
+| `setQuickCleanAirState(int)` | `(int) → int` | state | Toggle quick clean |
+| `setAcRemoteCtrlTime(int)` | `(int) → int` | 1-5 = 10/15/20/25/30 min | Set remote AC timer |
+| `setAcRearPanelLockState(int)` | `(int) → int` | state | Lock rear panel |
+| `feelColdHot(int, int)` | `(int,int) → int` | ?, ? | Comfort adjustment |
+| `setFragrance(String, int)` | `(String,int) → int` | name, intensity | Fragrance system |
+
+### Temperature Encoding
+
+Two encoding schemes:
+- **GET (getTemprature):** Direct Celsius — `getTemprature(1)` returns 26 = 26°C
+- **SET (setAcTemperature):** Half-degree encoding — values 34-66 map to 17.0°C - 33.0°C (value ÷ 2)
+
+Example: set 22°C on main zone → `setAcTemperature(1, 44, 0, 0)` (44/2 = 22°C)
+
+### Remote Control
+
+`hasFeature("ACRemoteControl") = 1` — remote AC control confirmed supported. Timer values: 1-5 map to 10/15/20/25/30 minutes.
+
+### Return Codes
+
+| Constant | Meaning |
+|----------|---------|
+| `AC_COMMAND_SUCCESS` | Command accepted |
+| `AC_COMMAND_FAILED` | Command rejected |
+| `AC_COMMAND_BUSY` | CAN bus busy |
+| `AC_COMMAND_TIMEOUT` | Command timed out |
 
 ### Event Listener
 
