@@ -13,7 +13,7 @@
 > - CPF (Brazil only)
 > - Firmware versions — check Settings > System > About on the head unit
 
-**Para**: sac@byd.com.br
+**Para**: cliente@byd.com
 **Assunto**: Solicitacao de Ativacao da Chave Digital NFC — BYD Dolphin GS
 
 ---
