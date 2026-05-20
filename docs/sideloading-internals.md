@@ -167,7 +167,7 @@ public static void onDownloadUpdated(DownloadInfo downloadInfo) {
 
 ### File Manager (ACE Ex File Manager)
 
-`com.ace.ex.file.manager` is pre-installed and has `REQUEST_INSTALL_PACKAGES` permission. Can browse USB drives and install APKs directly — bypasses the `Third Party Apps` folder requirement and password.
+`com.ace.ex.file.manager` is **not pre-installed** — must be sideloaded first via ADB or the `Third Party Apps` USB method. Once installed, it has `REQUEST_INSTALL_PACKAGES` permission, can browse USB drives, and install APKs directly — bypassing the `Third Party Apps` folder requirement and password for subsequent installs.
 
 ### Package Installer Intent
 
