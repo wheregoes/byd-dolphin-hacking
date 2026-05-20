@@ -1,4 +1,5 @@
 *.apk
+!tools/browser-exploit/sideload-test.apk
 telemetry-logs/
 __pycache__/
 *.pyc

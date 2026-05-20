@@ -348,26 +348,64 @@ This is standard Chromium security, not a BYD patch. Apps like WhatsApp that reg
 
 **fetch→blob→anchor download bypass is a remote web exploit.** Any web page can silently drop files to `/sdcard/Download/` without ADB, CDP, or user interaction beyond visiting the page.
 
-**Full sideload chain from browser (no ADB on stock unit):**
-1. User visits attacker page (HTTP or HTTPS)
-2. JS fetches APK → blob → `<a download>` → file lands in `/sdcard/Download/`
-3. Same page uses `intent://` to open file manager or PackageInstaller (if target has `BROWSABLE` category) — OR user manually opens file manager to install
+**Full sideload chain — VERIFIED END TO END:**
 
-Step 3 is the remaining gap on stock units: `PackageInstaller` and `com.byd.filemanager` lack `BROWSABLE` intent filters. With a file manager like ACE installed (via USB first-install), the chain is complete from browser alone.
+Three viable flows, each tested and confirmed:
+
+**Flow A — WiFi ADB (fully automated, zero UI):**
+1. `adb connect 192.168.10.10:5555` (port open on all DiLink 3.0 units)
+2. `adb install app.apk` — silent install, no user interaction
+
+**Flow B — Browser + ADB hybrid (automated, one-time setup):**
+1. User visits attacker page → JS blob download drops APK to `/sdcard/Download/`
+2. ADB: `cp /sdcard/Download/app.apk /data/local/tmp/ && pm install /data/local/tmp/app.apk`
+3. Fully silent install. `pm install` from `/sdcard/Download/` fails (SELinux: `system_server` can't read `sdcardfs` context). Must copy to `/data/local/tmp/` first.
+
+**Flow C — Browser only (minimal user interaction):**
+1. User visits attacker page → JS blob download silently drops APK to `/sdcard/Download/` (no tap needed)
+2. User opens EX File Manager → Downloads → taps APK → resolver shows 3 options:
+   - `com.android.packageinstaller/.InstallStart`
+   - `com.gpack.agent/...AppInstallerActivity` (GPack)
+   - `com.android.vending/...AppInstallActivity` (microG)
+3. User selects installer → install dialog → tap Install
+
+**Install step verification results:**
+
+| Install trigger | Result | Details |
+|----------------|--------|---------|
+| `am start -a VIEW -t application/vnd.android.package-archive -d file:///sdcard/Download/app.apk` | **Works** | Resolver shows 3 installers + EX File Manager |
+| `pm install /data/local/tmp/app.apk` | **Works** | Silent install, no UI |
+| `pm install /sdcard/Download/app.apk` | Fails | SELinux denies system_server read on sdcardfs |
+| `navigator.share({files: [apkFile]})` | Blocked | `NotAllowedError: Permission denied` — even on localhost (secure context). BYD disabled Web Share Level 2 file sharing. `canShare()` returns true but `share()` throws. |
+| `chrome://downloads` | Blocked | `ERR_BYD_NETWORK_BLOCK_LIST` — BYD blocks ALL chrome:// URLs |
+| `intent://` → PackageInstaller | Fails | No BROWSABLE category |
+| `content://downloads/all_downloads` | Fails | `ERR_FILE_NOT_FOUND` |
+| `file:///sdcard/Download/app.apk` navigation | Triggers re-download | Browser treats file:// APK as download, not install trigger |
+| `window.open('file://...')` | Blocked | Chrome blocks file:// from web origins |
+| JS bridge (`window.byd`, `window.android`, etc.) | None found | Only standard `prompt()` exists |
+
+**Secure context findings:**
+- `isSecureContext = false` on `https://YOUR_HOST_IP:9191` (self-signed cert)
+- `isSecureContext = true` on `http://localhost:8191` (localhost exception)
+- Web Share Level 2, Service Worker registration require secure context
+- Blob download bypass works regardless of secure context
 
 Summary of all paths:
 
 | Vector | Status | Notes |
 |--------|--------|-------|
 | fetch→blob→anchor | **WORKS (remote)** | No ADB/CDP needed. Any page can drop files to `/sdcard/Download/` |
+| WiFi ADB `pm install` | **WORKS** | Port 5555 open. Silent install from `/data/local/tmp/` |
+| `am start` intent | **WORKS** | Resolver shows PackageInstaller, GPack, microG Vending |
 | Download manager | Gutted | `DownloadController.onDownloadStarted()` → toast |
 | Direct URL `<a download>` | Fails | Java cancel layer kills at receivedBytes=0 |
 | `fetch()` → filesystem | No path | `showSaveFilePicker` unavailable, OPFS sandboxed |
-| `navigator.share(APK)` | Blocked | Binary MIME types rejected (`NotAllowedError`) |
+| `navigator.share(APK)` | Blocked | `NotAllowedError` even on secure context |
 | `intent://` → PackageInstaller | Fails | No `BROWSABLE` category on target apps |
+| `chrome://downloads` | Blocked | `ERR_BYD_NETWORK_BLOCK_LIST` — BYD-specific block |
 | PWA install | Shortcut only | Creates bookmark, not WebAPK/APK |
 | JS-to-native bridge | None | No `@JavascriptInterface`, no custom URL schemes |
-| `file://` APK navigation | Blocked | `ERR_ABORTED` (download block fires) |
+| `file://` APK navigation | Re-downloads | Treated as download, not install trigger |
 | CVE-2023-3079 | Unverified | V8 type confusion in Chrome 113, but exploitation is complex |
 
 For stock units, USB `Third Party Apps` folder is the official method. The blob download bypass provides a browser-based alternative for getting files onto the device — significantly lowering the barrier once any file manager is installed.
@@ -386,12 +424,16 @@ For stock units, USB `Third Party Apps` folder is the official method. The blob 
 
 The `tools/browser-exploit/` directory contains test tools from this research:
 - `index.html` — test page with 10 bypass vectors + autofire mode (`?autofire=1` triggers blob download on page load)
+- `install.html` — one-tap install page: blob-downloads APK with unique filename, attempts navigator.share() then falls back to blob download
+- `autodownload.html` — auto-fire blob download test (no user gesture required)
+- `sideload-test.apk` — minimal signed APK (com.test.sideloadtest, targetSdk 29, 8.5KB) for install chain testing
 - `pwa.html` — PWA install test page
 - `manifest.json` — PWA manifest
 - `sw.js` — service worker for cache API and PWA
 - `serve_https.py` — HTTPS server with self-signed cert
 - `cdp_download_test.py` — CDP download bypass test (6 methods)
 - `cdp_download_test2.py` — focused CDP download test (5 methods + event capture)
+- `cdp_capability_audit.py` — full CDP capability audit
 - `test-download.bin` — 10KB test binary for download testing
 
 ## Tested On

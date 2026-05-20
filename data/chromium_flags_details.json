@@ -1,0 +1,1139 @@
+[
+  {
+    "id": "enable-isolated-web-app-dev-mode",
+    "found": true,
+    "name": "",
+    "desc": "Enables the installation of unverified Isolated Web Apps \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#enable-isolated-web-app-dev-mode",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Enable Isolated Web App Developer Mode\n\nEnables the installation of unverified Isolated Web Apps \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#enable-isolated-web-app-dev-mode\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "enable-isolated-web-apps",
+    "found": true,
+    "name": "",
+    "desc": "Enables experimental support for isolated web apps. See https://github.com/reillyeon/isolated-web-apps for more information. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#enable-isolated-web-apps",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Enable Isolated Web Apps\n\nEnables experimental support for isolated web apps. See https://github.com/reillyeon/isolated-web-apps for more information. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#enable-isolated-web-apps\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "enable-iwa-controlled-frame",
+    "found": true,
+    "name": "",
+    "desc": "Enables experimental support for IWA Controlled Frame. See https://github.com/chasephillips/controlled-frame/blob/main/EXPLAINER.md for more information. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#enable-iwa-controlled-frame",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Enable IWA Controlled Frame\n\nEnables experimental support for IWA Controlled Frame. See https://github.com/chasephillips/controlled-frame/blob/main/EXPLAINER.md for more information. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#enable-iwa-controlled-frame\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "install-isolated-web-app-from-url",
+    "found": true,
+    "name": "",
+    "desc": "Installs a new developer mode Isolated Web App whose contents are hosted at the provided HTTP(S) URL. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#install-isolated-web-app-from-url",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "",
+        "all": [
+          ""
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Install Isolated Web App from Proxy URL\n\nInstalls a new developer mode Isolated Web App whose contents are hosted at the provided HTTP(S) URL. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#install-isolated-web-app-from-url\nDisabled\nEnabled"
+  },
+  {
+    "id": "enable-experimental-web-platform-features",
+    "found": true,
+    "name": "",
+    "desc": "Enables experimental Web Platform features that are in development. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#enable-experimental-web-platform-features",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "",
+        "all": [
+          ""
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Experimental Web Platform features\n\nEnables experimental Web Platform features that are in development. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#enable-experimental-web-platform-features\nDisabled\nEnabled"
+  },
+  {
+    "id": "block-insecure-downloads",
+    "found": true,
+    "name": "",
+    "desc": "Enables insecure download blocking. This shows a 'blocked' message if the user attempts to download a file over an insecure transport (e.g. HTTP) either directly or via an insecure redirect. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#block-insecure-downloads",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Block insecure downloads\n\nEnables insecure download blocking. This shows a 'blocked' message if the user attempts to download a file over an insecure transport (e.g. HTTP) either directly or via an insecure redirect. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#block-insecure-downloads\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "enable-parallel-downloading",
+    "found": true,
+    "name": "",
+    "desc": "Enable parallel downloading to accelerate download speed. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#enable-parallel-downloading",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Parallel downloading\n\nEnable parallel downloading to accelerate download speed. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#enable-parallel-downloading\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "clipboard-unsanitized-content",
+    "found": true,
+    "name": "",
+    "desc": "Allows reading/writing unsanitized content from/to the clipboard. Currently, it is only applicable to HTML format. See crbug.com/1268679. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#clipboard-unsanitized-content",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Clipboard unsanitized read and write\n\nAllows reading/writing unsanitized content from/to the clipboard. Currently, it is only applicable to HTML format. See crbug.com/1268679. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#clipboard-unsanitized-content\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "enable-web-usb-on-extension-service-worker",
+    "found": true,
+    "name": "",
+    "desc": "When enabled, WebUSB API is available on extension service workers. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#enable-web-usb-on-extension-service-worker",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Enable WebUSB on extension service workers\n\nWhen enabled, WebUSB API is available on extension service workers. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#enable-web-usb-on-extension-service-worker\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "unsafely-treat-insecure-origin-as-secure",
+    "found": true,
+    "name": "",
+    "desc": "Treat given (insecure) origins as secure origins. Multiple origins can be supplied as a comma-separated list. Origins must have their protocol specified e.g. \"http://example.com\". For the definition of secure contexts, see https://w3c.github.io/webappsec-secure-contexts/ \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#unsafely-treat-insecure-origin-as-secure",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "",
+        "all": [
+          ""
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Insecure origins treated as secure\n\nTreat given (insecure) origins as secure origins. Multiple origins can be supplied as a comma-separated list. Origins must have their protocol specified e.g. \"http://example.com\". For the definition of secure contexts, see https://w3c.github.io/webappsec-secure-contexts/ \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#unsafely-treat-insecure-origin-as-secure\nDisabled\nEnabled"
+  },
+  {
+    "id": "allow-insecure-localhost",
+    "found": true,
+    "name": "",
+    "desc": "Allows requests to localhost over HTTPS even when an invalid certificate is presented. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#allow-insecure-localhost",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "",
+        "all": [
+          ""
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Allow invalid certificates for resources loaded from localhost.\n\nAllows requests to localhost over HTTPS even when an invalid certificate is presented. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#allow-insecure-localhost\nDisabled\nEnabled"
+  },
+  {
+    "id": "block-insecure-private-network-requests",
+    "found": true,
+    "name": "",
+    "desc": "Prevents non-secure contexts from making subresource requests to more-private IP addresses. See also: https://developer.chrome.com/blog/private-network-access-update/ \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#block-insecure-private-network-requests",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Block insecure private network requests.\n\nPrevents non-secure contexts from making subresource requests to more-private IP addresses. See also: https://developer.chrome.com/blog/private-network-access-update/ \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#block-insecure-private-network-requests\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "ignore-csp-in-web-payment-api",
+    "found": true,
+    "name": "",
+    "desc": "Temporarily disable enforcing Content Security Policy connect-src directive for Web Payment API when fetching manifest files, app icons, and service worker JavaScript files. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#ignore-csp-in-web-payment-api",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Ignore CSP in Web Payment API\n\nTemporarily disable enforcing Content Security Policy connect-src directive for Web Payment API when fetching manifest files, app icons, and service worker JavaScript files. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#ignore-csp-in-web-payment-api\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "site-isolation-trial-opt-out",
+    "found": true,
+    "name": "",
+    "desc": "Disables site isolation (SitePerProcess, IsolateOrigins, etc). Intended for diagnosing bugs that may be due to out-of-process iframes. Opt-out has no effect if site isolation is force-enabled using a command line switch or using an enterprise policy. Caution: this disables important mitigations for the Spectre CPU vulnerability affecting most computers. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#site-isolation-trial-opt-out",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Disabled (not recommended)"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Disable site isolation\n\nDisables site isolation (SitePerProcess, IsolateOrigins, etc). Intended for diagnosing bugs that may be due to out-of-process iframes. Opt-out has no effect if site isolation is force-enabled using a command line switch or using an enterprise policy. Caution: this disables important mitigations for the Spectre CPU vulnerability affecting most computers. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#site-isolation-trial-opt-out\nDefault\nDisabled (not recommend"
+  },
+  {
+    "id": "enable-site-per-process",
+    "found": true,
+    "name": "",
+    "desc": "Security mode that enables site isolation for all sites (SitePerProcess). In this mode, each renderer process will contain pages from at most one site, using out-of-process iframes when needed. Check chrome://process-internals to see the current isolation mode. Setting this flag to 'Enabled' turns on site isolation regardless of the default. Here, 'Disabled' is a legacy value that actually means 'Default,' in which case site isolation may be already enabled based on platform, enterprise policy, or field trial. See also #site-isolation-trial-opt-out for how to disable site isolation for testing. \u2013\n                Android",
+    "flagString": "#enable-site-per-process",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "",
+        "all": [
+          ""
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Strict site isolation\n\nSecurity mode that enables site isolation for all sites (SitePerProcess). In this mode, each renderer process will contain pages from at most one site, using out-of-process iframes when needed. Check chrome://process-internals to see the current isolation mode. Setting this flag to 'Enabled' turns on site isolation regardless of the default. Here, 'Disabled' is a legacy value that actually means 'Default,' in which case site isolation may be already enabled based on platfo"
+  },
+  {
+    "id": "network-service-in-process",
+    "found": true,
+    "name": "",
+    "desc": "When enabled, the network service runs on the browser process. Otherwise, it runs on a dedicated process. \u2013\n                Android",
+    "flagString": "#network-service-in-process",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Run the network service on the browser process\n\nWhen enabled, the network service runs on the browser process. Otherwise, it runs on a dedicated process. \u2013 Android\n\n#network-service-in-process\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "enable-network-logging-to-file",
+    "found": true,
+    "name": "",
+    "desc": "Enables network logging to a file named netlog.json in the user data directory. The file can be imported into chrome://net-internals. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#enable-network-logging-to-file",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "",
+        "all": [
+          ""
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Enable network logging to file\n\nEnables network logging to a file named netlog.json in the user data directory. The file can be imported into chrome://net-internals. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#enable-network-logging-to-file\nDisabled\nEnabled"
+  },
+  {
+    "id": "storage-access-api",
+    "found": true,
+    "name": "",
+    "desc": "Enables the Storage Access API, allowing websites to request storage access when it would otherwise be restricted. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#storage-access-api",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Storage Access API\n\nEnables the Storage Access API, allowing websites to request storage access when it would otherwise be restricted. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#storage-access-api\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "storage-buckets",
+    "found": true,
+    "name": "",
+    "desc": "Enable experimental Storage Buckets API, allowing websites to create multiple buckets of storage to organize their data, allowing user agents to delete each bucket independently of other buckets. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#storage-buckets",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Storage Buckets API\n\nEnable experimental Storage Buckets API, allowing websites to create multiple buckets of storage to organize their data, allowing user agents to delete each bucket independently of other buckets. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#storage-buckets\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "web-sql-access",
+    "found": true,
+    "name": "",
+    "desc": "The WebSQL API is enabled by default, but can be disabled here. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#web-sql-access",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Allows access to WebSQL APIs\n\nThe WebSQL API is enabled by default, but can be disabled here. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#web-sql-access\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "enable-generic-sensor-extra-classes",
+    "found": true,
+    "name": "",
+    "desc": "Enables an extra set of sensor classes based on Generic Sensor API, which expose previously unavailable platform features, i.e. AmbientLightSensor and Magnetometer interfaces. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#enable-generic-sensor-extra-classes",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Generic Sensor Extra Classes\n\nEnables an extra set of sensor classes based on Generic Sensor API, which expose previously unavailable platform features, i.e. AmbientLightSensor and Magnetometer interfaces. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#enable-generic-sensor-extra-classes\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "broker-file-operations-on-disk-cache-in-network-service",
+    "found": true,
+    "name": "",
+    "desc": "Broker file operations on disk cache running in the Network Service. This is no-op when the Network Service is running in the browser process. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#broker-file-operations-on-disk-cache-in-network-service",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Broker file operations on disk cache in the Network Service\n\nBroker file operations on disk cache running in the Network Service. This is no-op when the Network Service is running in the browser process. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#broker-file-operations-on-disk-cache-in-network-service\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "enable-storage-pressure-event",
+    "found": true,
+    "name": "",
+    "desc": "If enabled, Chrome will dispatch a DOM event, informing applications about storage pressure (low disk space) \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#enable-storage-pressure-event",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Enable storage pressure Event\n\nIf enabled, Chrome will dispatch a DOM event, informing applications about storage pressure (low disk space) \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#enable-storage-pressure-event\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "third-party-storage-partitioning",
+    "found": true,
+    "name": "",
+    "desc": "Enables partitioning of third-party storage by top-level site. Note: this is under active development and may result in unexpected behavior. Please file bugs at https://bugs.chromium.org/p/chromium/issues/entry?labels=StoragePartitioning-trial-bugs&components=Blink%3EStorage. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#third-party-storage-partitioning",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Experimental third-party storage partitioning.\n\nEnables partitioning of third-party storage by top-level site. Note: this is under active development and may result in unexpected behavior. Please file bugs at https://bugs.chromium.org/p/chromium/issues/entry?labels=StoragePartitioning-trial-bugs&components=Blink%3EStorage. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#third-party-storage-partitioning\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "strict-origin-isolation",
+    "found": true,
+    "name": "",
+    "desc": "Experimental security mode that strengthens the site isolation policy. Controls whether site isolation should use origins instead of scheme and eTLD+1. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#strict-origin-isolation",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Strict-Origin-Isolation\n\nExperimental security mode that strengthens the site isolation policy. Controls whether site isolation should use origins instead of scheme and eTLD+1. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#strict-origin-isolation\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "enable-restricted-web-apis",
+    "found": false
+  },
+  {
+    "id": "policy-logs-page-android",
+    "found": true,
+    "name": "",
+    "desc": "Enable the new chrome://policy-logs page containing logs for debugging policy related issues on Android. \u2013\n                Android",
+    "flagString": "#policy-logs-page-android",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Policy Logs Page on Android\n\nEnable the new chrome://policy-logs page containing logs for debugging policy related issues on Android. \u2013 Android\n\n#policy-logs-page-android\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "policy-merge-multi-source",
+    "found": true,
+    "name": "",
+    "desc": "Only merge policies that are set from multiple sources. Policies set from a single source will not be treated as merged and will keep their original source. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#policy-merge-multi-source",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Merge policies from multiple sources\n\nOnly merge policies that are set from multiple sources. Policies set from a single source will not be treated as merged and will keep their original source. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#policy-merge-multi-source\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "enable-machine-learning-model-loader-web-platform-api",
+    "found": true,
+    "name": "",
+    "desc": "Enables the Machine Learning Model Loader Web Platform API. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#enable-machine-learning-model-loader-web-platform-api",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Enables Machine Learning Model Loader Web Platform API\n\nEnables the Machine Learning Model Loader Web Platform API. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#enable-machine-learning-model-loader-web-platform-api\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "debug-packed-apps",
+    "found": false
+  },
+  {
+    "id": "external-navigation-debug-logs",
+    "found": true,
+    "name": "",
+    "desc": "Enables detailed logging to logcat about why Chrome is making decisions about whether to allow or block navigation to other apps \u2013\n                Android",
+    "flagString": "#external-navigation-debug-logs",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "External Navigation Debug Logs\n\nEnables detailed logging to logcat about why Chrome is making decisions about whether to allow or block navigation to other apps \u2013 Android\n\n#external-navigation-debug-logs\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "enable-local-web-approvals",
+    "found": true,
+    "name": "",
+    "desc": "Enable local web approvals for Family Link users. Web filter interstitial refresh needs to also be enabled. \u2013\n                ChromeOS, Android",
+    "flagString": "#enable-local-web-approvals",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Enabled Prefer Local",
+          "Enabled Prefer Remote",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Local web approvals\n\nEnable local web approvals for Family Link users. Web filter interstitial refresh needs to also be enabled. \u2013 ChromeOS, Android\n\n#enable-local-web-approvals\nDefault\nEnabled\nEnabled Prefer Local\nEnabled Prefer Remote\nDisabled"
+  },
+  {
+    "id": "enable-desktop-pwas-detailed-install-dialog",
+    "found": true,
+    "name": "",
+    "desc": "Enable PWAs with screenshots to show a detailed install dialog during installation \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#enable-desktop-pwas-detailed-install-dialog",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Desktop PWAs Detailed Install Dialog\n\nEnable PWAs with screenshots to show a detailed install dialog during installation \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#enable-desktop-pwas-detailed-install-dialog\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "messages-for-android-pwa-install",
+    "found": true,
+    "name": "",
+    "desc": "When enabled, PWA Installation prompt will use the new Messages UI. \u2013\n                Android",
+    "flagString": "#messages-for-android-pwa-install",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "PWA Installation Messages UI\n\nWhen enabled, PWA Installation prompt will use the new Messages UI. \u2013 Android\n\n#messages-for-android-pwa-install\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "cert-dual-verification-enabled",
+    "found": true,
+    "name": "",
+    "desc": "Runs both platform Cert Verifer and Chrome Cert Verifier, reporting any differences to Chrome if Safe Browsing Extended Reporting is enabled. \u2013\n                Android",
+    "flagString": "#cert-dual-verification-enabled",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Cert Dual Verification\n\nRuns both platform Cert Verifer and Chrome Cert Verifier, reporting any differences to Chrome if Safe Browsing Extended Reporting is enabled. \u2013 Android\n\n#cert-dual-verification-enabled\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "use-sha1-server-handshakes",
+    "found": true,
+    "name": "",
+    "desc": "When enabled, Chrome will allow the use of SHA-1 in signatures from the server during a TLS handshake \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#use-sha1-server-handshakes",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Allow SHA-1 server signatures in TLS.\n\nWhen enabled, Chrome will allow the use of SHA-1 in signatures from the server during a TLS handshake \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#use-sha1-server-handshakes\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "omit-cors-client-cert",
+    "found": true,
+    "name": "",
+    "desc": "Strictly conform the Fetch spec to omit TLS client certificates if credential mode disallows. Without this flag enabled, Chrome will always try sending client certificates regardless of the credential mode. \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#omit-cors-client-cert",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Omit TLS client certificates if credential mode disallows\n\nStrictly conform the Fetch spec to omit TLS client certificates if credential mode disallows. Without this flag enabled, Chrome will always try sending client certificates regardless of the credential mode. \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#omit-cors-client-cert\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "private-network-access-preflight-short-timeout",
+    "found": true,
+    "name": "",
+    "desc": "Reduce the waiting time for Private Network Access preflights to 200 milliseconds. The default timeout period for requests is 5 minutes.See also: https://developer.chrome.com/blog/private-network-access-preflight/ \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#private-network-access-preflight-short-timeout",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Reduce waiting time for Private Network Access preflights response\n\nReduce the waiting time for Private Network Access preflights to 200 milliseconds. The default timeout period for requests is 5 minutes.See also: https://developer.chrome.com/blog/private-network-access-preflight/ \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#private-network-access-preflight-short-timeout\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "private-network-access-respect-preflight-results",
+    "found": true,
+    "name": "",
+    "desc": "Enables sending Private Network Access preflights ahead of requests to more-private IP addresses. These preflight requests must succeed in order for the request to proceed. See also: https://developer.chrome.com/blog/private-network-access-preflight/ \u2013\n                Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros",
+    "flagString": "#private-network-access-respect-preflight-results",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Respect the result of Private Network Access preflights\n\nEnables sending Private Network Access preflights ahead of requests to more-private IP addresses. These preflight requests must succeed in order for the request to proceed. See also: https://developer.chrome.com/blog/private-network-access-preflight/ \u2013 Mac, Windows, Linux, ChromeOS, Android, Fuchsia, Lacros\n\n#private-network-access-respect-preflight-results\nDefault\nEnabled\nDisabled"
+  },
+  {
+    "id": "incognito-downloads-warning",
+    "found": true,
+    "name": "",
+    "desc": "When enabled, users will be warned that downloaded files are saved on the device and might be seen by other users even if they are in Incognito. \u2013\n                Android",
+    "flagString": "#incognito-downloads-warning",
+    "platforms": "",
+    "options": [
+      {
+        "selectedIdx": 0,
+        "selected": "Default",
+        "all": [
+          "Default",
+          "Enabled",
+          "Disabled"
+        ]
+      },
+      {
+        "selectedIdx": 0,
+        "selected": "Disabled",
+        "all": [
+          "Disabled",
+          "Enabled"
+        ]
+      }
+    ],
+    "isDefault": true,
+    "section": "tab-content-available",
+    "fullText": "Enable Incognito downloads warning\n\nWhen enabled, users will be warned that downloaded files are saved on the device and might be seen by other users even if they are in Incognito. \u2013 Android\n\n#incognito-downloads-warning\nDefault\nEnabled\nDisabled"
+  }
+]

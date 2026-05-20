@@ -1,0 +1,331 @@
+{
+  "browser": {
+    "package": "com.byd.browser",
+    "apk_version": "113.1.6.37",
+    "webui_version": "113.1.3.0",
+    "chromium_base": "113",
+    "v8_version": "11.3.141",
+    "android_version": "10",
+    "target_sdk": 33
+  },
+  "summary": {
+    "total_flags": 475,
+    "available_flags": 407,
+    "unavailable_flags": 68,
+    "byd_customized_flags": 8,
+    "all_flags_at_default": true,
+    "filesystem_access_api_present": false,
+    "opfs_available": true,
+    "webkit_filesystem_available": true,
+    "webusb_available": true,
+    "web_bluetooth_available": true,
+    "extension_loading_flags_present": false
+  },
+  "byd_customized_flags": [
+    {
+      "id": "#disable-accelerated-2d-canvas",
+      "state": "Enabled (meaning 2D canvas acceleration is DISABLED)",
+      "note": "BYD intentionally disabled hardware-accelerated 2D canvas"
+    },
+    {
+      "id": "#ui-disable-partial-swap",
+      "state": "Enabled (meaning partial swap is DISABLED)",
+      "note": "BYD disabled UI partial swap"
+    },
+    {
+      "id": "#disable-webrtc-hw-decoding",
+      "state": "Enabled (meaning WebRTC HW decoding is DISABLED)",
+      "note": "BYD disabled WebRTC hardware video decoding"
+    },
+    {
+      "id": "#disable-webrtc-hw-encoding",
+      "state": "Enabled (meaning WebRTC HW encoding is DISABLED)",
+      "note": "BYD disabled WebRTC hardware video encoding"
+    },
+    {
+      "id": "#disable-javascript-harmony-shipping",
+      "state": "Enabled (meaning JS harmony shipping is DISABLED)",
+      "note": "BYD disabled shipping JavaScript harmony features"
+    },
+    {
+      "id": "#disable-accelerated-video-decode",
+      "state": "Enabled (meaning HW video decoding is DISABLED)",
+      "note": "BYD disabled hardware-accelerated video decoding"
+    },
+    {
+      "id": "#disable-accelerated-video-encode",
+      "state": "Enabled (meaning HW video encoding is DISABLED)",
+      "note": "BYD disabled hardware-accelerated video encoding"
+    },
+    {
+      "id": "#disable-threaded-scrolling",
+      "state": "Enabled (meaning threaded scrolling is DISABLED)",
+      "note": "BYD disabled threaded scrolling"
+    }
+  ],
+  "high_value_attack_surface_flags": {
+    "filesystem_write": [
+      {
+        "id": "#enable-network-logging-to-file",
+        "status": "available, default",
+        "desc": "Writes netlog.json to user data directory. Confirms filesystem write capability exists from browser process.",
+        "options": ["toggle"],
+        "attack_value": "HIGH - proves filesystem write path works, netlog contains full HTTP traffic"
+      },
+      {
+        "id": "#broker-file-operations-on-disk-cache-in-network-service",
+        "status": "available, default",
+        "desc": "Broker file operations on disk cache in Network Service",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "MEDIUM - controls file operation brokering for disk cache"
+      }
+    ],
+    "code_loading_paths": [
+      {
+        "id": "#enable-isolated-web-apps",
+        "status": "available, default",
+        "desc": "Enables experimental support for isolated web apps",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "HIGH - IWAs have elevated filesystem/device permissions"
+      },
+      {
+        "id": "#enable-isolated-web-app-dev-mode",
+        "status": "available, default",
+        "desc": "Enables installation of UNVERIFIED Isolated Web Apps",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "CRITICAL - allows unverified IWA installation, bypasses signature checks"
+      },
+      {
+        "id": "#install-isolated-web-app-from-url",
+        "status": "available, default",
+        "desc": "Installs developer mode IWA from HTTP(S) URL",
+        "options": ["text input for URL"],
+        "attack_value": "CRITICAL - direct code loading from arbitrary URL"
+      },
+      {
+        "id": "#enable-iwa-controlled-frame",
+        "status": "available, default",
+        "desc": "IWA Controlled Frame - embed content with elevated control",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "HIGH - IWA can control embedded frames"
+      },
+      {
+        "id": "#enable-experimental-web-platform-features",
+        "status": "available, default",
+        "desc": "Enables experimental Web Platform features in development",
+        "options": ["toggle"],
+        "attack_value": "HIGH - single toggle unlocks many experimental APIs"
+      }
+    ],
+    "security_bypass": [
+      {
+        "id": "#unsafely-treat-insecure-origin-as-secure",
+        "status": "available, default",
+        "desc": "Treat insecure origins as secure. Comma-separated list input.",
+        "options": ["text input for origins"],
+        "attack_value": "CRITICAL - bypasses secure-context requirements for clipboard, sensors, SAB, service workers, etc."
+      },
+      {
+        "id": "#allow-insecure-localhost",
+        "status": "available, default",
+        "desc": "Allow invalid certificates for localhost",
+        "options": ["toggle"],
+        "attack_value": "HIGH - bypasses cert validation for localhost requests"
+      },
+      {
+        "id": "#block-insecure-downloads",
+        "status": "available, default",
+        "desc": "Blocks insecure (HTTP) downloads. Can be DISABLED.",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "MEDIUM - disabling allows HTTP downloads without warning"
+      },
+      {
+        "id": "#ignore-csp-in-web-payment-api",
+        "status": "available, default",
+        "desc": "Disable CSP connect-src enforcement for Web Payment API",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "MEDIUM - CSP bypass for payment manifest/icon/SW fetches"
+      },
+      {
+        "id": "#site-isolation-trial-opt-out",
+        "status": "available, default",
+        "desc": "Disables site isolation entirely",
+        "options": ["Default", "Disabled (not recommended)"],
+        "attack_value": "HIGH - disabling site isolation enables cross-site data access"
+      },
+      {
+        "id": "#block-insecure-private-network-requests",
+        "status": "available, default",
+        "desc": "Prevents non-secure contexts from requesting private IPs. Can be disabled.",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "MEDIUM - disabling allows HTTP pages to access LAN devices"
+      },
+      {
+        "id": "#strict-origin-isolation",
+        "status": "available, default",
+        "desc": "Uses origins instead of eTLD+1 for isolation",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "LOW - strengthens isolation when enabled"
+      }
+    ],
+    "device_access": [
+      {
+        "id": "#enable-web-usb-on-extension-service-worker",
+        "status": "available, default",
+        "desc": "WebUSB API on extension service workers",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "HIGH - enables WebUSB in service worker context"
+      },
+      {
+        "id": "#clipboard-unsanitized-content",
+        "status": "available, default",
+        "desc": "Read/write unsanitized clipboard content (HTML)",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "MEDIUM - bypasses clipboard sanitization"
+      },
+      {
+        "id": "#enable-generic-sensor-extra-classes",
+        "status": "available, default",
+        "desc": "Extra sensor classes: AmbientLightSensor, Magnetometer",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "LOW - exposes additional vehicle sensors"
+      }
+    ],
+    "storage_and_data": [
+      {
+        "id": "#storage-access-api",
+        "status": "available, default",
+        "desc": "Storage Access API - request storage when restricted",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "MEDIUM - bypass storage restrictions"
+      },
+      {
+        "id": "#storage-buckets",
+        "status": "available, default",
+        "desc": "Storage Buckets API - multiple storage buckets per origin",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "LOW - organize persistent storage"
+      },
+      {
+        "id": "#web-sql-access",
+        "status": "available, default (enabled by default in Cr113)",
+        "desc": "WebSQL API access",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "LOW - legacy SQL storage"
+      },
+      {
+        "id": "#third-party-storage-partitioning",
+        "status": "available, default",
+        "desc": "Partition third-party storage by top-level site",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "LOW - disabling allows cross-site storage access"
+      }
+    ],
+    "network_and_tls": [
+      {
+        "id": "#enable-network-logging-to-file",
+        "status": "available, default",
+        "desc": "Network logging to netlog.json file",
+        "options": ["toggle"],
+        "attack_value": "HIGH - filesystem write + traffic capture"
+      },
+      {
+        "id": "#network-service-in-process",
+        "status": "available, default",
+        "desc": "Run network service in browser process (no sandbox)",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "MEDIUM - enabling removes network service sandboxing"
+      },
+      {
+        "id": "#use-sha1-server-handshakes",
+        "status": "available, default",
+        "desc": "Allow SHA-1 in TLS server signatures",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "LOW - weakens TLS validation"
+      },
+      {
+        "id": "#enable-quic",
+        "status": "available, default",
+        "desc": "QUIC protocol",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "LOW"
+      }
+    ],
+    "pwa_and_install": [
+      {
+        "id": "#enable-desktop-pwas-detailed-install-dialog",
+        "status": "available, default",
+        "desc": "Detailed PWA install dialog with screenshots",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "LOW - UI only"
+      },
+      {
+        "id": "#messages-for-android-pwa-install",
+        "status": "available, default",
+        "desc": "PWA installation prompt via Messages UI",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "LOW - UI only"
+      }
+    ],
+    "debug_and_logging": [
+      {
+        "id": "#external-navigation-debug-logs",
+        "status": "available, default",
+        "desc": "Detailed logcat logging for external navigation decisions",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "MEDIUM - reveals navigation blocking logic"
+      },
+      {
+        "id": "#policy-logs-page-android",
+        "status": "available, default",
+        "desc": "chrome://policy-logs page for debugging policies",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "MEDIUM - reveals enterprise policy configuration"
+      },
+      {
+        "id": "#enable-network-logging-to-file",
+        "status": "available, default",
+        "desc": "See filesystem_write section",
+        "attack_value": "HIGH"
+      }
+    ],
+    "download_controls": [
+      {
+        "id": "#block-insecure-downloads",
+        "status": "available, default",
+        "desc": "Block HTTP downloads. Can be disabled to allow unblocked downloads.",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "MEDIUM"
+      },
+      {
+        "id": "#enable-parallel-downloading",
+        "status": "available, default",
+        "desc": "Parallel download acceleration",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "LOW - performance only"
+      },
+      {
+        "id": "#incognito-downloads-warning",
+        "status": "available, default",
+        "desc": "Warning about incognito downloads being visible",
+        "options": ["Default", "Enabled", "Disabled"],
+        "attack_value": "LOW - UI only"
+      }
+    ]
+  },
+  "key_absence_findings": {
+    "no_file_system_access_api_flags": "No chrome://flags entries for File System Access API. Runtime check confirms showSaveFilePicker/showOpenFilePicker/showDirectoryPicker are NOT in window.",
+    "opfs_available": "navigator.storage.getDirectory() IS available (Origin Private File System) - sandboxed per-origin filesystem",
+    "webkit_filesystem_available": "window.webkitRequestFileSystem IS available (legacy Chrome Filesystem API) - provides sandboxed FS write capability",
+    "webusb_present": "navigator.usb is present",
+    "web_bluetooth_present": "navigator.bluetooth is present",
+    "no_extension_loading": "No flags for extension sideloading or loading unpacked extensions - standard Android Chromium limitation",
+    "no_serial_api": "navigator.serial not present",
+    "no_hid_api": "navigator.hid not present",
+    "no_webdriver": "No webdriver/automation flags visible",
+    "apis_confirmed": {
+      "available": ["WebUSB", "Bluetooth", "Clipboard", "ServiceWorker", "Presentation", "MediaDevices", "Geolocation", "Permissions", "webkitRequestFileSystem", "OPFS", "FileReader", "Blob", "URL.createObjectURL"],
+      "absent": ["showSaveFilePicker", "showOpenFilePicker", "showDirectoryPicker", "Serial", "HID", "requestFileSystem (non-webkit)"]
+    }
+  }
+}
