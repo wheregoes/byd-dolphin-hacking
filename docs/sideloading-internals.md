@@ -361,19 +361,21 @@ Three viable flows, each tested and confirmed:
 2. ADB: `cp /sdcard/Download/app.apk /data/local/tmp/ && pm install /data/local/tmp/app.apk`
 3. Fully silent install. `pm install` from `/sdcard/Download/` fails (SELinux: `system_server` can't read `sdcardfs` context). Must copy to `/data/local/tmp/` first.
 
-**Flow C — Browser only (minimal user interaction):**
+**Flow C — Browser only (requires non-stock file manager):**
 1. User visits attacker page → JS blob download silently drops APK to `/sdcard/Download/` (no tap needed)
-2. User opens EX File Manager → Downloads → taps APK → resolver shows 3 options:
+2. User opens file manager → Downloads → taps APK → resolver shows 3 options:
    - `com.android.packageinstaller/.InstallStart`
    - `com.gpack.agent/...AppInstallerActivity` (GPack)
    - `com.android.vending/...AppInstallActivity` (microG)
 3. User selects installer → install dialog → tap Install
 
+**Note:** Stock BYD has no user-accessible file manager. `com.byd.filemanager` exists but has no launcher activity. EX File Manager (or similar) must be installed first via USB or ADB — making this flow not truly "stock browser only."
+
 **Install step verification results:**
 
 | Install trigger | Result | Details |
 |----------------|--------|---------|
-| `am start -a VIEW -t application/vnd.android.package-archive -d file:///sdcard/Download/app.apk` | **Works** | Resolver shows 3 installers + EX File Manager |
+| `am start -a VIEW -t application/vnd.android.package-archive -d file:///sdcard/Download/app.apk` | **Works** | Resolver shows 3 installers (+ EX File Manager if installed) |
 | `pm install /data/local/tmp/app.apk` | **Works** | Silent install, no UI |
 | `pm install /sdcard/Download/app.apk` | Fails | SELinux denies system_server read on sdcardfs |
 | `navigator.share({files: [apkFile]})` | Blocked | `NotAllowedError: Permission denied` — even on localhost (secure context). BYD disabled Web Share Level 2 file sharing. `canShare()` returns true but `share()` throws. |
@@ -408,7 +410,7 @@ Summary of all paths:
 | `file://` APK navigation | Re-downloads | Treated as download, not install trigger |
 | CVE-2023-3079 | Unverified | V8 type confusion in Chrome 113, but exploitation is complex |
 
-For stock units, USB `Third Party Apps` folder is the official method. The blob download bypass provides a browser-based alternative for getting files onto the device — significantly lowering the barrier once any file manager is installed.
+For stock units, USB `Third Party Apps` folder is the official method. The blob download bypass gets files onto the device silently, but the install step still requires either ADB (Flow A/B) or a non-stock file manager (Flow C). No stock-browser-only install path exists yet.
 
 ### Other Browser Findings
 
