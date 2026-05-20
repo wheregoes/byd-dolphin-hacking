@@ -189,6 +189,75 @@ adb shell am start -a android.intent.action.VIEW \
 - No device policy restrictions on app installation
 - Per-app install permission: browser and file manager both have `REQUEST_INSTALL_PACKAGES`
 
+## Browser Exploit: fetch() + Web Share Bypass
+
+**Status:** Confirmed working (requires HTTPS + file manager app installed)
+
+BYD's download block is only at `DownloadController.onDownloadStarted()` — a single Java entry point called from native Chromium. The `fetch()` API operates entirely in the renderer process and never touches the download manager.
+
+### Browser: Chromium 113
+
+```
+versionName=113.1.6.37
+targetSdk=33
+```
+
+Channel 4 (stable). Modern enough that memory-corruption exploits are not viable.
+
+### API Availability (HTTP vs HTTPS)
+
+| API | HTTP | HTTPS (self-signed) |
+|-----|------|---------------------|
+| `isSecureContext` | false | **true** |
+| `fetch()` | yes | yes |
+| `Blob` / `createObjectURL` | yes | yes |
+| `navigator.share()` | no | **yes** |
+| `navigator.canShare({files})` | no | **yes (returns true for APK)** |
+| `ServiceWorker` | no | **yes** |
+| `caches` (Cache API) | no | **yes** |
+| `showSaveFilePicker` | no | no |
+| `clipboard` | no | **yes** |
+
+### Exploit Chain
+
+1. Host page over **HTTPS** (self-signed cert OK — user accepts warning)
+2. User taps "Install" button (real user gesture required)
+3. JavaScript `fetch('app.apk')` downloads APK into memory — **download manager never involved**
+4. `navigator.share({files: [new File([blob], 'app.txt', {type: 'text/plain'})]})` — disguise as text file
+5. Share sheet opens → user picks file manager → saves to `/sdcard/Download/`
+6. Rename `app.txt` → `app.apk`
+7. Open with package installer → Install
+
+### MIME Type Restriction
+
+`navigator.share()` with files works for `text/plain` but **blocks binary MIME types** (`application/vnd.android.package-archive`, `application/octet-stream`, `application/zip`). The APK binary must be disguised as text.
+
+`navigator.canShare()` returns `true` for all types but the actual share call gets `NotAllowedError: Permission denied` for non-text types.
+
+### Stock Unit Limitation
+
+On a stock BYD (no third-party apps), the only share target for files is **Bluetooth OPP** — which sends files to another device, not save locally. The native `com.byd.filemanager` does not register for `ACTION_SEND` intents.
+
+**Practical strategy:**
+- First install: USB `Third Party Apps 55` + password `BYD6125F`
+- After file manager installed: browser exploit becomes viable for future installs
+- App self-updates: built-in HTTP download + PackageInstaller API (no browser needed)
+
+### Other Browser Findings
+
+- `intent://` URLs are parsed by `ExternalNavigationHandler` but require user gesture
+- `blob:` URLs can be navigated to (URL bar shows blob URL) but don't trigger package installer
+- `<a download>` with blob URLs silently blocked (goes through `DownloadController`)
+- Chrome DevTools remote debugging available via `localabstract:chrome_devtools_remote`
+- Browser has BYD car APIs baked in (`com.byd.car.*` packages in browser APK)
+
+### Test Harness
+
+The `tools/browser-exploit/` directory contains the test page used for this research:
+- `index.html` — test page with 10 bypass vectors
+- `sw.js` — service worker for cache API testing
+- `serve_https.py` — HTTPS server with self-signed cert
+
 ## Tested On
 
 - BYD Dolphin 2025
