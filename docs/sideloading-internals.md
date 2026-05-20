@@ -243,20 +243,112 @@ On a stock BYD (no third-party apps), the only share target for files is **Bluet
 - After file manager installed: browser exploit becomes viable for future installs
 - App self-updates: built-in HTTP download + PackageInstaller API (no browser needed)
 
+### CDP Download Bypass Attempts
+
+Chrome DevTools Protocol (CDP) is accessible via `localabstract:chrome_devtools_remote`. Chromium 113, Protocol 1.3.
+
+**Connection:** `ws://localhost:9222/devtools/browser` (requires ADB port forward + `suppress_origin=True`).
+
+`Browser.setDownloadBehavior({behavior: "allow", downloadPath: "/sdcard/Download/"})` — **accepted** by CDP, returns success. But downloads are fully received (all bytes transferred) then **CANCELED** by the Java `DownloadController` layer:
+
+```
+Page.downloadWillBegin → downloadProgress receivedBytes=10240 → state=canceled
+```
+
+All 5 CDP download methods tested fail identically:
+1. `<a download>` via anchor click — canceled
+2. `Page.navigate` to file URL — canceled
+3. `fetch()` → blob → anchor download — canceled
+4. `data:` URI anchor download — canceled
+5. `Fetch.enable` + intercept — no download bypass
+
+The native C++ download engine (`DownloadCollectionBridge`, `@CalledByNative` methods) is intact — bytes are fully received. But the Java layer (`DownloadController.onDownloadStarted()`) cancels every download and shows the toast. CDP can't override Java callbacks.
+
+### OPFS (Origin Private File System)
+
+`navigator.storage.getDirectory()` works — confirmed writing binary data to sandboxed browser storage. But OPFS is sandboxed to the browser's internal data directory — files are NOT accessible from the filesystem, file managers, or other apps. No escape path to user-visible storage.
+
+### PWA Install (BeforeInstallPromptEvent)
+
+`typeof BeforeInstallPromptEvent === 'function'` — the API exists and the event fires.
+
+**Requirements for SW registration:** Self-signed HTTPS certs are rejected for Service Worker fetch. Must use `localhost` (treated as secure context). ADB reverse proxy (`adb reverse tcp:8191 tcp:8191`) makes host server appear as localhost to car browser.
+
+**Install flow:**
+1. Navigate to `http://localhost:8191/pwa.html` (via ADB reverse proxy)
+2. Service Worker registers successfully on localhost
+3. `beforeinstallprompt` event fires, `platforms: "web"`
+4. `prompt()` requires real user gesture (CDP `Runtime.evaluate` doesn't count — must use ADB tap or real touch)
+5. BYD shows custom "Create shortcut" dialog (NOT Chrome's native PWA install dialog)
+6. User taps "Create" → `userChoice.outcome: "accepted"` → `appinstalled` event fires
+
+**Result:** Creates a Chrome shortcut, **NOT a WebAPK**. Package count unchanged (182 → 182). No `app_WebAPKs/` or `app_webapps/` directory created.
+
+Shortcut intent details from `dumpsys shortcut`:
+```
+Intent { act=com.google.android.apps.chrome.webapps.WebappManager.ACTION_START_WEBAPP }
+  webapp_source=7 (ADD_TO_HOMESCREEN_STANDALONE)
+  webapp_display_mode=3 (standalone)
+  webapp_scope=http://localhost:8191/
+  webapp_short_name=BYDTool
+  webapp_shortcut_version=3
+```
+
+BYD did not modify Chrome's source tag — `webapp_source=7` is standard Chromium `ADD_TO_HOMESCREEN_STANDALONE`. They only replaced the install dialog UI with their "Create shortcut" dialog. No WebAPK minting via GMS is attempted despite `com.google.android.gms` being installed.
+
+### External Navigation (intent:// URLs)
+
+`ExternalNavigationHandler` (decompiled: `kw1.java`) has **standard Chromium sanitization with NO BYD modifications**. The `intent://` URL scheme is parsed correctly but Chrome requires target activities to have the `BROWSABLE` category.
+
+Target apps that lack `BROWSABLE`:
+- `com.android.packageinstaller` — no `BROWSABLE` activities
+- `com.android.settings` — no `BROWSABLE` activities
+- `com.byd.filemanager` — no file-handling intent filters at all
+- `com.byd.overseaappstore` — system app with install permission but no `BROWSABLE`
+
+This is standard Chromium security, not a BYD patch. Apps like WhatsApp that register `BROWSABLE` activities work fine.
+
+### Browser-Only Sideload: Verdict
+
+**No viable browser-only sideload path exists on a stock BYD unit.**
+
+Summary of all blocked paths:
+
+| Vector | Status | Blocked By |
+|--------|--------|------------|
+| Download manager | Gutted | `DownloadController.onDownloadStarted()` → toast |
+| CDP download bypass | Fails | Java cancel layer overrides CDP |
+| `fetch()` → filesystem | No path | `showSaveFilePicker` unavailable, OPFS sandboxed |
+| `navigator.share(APK)` | Blocked | Binary MIME types rejected (`NotAllowedError`) |
+| `intent://` → PackageInstaller | Fails | No `BROWSABLE` category on target apps |
+| PWA install | Shortcut only | Creates bookmark, not WebAPK/APK |
+| JS-to-native bridge | None | No `@JavascriptInterface`, no custom URL schemes |
+| `file://` APK navigation | Blocked | `ERR_ABORTED` (download block fires) |
+| CVE-2023-3079 | Unverified | V8 type confusion in Chrome 113, but exploitation is complex |
+
+The browser can download content into memory (`fetch()` works) but has no path to write files to user-accessible storage or trigger PackageInstaller. USB `Third Party Apps` folder remains the only stock sideload method.
+
 ### Other Browser Findings
 
-- `intent://` URLs are parsed by `ExternalNavigationHandler` but require user gesture
 - `blob:` URLs can be navigated to (URL bar shows blob URL) but don't trigger package installer
 - `<a download>` with blob URLs silently blocked (goes through `DownloadController`)
-- Chrome DevTools remote debugging available via `localabstract:chrome_devtools_remote`
-- Browser has BYD car APIs baked in (`com.byd.car.*` packages in browser APK)
+- `chrome://flags` accessible via CDP navigation — IWA Developer Mode flag found
+- Browser password encryption: AES/ECB with hardcoded key `"com.byd.browser."` — trivially decryptable
+- `BYDCrossFeatureIds` is NOT a JS bridge — decompiler artifact (integer constants reused as bitflags)
+- `com.google.android.gms` installed but unused for WebAPK minting
+- Screen coordinate mapping: 1920x1080 physical, 1280x548 CSS, DPR 1.5, chrome offset 168px
 
 ### Test Harness
 
-The `tools/browser-exploit/` directory contains the test page used for this research:
+The `tools/browser-exploit/` directory contains test tools from this research:
 - `index.html` — test page with 10 bypass vectors
-- `sw.js` — service worker for cache API testing
+- `pwa.html` — PWA install test page
+- `manifest.json` — PWA manifest
+- `sw.js` — service worker for cache API and PWA
 - `serve_https.py` — HTTPS server with self-signed cert
+- `cdp_download_test.py` — CDP download bypass test (6 methods)
+- `cdp_download_test2.py` — focused CDP download test (5 methods + event capture)
+- `test-download.bin` — 10KB test binary for download testing
 
 ## Tested On
 
