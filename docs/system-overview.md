@@ -74,6 +74,26 @@ The instrument cluster runs a separate Qt/QML application stack:
 - **Cloud Services**: `com.byd.cloudserviceapp` for BYD cloud
 - **MQTT**: Has `BYDAUTO_MQTT_GET/SET` permissions (likely for remote telemetry)
 
+### TCP Services
+
+| Port | Bind Address | UID | Process | Purpose |
+|------|-------------|-----|---------|---------|
+| 5555 | all (tcp6) | shell | adbd | ADB wireless debug |
+| 7000 | 0.0.0.0 + :: | 0 (root) | carplayserv | Apple CarPlay wireless (IAP2 over TCP) |
+| 8191 | 127.0.0.1 | 2000 (shell) | hbs | Local HTTP server (toolkit) |
+| 9191 | 127.0.0.1 | 2000 (shell) | - | HTTPS test server (user-deployed) |
+| 12406 | 127.0.0.1 | 1000 (system) | idd-idps-server | IDD Intrusion Detection/Prevention |
+| 14002 | :: (tcp6) | - | - | BYD service (heavy traffic, many connections) |
+| 14003 | :: (tcp6) | - | - | BYD service |
+| 14004 | :: (tcp6) | - | - | BYD service |
+| 14006 | :: (tcp6) | shell | hbs | HBS service |
+| 14041 | :: (tcp6) | - | - | BYD service |
+| 43609 | :: (tcp6) | - | - | Dynamic port |
+
+**Port 7000 (CarPlay)**: Runs as root, listens on ALL interfaces. Started via `carplay.rc` when `sys.carplay.support=1`. Binary at `/system/bin/carplayserv`. CarPlay state tracked via `sys.carplay.*` properties. Currently not connected (`sys.carplay.connected=0`). Potential attack surface as it's network-exposed.
+
+**Port 12406 (IDD-IDPS)**: BYD's Intelligent Driving Data - Intrusion Detection & Prevention System. Localhost only. Server binary at `/system/bin/idd-idps-server` (UID system, groups: system inet media_rw). Three root-UID clients connect to it: `idd-metrics` (PID 322), `idd-nidps-engine` (PID 326, monitors wlan0/rmnet interfaces), `idd-nidps-manage` (PID 3452). Data stored at `/data/idd/`. Config at `/etc/idd/rule/idd-nidps-engine/conf/idd-idps.yaml`.
+
 ## Voice Assistant
 
 BYD's custom voice assistant (`BydVoice`) with:

