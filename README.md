@@ -44,6 +44,7 @@ adb connect 192.168.10.10:5555
 | Doc | What's Inside |
 |-----|---------------|
 | [Sideloading Guide](docs/sideloading-guide.md) | Install third-party apps via USB or ADB (no root) |
+| [Sideloading Internals](docs/sideloading-internals.md) | Browser exploit research: blob download bypass, install chain analysis, Chromium 113 internals |
 | [System Overview](docs/system-overview.md) | Hardware, partitions, architecture |
 | [BYD Auto API](docs/bydauto-api.md) | BYDAUTO permissions and API reference |
 | [Content Providers](docs/content-providers.md) | Content provider URIs and schemas |
@@ -58,10 +59,11 @@ adb connect 192.168.10.10:5555
 ## Repository Structure
 
 ```
-scripts/       On-device tools (CAN bus queries, MCU probes, AVAS player)
-docs/          Documentation and guides
-data/          Raw data dumps (system properties, packages, audio config)
-apk-analysis/  Extracted APK assets (vehicle type mappings)
+scripts/              On-device tools (CAN bus queries, MCU probes, AVAS player)
+docs/                 Documentation and guides
+data/                 Raw data dumps (system properties, packages, audio config, Chromium flags)
+tools/browser-exploit/ Browser-based sideloading research (test pages, CDP audit, mock APK)
+apk-analysis/         Extracted APK assets (vehicle type mappings)
 ```
 
 Custom Android apps (Door Sound, etc.) live in [byd-apps](https://github.com/wheregoes/byd-apps).
@@ -81,6 +83,7 @@ Custom Android apps (Door Sound, etc.) live in [byd-apps](https://github.com/whe
 - **AVAH test tones** play on AVAS external speaker using factory diagnostic signals
 - **Content providers** expose vehicle data (battery, tyre pressure, maintenance)
 - **Sideloading** works via USB drive or ADB (see guide above)
+- **Browser blob download bypass** — any web page can silently drop files (including APKs) to `/sdcard/Download/` via `fetch→blob→anchor.click`, no user gesture needed (Chromium 113 bug)
 
 ### Partially Working
 
