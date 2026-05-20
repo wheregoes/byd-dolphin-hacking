@@ -264,7 +264,7 @@ On a stock BYD (no third-party apps), the only share target for files is **Bluet
 })()
 ```
 
-Can fire on `window.onload` — no button click needed. Works from HTTP and HTTPS origins.
+Can fire on `window.onload` — no button click needed. Works from HTTP and HTTPS origins. Fetch must be same-origin (attacker hosts both page and payload) or target must have permissive CORS headers.
 
 **Why it works:** Direct URL downloads (`<a href="remote-url" download>`, `Page.navigate`) trigger `DownloadController.onDownloadStarted()` which cancels immediately (`state=canceled`, `receivedBytes=0`). Blob URL downloads take a different native code path: `fetch()` retrieves all bytes in the renderer process (Network domain), `URL.createObjectURL` creates a local blob reference, and the blob-to-disk write bypasses the Java cancel layer entirely. BYD's download block only hooks the URL-based download initiation path, not the blob-to-disk path.
 
