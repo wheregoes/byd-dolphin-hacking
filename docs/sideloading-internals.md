@@ -384,7 +384,7 @@ Via CDP proxy, a web page can:
 
 | Port | Bind | Owner | Protocol | Notes |
 |------|------|-------|----------|-------|
-| 5555 | 0.0.0.0 | adbd | ADB | Always open on all DiLink 3.0 units |
+| 5555 | 0.0.0.0 | adbd | ADB | NOT enabled by default. Requires TestTools → "Wireless adb debug switch" (see sideloading-guide.md) |
 | 7000 | 0.0.0.0 | root | Binary (unknown) | Accepts TCP connections, not HTTP. Unidentified. |
 | 9222 | localabstract | chrome | CDP | Chrome DevTools Protocol (ADB forward required) |
 | 12406 | 127.0.0.1 | unknown | unknown | Localhost-only, unidentified |
@@ -395,7 +395,7 @@ Investigated as potential pure-browser chain:
 1. Enable IWA flags via CDP → `chrome://flags` → "Enable Isolated Web Apps" = Enabled ✓
 2. `Browser.close` → restart → flags take effect ✓
 3. Install IWA bundle with Direct Sockets API permission ✗
-4. IWA opens raw TCP socket to `localhost:5555` (ADB is on all interfaces) ✗
+4. IWA opens raw TCP socket to `localhost:5555` (ADB must be enabled via TestTools first) ✗
 5. Speak ADB protocol over TCP → `pm install` APK ✗
 
 **Why it fails:**
@@ -465,7 +465,7 @@ This is standard Chromium security, not a BYD patch. Apps like WhatsApp that reg
 Three viable flows, each tested and confirmed:
 
 **Flow A — WiFi ADB (fully automated, zero UI):**
-1. `adb connect 192.168.10.10:5555` (port open on all DiLink 3.0 units)
+1. `adb connect 192.168.10.10:5555` (requires ADB WiFi enabled via TestTools — see sideloading-guide.md)
 2. `adb install app.apk` — silent install, no user interaction
 
 **Flow B — PS4-style Browser Jailbreak (VERIFIED, zero-click after page visit):**
@@ -521,7 +521,7 @@ Summary of all paths:
 | Vector | Status | Notes |
 |--------|--------|-------|
 | fetch→blob→anchor | **WORKS (remote)** | No ADB/CDP needed. Any page can drop files to `/sdcard/Download/` |
-| WiFi ADB `pm install` | **WORKS** | Port 5555 open. Silent install from `/data/local/tmp/` |
+| WiFi ADB `pm install` | **WORKS** | Requires ADB WiFi enabled via TestTools. Silent install from `/data/local/tmp/` |
 | `am start` intent | **WORKS** | Resolver shows PackageInstaller, GPack, microG Vending |
 | Download manager | Gutted | `DownloadController.onDownloadStarted()` → toast |
 | Direct URL `<a download>` | Fails | Java cancel layer kills at receivedBytes=0 |
