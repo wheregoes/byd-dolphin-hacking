@@ -298,7 +298,95 @@ Files written to `/sdcard/Download/` persist permanently — not cleaned up.
 
 ### CDP Access
 
-Chrome DevTools Protocol is accessible via `localabstract:chrome_devtools_remote`. Chromium 113, Protocol 1.3. Connection: `ws://localhost:9222/devtools/browser` (requires ADB port forward + `suppress_origin=True`). Useful for inspecting download events and injecting JS, but NOT required for the blob download bypass.
+Chrome DevTools Protocol is accessible via `localabstract:chrome_devtools_remote`. Chromium 113, Protocol 1.3. Connection: `ws://localhost:9222/devtools/browser` (requires ADB port forward). Useful for inspecting download events and injecting JS, but NOT required for the blob download bypass.
+
+### CDP-from-Browser-Page Exploit
+
+**Critical finding:** A web page loaded in the BYD browser can obtain full browser-level CDP control through a WebSocket proxy. Chrome's CDP server rejects WebSocket connections with browser-set Origin headers, but a proxy that strips Origin (`origin=None` in websockets library) bypasses this check.
+
+**Architecture:**
+
+```
+[Car Browser Page] --ws:8081/cdp/devtools/browser--> [WS Proxy :8081] --ws:9222/devtools/browser--> [Chrome CDP]
+                                                      (strips Origin)
+```
+
+The proxy (`serve_with_cdp_proxy.py`) runs on port 8081, strips the Origin header, and forwards to Chrome CDP on port 9222. ADB reverse proxy (`adb reverse tcp:8081 tcp:8081`) makes the proxy appear as localhost to the car browser.
+
+**Capabilities confirmed from a web page via CDP proxy:**
+
+| Capability | Status | Details |
+|-----------|--------|---------|
+| `Browser.getVersion` | Works | Returns full browser info |
+| `Target.getTargets` | Works | Enumerates all open tabs |
+| `Target.createTarget` | Works | Opens arbitrary URLs including `file://`, `intent://` |
+| `Browser.grantPermissions` | Works | Grants clipboardReadWrite, notifications |
+| `Page.navigate` | Works | Navigate any tab to any URL including `chrome://flags` |
+| `Runtime.evaluate` | Works | Execute arbitrary JS in any page context |
+| `Page.enable`, `DOM.enable`, etc. | Works | All major CDP domains accessible |
+| `Browser.close` | Works | Kills browser process, Android auto-restarts it |
+| `Browser.setDownloadBehavior` | Works | Required after browser restart for blob downloads |
+
+**chrome://flags manipulation from web page:**
+
+Via CDP proxy, a web page can:
+1. Navigate to `chrome://flags` (normally blocked by `ERR_BYD_NETWORK_BLOCK_LIST`)
+2. Read all 475 flags via `Runtime.evaluate` + DOM queries
+3. Modify flag values (confirmed: changed "Enable Isolated Web Apps" from Default to Enabled)
+4. Restart browser via `Browser.close` to apply flag changes (Android auto-restarts Chrome)
+
+**Browser.close restart behavior:**
+- `Browser.close` kills the Chromium process
+- Android system automatically restarts it (no user interaction)
+- Flag changes applied via `chrome://flags` take effect after restart
+- `Browser.setDownloadBehavior({behavior:'allow'})` must be re-issued after restart for blob downloads to persist
+- ADB forward/reverse mappings survive browser restart but CDP WebSocket must reconnect
+
+**Full exploit chain verified (WiFi-adjacent, CDP proxy):**
+1. Car browser navigates to `http://localhost:8080/exploit.html`
+2. CDP proxy enables `Browser.setDownloadBehavior`
+3. JS blob-downloads APK → `/sdcard/Download/` (verified: 8553 bytes, MD5: `ffd222cdb07f71c9ba18627cad490b5c`)
+4. Server triggers `am start -a android.intent.action.VIEW -t application/vnd.android.package-archive` via ADB
+5. ResolverActivity/PackageInstaller opens on car screen
+
+**Intent URL schemes tested via CDP Target.createTarget:**
+
+| URL Scheme | Result |
+|-----------|--------|
+| `file:///sdcard/Download/app.apk` | Target created, but Chrome treats as download (blocked by DownloadController) |
+| `intent:///sdcard/Download/app.apk#Intent;scheme=file;action=android.intent.action.VIEW;type=application/vnd.android.package-archive;end` | Target created, but Chrome BROWSABLE check blocks dispatch to PackageInstaller |
+| `content://media/external/file/15730` | Navigation error |
+| `android-app://com.android.packageinstaller` | Dispatched but no effect |
+| `package:com.test.sideloadtest` | Dispatched but no effect |
+
+**Limitation:** CDP-from-browser gives significant control but the install step still requires ADB for `am start`. Chrome's BROWSABLE category check blocks ALL intent:// URLs to PackageInstaller regardless of origin (file:// or web). This is Chromium security, not BYD-specific.
+
+### OverseaAppStore IPC (Unexplored)
+
+`com.byd.overseaappstore` is a system app with `INSTALL_PACKAGES` permission and an IPC service:
+- Service: `com.byd.overseaappstoripc.action.RemoteOverseaAppStoreService`
+- Has `FileProvider` registered at `com.byd.overseaappstore.fileProvider`
+- Potential attack vector: if the IPC service can be called from the browser or via CDP to install an APK
+
+### Network Services
+
+| Port | Bind | Owner | Protocol | Notes |
+|------|------|-------|----------|-------|
+| 5555 | 0.0.0.0 | adbd | ADB | Always open on all DiLink 3.0 units |
+| 7000 | 0.0.0.0 | root | Binary (unknown) | Accepts TCP connections, not HTTP. Unidentified. |
+| 9222 | localabstract | chrome | CDP | Chrome DevTools Protocol (ADB forward required) |
+| 12406 | 127.0.0.1 | unknown | unknown | Localhost-only, unidentified |
+
+### IWA Direct Sockets Path (Theoretical)
+
+Potential pure-browser chain using Isolated Web Apps:
+1. Enable IWA flags via CDP → `chrome://flags` → "Enable Isolated Web Apps" = Enabled
+2. `Browser.close` → restart → flags take effect
+3. Install IWA bundle with Direct Sockets API permission
+4. IWA opens raw TCP socket to `localhost:5555` (ADB is on all interfaces)
+5. Speak ADB protocol over TCP → `pm install` APK
+
+**Status:** IWA flags can be enabled. IWA bundle installation mechanism on Android Chromium 113 not yet tested. Direct Sockets API availability in IWA context unknown.
 
 ### OPFS (Origin Private File System)
 
@@ -428,6 +516,12 @@ The `tools/browser-exploit/` directory contains test tools from this research:
 - `index.html` — test page with 10 bypass vectors + autofire mode (`?autofire=1` triggers blob download on page load)
 - `install.html` — one-tap install page: blob-downloads APK with unique filename, attempts navigator.share() then falls back to blob download
 - `autodownload.html` — auto-fire blob download test (no user gesture required)
+- `exploit.html` — end-to-end exploit chain: blob-download APK → verify file → trigger install via server. Auto-run with `?auto=1`
+- `cdp-exploit.html` — CDP-from-browser capability test: connects to CDP via WS proxy, enumerates targets, tests capabilities, chrome://flags, install triggers
+- `chain-test.html` — comprehensive browser install chain test with vectors A-G
+- `serve_with_cdp_proxy.py` — combined HTTP server (port 8080) + WebSocket-to-CDP proxy (port 8081). Strips Origin header for CDP access. Endpoints: `/cdp-json`, `/trigger-install`, `/check-file`
+- `chain_test_runner.py` — CDP-based automated test runner for install chain vectors
+- `pivot_test.py` — tests file:// origin pivot for privilege escalation
 - `sideload-test.apk` — minimal signed APK (com.test.sideloadtest, targetSdk 29, 8.5KB) for install chain testing
 - `pwa.html` — PWA install test page
 - `manifest.json` — PWA manifest
