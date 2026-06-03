@@ -543,7 +543,7 @@ Summary of all paths:
 | PWA install | Shortcut only | Creates bookmark, not WebAPK/APK |
 | JS-to-native bridge | None | No `@JavascriptInterface`, no custom URL schemes |
 | `file://` APK navigation | Re-downloads | Treated as download, not install trigger |
-| CVE-2023-3079 | Unverified | V8 type confusion in Chrome 113, but exploitation is complex |
+| CVE-2023-3079 | Partial (JS primitives) | V8 type confusion (TheHole) + OOB + addrof/fakeobj + arb R/W achieved on car Chrome 113 arm64. Sandbox mode (shift=24) detected. No native code exec yet (RX code pages; fake Code/Bytecode hijack recon only). No BYD JS bridges found. file:///proc/self/maps blocked in renderer. |
 
 For stock units, USB `Third Party Apps` folder is the official method. The blob download bypass gets files onto the device silently, but the install step still requires either ADB (Flow A/B) or a non-stock file manager (Flow C). No stock-browser-only install path exists yet.
 
@@ -558,13 +558,46 @@ For stock units, USB `Third Party Apps` folder is the official method. The blob 
 - `com.google.android.gms` installed but unused for WebAPK minting
 - Screen coordinate mapping: 1920x1080 physical, 1280x548 CSS, DPR 1.5, chrome offset 168px
 
+### V8 Exploit Research (CVE-2023-3079)
+**Session:** private V8 research session (jailbreak)
+
+**Status:** Hole leak + full arb R/W + WASM setup reliable. Native RCE not achieved.
+
+**Car test findings (from /report dumps on 192.168.10.10):**
+- UA: Chrome/113.0.0.0 (X11; Linux armv81) — arm64
+- p1 (TheHole): leaks on first attempt, type=undefined but not null/num
+- p2: addr_of works (e.g. 0x242599)
+- p3 arb: sandbox=true, shift=24 (detected via backing store ptr)
+- p4: wasm pwn()=42, then sb escape via ArrayBuffer + WasmIndirectFunctionTable
+- Detailed sb dumps: cage=0x20000000000, many Code/func ptrs (ic0=0xd9d etc), T1/T2/T3v/T4 all return expected (66 or 42), BytecodeArray swaps tested
+- fprobe: file:///proc/self/maps and /status always FAIL (renderer blocks)
+- bridge probes: none_named for BYD/bridge/native/etc; only standard chrome objects
+- fs access (file:// /sdcard etc): FAIL "unsafe for access"
+- local scans (5555/9222 etc): TypeError (no net or blocked)
+- chain "success" = JS chain no throw (p4 done, P5_done); actual sc exec not reached
+- Older runs hit "sandbox code pages RX" on direct write attempts
+- dl/blob tests: work as fallback
+
+**Blockers:**
+- Code pages RX (W^X); direct write fails, redirect via fake Code/BCArray tested but no native trigger of planted sc
+- Renderer uid/SELinux/seccomp likely blocks execve/clone even if RIP control
+- No RWX regions easily discoverable (maps blocked)
+- No JS-to-native bridge or privileged content provider from renderer
+
+**Artifacts in session:** v8exploit.js iterations (v2..v26), jailbreak_server.py, multiple test html (hole tests, bca dumps, auto probes), diag-report.txt, jailbreak-report.txt with 100s of runs.
+
+**Next:** port RX-redirect + sc plant to sb_ primitives (encode_sp/decode); try Wasm table corruption or rwx jit region hunt via other leaks; test minimal native payload (e.g. just exit or write marker file); measure if renderer can even reach pm.
+
 ### Test Harness
 
 The `tools/browser-exploit/` directory contains test tools from this research:
 - `index.html` — test page with 10 bypass vectors + autofire mode (`?autofire=1` triggers blob download on page load)
 - `install.html` — one-tap install page: blob-downloads APK with unique filename, attempts navigator.share() then falls back to blob download
 - `autodownload.html` — auto-fire blob download test (no user gesture required)
-- `jailbreak.py` — **COMPLETE PS4-STYLE JAILBREAK SERVER.** Self-contained: auto-discovers car on WiFi, serves exploit page, handles ADB install. Usage: `python3 jailbreak.py --apk aurora.apk`. Supports `--car-ip`, `--port`, `--filename`. Silent install via `pm install` or interactive via `am start`.
+- `jailbreak.py` — PS4-style server (ADB discover + blob + pm/am). 
+- `jailbreak_server.py` — **Hybrid V8 RCE + fallback.** Inlines v8exploit.js + ARM64 sc (clone+execve wget+pm). Serves / , /payload.apk, /report, /keepalive. Auto-runs exploit on load; reports phases. On V8 fail: button fallback. (continued research from private jailbreak session)
+- `v8exploit.js` — Full CVE-2023-3079 chain (TheHole, primitives, arb RW sb-aware, WASM, raw+sb code exec stubs, heavy recon for BYD bridges/file maps/ports).
+- `shellcode.py` — ARM64 PIC generator: clone(SIGCHLD) + child execve(/system/bin/sh -c "wget||curl apk; pm install -r").
 - `jailbreak.html` — Jailbreak exploit page. Blob-downloads APK, verifies on filesystem, triggers install via server. Auto-run with `?auto=1` for zero-click. Two modes: silent (pm install) and interactive (PackageInstaller dialog).
 - `exploit.html` — end-to-end exploit chain: blob-download APK → verify file → trigger install via server. Auto-run with `?auto=1`
 - `cdp-exploit.html` — CDP-from-browser capability test: connects to CDP via WS proxy, enumerates targets, tests capabilities, chrome://flags, install triggers
