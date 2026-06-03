@@ -561,7 +561,7 @@ For stock units, USB `Third Party Apps` folder is the official method. The blob 
 ### V8 Exploit Research (CVE-2023-3079)
 **Session:** private V8 research session (jailbreak)
 
-**Status:** p1-p4 + sb arb + early fake Code hijack (about_to_call reached, recon path) works when p1/p2 succeed. Native sc exec (clone/execve + pm) not yet producing marker/pkg (sc launch or child write blocked). Robust p1(10)/p2(3) + full payload sc + real IP for locked-car.
+**Status:** p1-p4 + sb arb + real X page overwrite (real_ep reports) works on good p1/p2. 50 internal retries + auto page reload on failure (JS keeps trying/reloading until hits rare hole — makes "visit link" consistent for locked car). Direct minimal syscall test + full payload with mkdir + printf marker. Injection confirmed, marker/pkg not yet (hole very rare in tests; post-real_ep beacons often missing).
 
 **Car test findings (from /report dumps on 192.168.10.10):**
 - UA: Chrome/113.0.0.0 (X11; Linux armv81) — arm64
@@ -583,7 +583,7 @@ For stock units, USB `Third Party Apps` folder is the official method. The blob 
 - When about_to_call fires (hijack), no marker/pkg yet (now using real JIT X page overwrite via sb_write to real_ep for exec mem; previous RW buf lacked X). Sc child still not producing side effect in tests.
 - No recent chain success (p2 fail -> fallback)
 
-**Current (locked-car vector):** am start real 192.168.1.21:8080 (or victim taps) serves html+cb v8.js; p1 hole, p2 addr, p3 arb sb shift=24, p4 wasm, sb plant sc buf (len~288-496), mod5 T1, ifn_code, real_ep = ifn_code+8, sb_write_bytes(real_ep, sc) to X JIT page, about_to_call fires, call to importFn now execs sc from real X mem (not data RW buf). sc full (wget 192 ip + pm + echo SC_EXEC_OK). No side effect (marker/pkg) in runs yet (p1/p2 flake or sc child still fails write/pm).
+**Current (locked-car vector):** am start real 192.168.1.21:8080 (or victim taps) serves html+cb v8.js; p1 hole, p2 addr, p3 arb sb shift=24, p4 wasm, sb plant sc buf, mod5 to get importFn, real_ep from its Code, sb_write(real_ep, sc) to X page (with try/catch + "after_real_ep_report" beacon for diag), about_to, call. p1 (30+gc)/p2 (5+inner) strengthened. Full sc uses mkdir + printf > marker (tmp+sdcard) + wget+pm. Direct minimal test sc in shellcode.py (stderr + open/write). Injection (real_ep + early_sc_buf) confirmed on good p1/p2 loads, but "after" / "written" beacons often missing and no marker (p1/p2 flake main gate; when reached, write or beacon after real_ep may fail or payload child not succeeding the marker write).
 
 **Artifacts:** jailbreak-report.txt (early_fake, about_to, T1=66, ifn=0x146671, fc, swap), v8exploit.js, shellcode.py, server with no-cache + real ip.
 
