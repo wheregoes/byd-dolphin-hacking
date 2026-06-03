@@ -580,10 +580,10 @@ For stock units, USB `Third Party Apps` folder is the official method. The blob 
 
 **Blockers:**
 - p1/p2 flakey (hole+leak_stuff) even with 10/3 tries — many visits never reach p3/p4/early hijack
-- When about_to_call fires (hijack to sc_abs via fake Code ep), no marker/pkg (sc child may not execve or write /sdcard or /data/local/tmp; possible argv/string setup or uid/perms in child)
-- No chain success recent (p2 fail -> fallback)
+- When about_to_call fires (hijack), no marker/pkg yet (now using real JIT X page overwrite via sb_write to real_ep for exec mem; previous RW buf lacked X). Sc child still not producing side effect in tests.
+- No recent chain success (p2 fail -> fallback)
 
-**Current (locked-car vector):** am start real 192.168.1.21:8080 (or victim taps) serves html+cb v8.js; p1 hole, p2 addr, p3 arb sb shift=24, p4 wasm, sb plant sc buf (len~288-496), mod5 T1, ifn_code/fc, set ep=sc_abs, swap, about_to_call fires, call to hijacked. sc full (wget 192 ip + pm + echo SC_EXEC_OK). No side effect yet.
+**Current (locked-car vector):** am start real 192.168.1.21:8080 (or victim taps) serves html+cb v8.js; p1 hole, p2 addr, p3 arb sb shift=24, p4 wasm, sb plant sc buf (len~288-496), mod5 T1, ifn_code, real_ep = ifn_code+8, sb_write_bytes(real_ep, sc) to X JIT page, about_to_call fires, call to importFn now execs sc from real X mem (not data RW buf). sc full (wget 192 ip + pm + echo SC_EXEC_OK). No side effect (marker/pkg) in runs yet (p1/p2 flake or sc child still fails write/pm).
 
 **Artifacts:** jailbreak-report.txt (early_fake, about_to, T1=66, ifn=0x146671, fc, swap), v8exploit.js, shellcode.py, server with no-cache + real ip.
 
