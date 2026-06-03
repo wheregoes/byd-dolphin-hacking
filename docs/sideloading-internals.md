@@ -595,7 +595,7 @@ The `tools/browser-exploit/` directory contains test tools from this research:
 - `install.html` — one-tap install page: blob-downloads APK with unique filename, attempts navigator.share() then falls back to blob download
 - `autodownload.html` — auto-fire blob download test (no user gesture required)
 - `jailbreak.py` — PS4-style server (ADB discover + blob + pm/am). 
-- `jailbreak_server.py` — **Hybrid V8 RCE + fallback.** Inlines v8exploit.js + ARM64 sc (clone+execve wget+pm). Serves / , /payload.apk, /report, /keepalive. Auto-runs exploit on load; reports phases. On V8 fail: button fallback. (continued research from private jailbreak session)
+- `jailbreak_server.py` — **Hybrid V8 RCE + fallback.** External /v8exploit.js + ARM64 sc. Serves on 127.0.0.1 via adb reverse for block bypass. Remote trigger: `adb -s 192.168.10.10:5555 shell am start -a android.intent.action.VIEW -d 'http://127.0.0.1:8080/'`. No physical car screen clicks needed after one-time adb auth. (continued from private research + remote testing)
 - `v8exploit.js` — Full CVE-2023-3079 chain (TheHole, primitives, arb RW sb-aware, WASM, raw+sb code exec stubs, heavy recon for BYD bridges/file maps/ports).
 - `shellcode.py` — ARM64 PIC generator: clone(SIGCHLD) + child execve(/system/bin/sh -c "wget||curl apk; pm install -r").
 - `jailbreak.html` — Jailbreak exploit page. Blob-downloads APK, verifies on filesystem, triggers install via server. Auto-run with `?auto=1` for zero-click. Two modes: silent (pm install) and interactive (PackageInstaller dialog).
