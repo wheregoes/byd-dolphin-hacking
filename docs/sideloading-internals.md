@@ -561,7 +561,7 @@ For stock units, USB `Third Party Apps` folder is the official method. The blob 
 ### V8 Exploit Research (CVE-2023-3079)
 **Session:** private V8 research session (jailbreak)
 
-**Status:** Hole leak + full arb R/W + WASM setup reliable. Native RCE not achieved.
+**Status:** p1-p4 + sb arb + early fake Code hijack (about_to_call reached, recon path) works when p1/p2 succeed. Native sc exec (clone/execve + pm) not yet producing marker/pkg (sc launch or child write blocked). Robust p1(10)/p2(3) + full payload sc + real IP for locked-car.
 
 **Car test findings (from /report dumps on 192.168.10.10):**
 - UA: Chrome/113.0.0.0 (X11; Linux armv81) — arm64
@@ -579,14 +579,15 @@ For stock units, USB `Third Party Apps` folder is the official method. The blob 
 - dl/blob tests: work as fallback
 
 **Blockers:**
-- Code pages RX (W^X); direct write fails, redirect via fake Code/BCArray tested but no native trigger of planted sc
-- Renderer uid/SELinux/seccomp likely blocks execve/clone even if RIP control
-- No RWX regions easily discoverable (maps blocked)
-- No JS-to-native bridge or privileged content provider from renderer
+- p1/p2 flakey (hole+leak_stuff) even with 10/3 tries — many visits never reach p3/p4/early hijack
+- When about_to_call fires (hijack to sc_abs via fake Code ep), no marker/pkg (sc child may not execve or write /sdcard or /data/local/tmp; possible argv/string setup or uid/perms in child)
+- No chain success recent (p2 fail -> fallback)
 
-**Artifacts in session:** v8exploit.js iterations (v2..v26), jailbreak_server.py, multiple test html (hole tests, bca dumps, auto probes), diag-report.txt, jailbreak-report.txt with 100s of runs.
+**Current (locked-car vector):** am start real 192.168.1.21:8080 (or victim taps) serves html+cb v8.js; p1 hole, p2 addr, p3 arb sb shift=24, p4 wasm, sb plant sc buf (len~288-496), mod5 T1, ifn_code/fc, set ep=sc_abs, swap, about_to_call fires, call to hijacked. sc full (wget 192 ip + pm + echo SC_EXEC_OK). No side effect yet.
 
-**Next:** port RX-redirect + sc plant to sb_ primitives (encode_sp/decode); try Wasm table corruption or rwx jit region hunt via other leaks; test minimal native payload (e.g. just exit or write marker file); measure if renderer can even reach pm.
+**Artifacts:** jailbreak-report.txt (early_fake, about_to, T1=66, ifn=0x146671, fc, swap), v8exploit.js, shellcode.py, server with no-cache + real ip.
+
+**Next:** make p1/p2 100% (more gc/attempts/diff leak patterns); test direct (no sh) write sc or fix generator argv/data; try more Code fields or different target (ifn+24 vs other); one manual browser visit on car for clean vector test; if native blocked, pivot to arb write apk + intent auto or Aftermarket blob.
 
 ### Test Harness
 
