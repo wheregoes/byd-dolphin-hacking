@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BYD Car — App Drop</title>
+<style>
+  :root { --bg:#0a0c12; --card:#161a24; --accent:#3b82f6; --ok:#22c55e; --text:#e2e8f0; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, sans-serif; }
+  .wrap { max-width: 720px; margin: 40px auto; padding: 20px; }
+  .card { background:var(--card); border-radius:16px; padding:28px; margin-bottom:16px; box-shadow:0 10px 30px rgba(0,0,0,0.4); }
+  h1 { font-size:28px; margin:0 0 8px; }
+  .sub { color:#94a3b8; font-size:15px; margin-bottom:20px; }
+  .big { font-size:18px; padding:18px 28px; border:none; border-radius:12px; background:var(--accent); color:white; width:100%; cursor:pointer; font-weight:600; }
+  .big:active { transform:scale(0.985); }
+  .status { padding:14px 18px; border-radius:10px; margin:12px 0; font-size:15px; }
+  .ok { background:#052e16; color:#4ade80; border:1px solid #166534; }
+  .info { background:#0f172a; color:#60a5fa; border:1px solid #1e40af; }
+  .warn { background:#451a03; color:#fbbf24; border:1px solid #854d0e; }
+  .log { font-family: ui-monospace, monospace; font-size:13px; background:#0b0e16; padding:12px; border-radius:8px; white-space:pre-wrap; max-height:220px; overflow:auto; margin-top:12px; }
+  .footer { color:#64748b; font-size:12px; text-align:center; margin-top:30px; }
+  .step { display:flex; gap:12px; align-items:flex-start; margin:14px 0; }
+  .num { width:26px; height:26px; background:#1e2937; color:#94a3b8; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Drop app to your BYD</h1>
+    <div class="sub">This page puts the APK straight into Downloads on the car (bypasses the blocked downloader). No ADB needed for the file itself.</div>
+
+    <button class="big" id="go">Drop APK to car Downloads</button>
+
+    <div id="status"></div>
+    <div id="log" class="log" style="display:none"></div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:600;margin-bottom:8px">After the file lands (you will see a success message):</div>
+    <div class="step"><div class="num">1</div><div>Open a file manager on the car (install one first via the USB "Third Party Apps" method if you don't have one).</div></div>
+    <div class="step"><div class="num">2</div><div>Go to <b>Downloads</b> (or /sdcard/Download).</div></div>
+    <div class="step"><div class="num">3</div><div>Tap the APK → choose <b>Package Installer</b> (or microG / GPack if shown) → tap Install.</div></div>
+    <div class="step"><div class="num">4</div><div>Allow "install from this source" if it asks the first time.</div></div>
+  </div>
+
+  <div class="card" style="font-size:13px;color:#94a3b8">
+    Works because the browser's normal download path is killed by BYD, but <code>fetch()</code> + Blob + <code>&lt;a download&gt;</code> writes the bytes directly and survives.
+    <br><br>
+    For the absolute first app on a completely stock car use the USB magic folder method (see the prep tool in this repo). After that this + a file manager is all you need.
+  </div>
+
+  <div class="footer">byd-dolphin-hacking • blob drop helper • works on current DiLink 3 / Chrome 113</div>
+</div>
+
+<script>
+const APK_URL = "payload.apk";   // change to your hosted APK (same origin or CORS)
+const OUT_NAME = "dropped-from-web.apk";
+
+const logEl = document.getElementById('log');
+const statusEl = document.getElementById('status');
+
+function log(msg, cls) {
+  logEl.style.display = 'block';
+  const d = document.createElement('div');
+  if (cls) d.className = cls;
+  d.textContent = msg;
+  logEl.appendChild(d);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function setStatus(html, cls) {
+  statusEl.innerHTML = `<div class="status ${cls||''}">${html}</div>`;
+}
+
+async function doDrop() {
+  const btn = document.getElementById('go');
+  btn.disabled = true;
+  btn.textContent = 'Downloading to car...';
+  setStatus('Fetching APK into memory (this bypasses BYD download block)...', 'info');
+  log('start blob download to /sdcard/Download/' + OUT_NAME);
+
+  try {
+    const resp = await fetch(APK_URL, { cache: 'no-store' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = OUT_NAME;          // important: the name the car will see
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    setStatus('File written to Downloads. Now open file manager on the car and install it.', 'ok');
+    log('blob → <a download> succeeded. Look in Downloads for ' + OUT_NAME, 'ok');
+    log('On car: file manager → Downloads → tap APK → Install', 'info');
+  } catch (e) {
+    setStatus('Download failed: ' + e.message, 'warn');
+    log('ERROR: ' + e.message, 'err');
+    log('Make sure the page and the APK are on the same origin, or the server sends CORS headers.', 'warn');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Drop again';
+  }
+}
+
+document.getElementById('go').onclick = doDrop;
+
+// Optional: auto start if ?autodrop=1 in URL (for testing / one-click pages)
+if (location.search.includes('autodrop=1')) {
+  setTimeout(doDrop, 600);
+}
+</script>
+</body>
+</html>
