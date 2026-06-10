@@ -178,4 +178,32 @@ See `tools/browser-exploit/{autopm.html,install-vectors.html,jailbreak.html,v8ex
 
 **Next commit will include:** results of the intent vector sweep + any p1 reliability patches + the dumb locked-jailbreak.html page + decompile findings on Aftermarket/Ace.
 
-All findings from this ADB session + prior are to be committed per repo rules. Never leave only in chat.
+## Live Test Result (2026-06-10, this session)
+
+Tested the exact autopm vector that previous docs claimed as "Flow A" (auto blob + intent file://):
+
+- Used adb reverse tcp:8088 + am start to http://127.0.0.1:8088/autopm.html (simulates opening the page; JS is pure client).
+- Server log: GET /autopm.html 200, GET /payload.apk 200 (the fetch + top-level script in autopm.html executed, blob created in memory).
+- 5 polls: NO /sdcard/Download/testpm.apk landed. No new package. mResumedActivity stayed com.byd.browser ChromeTabbedActivity entire time. No "Starting Intent ... package-archive" or installer activity in recent logs.
+- Conclusion: the a[download].click() step after blob did **not** persist the file this run. Auto onload / script-top-level write is fragile or blocked without user gesture / CDP setDownloadBehavior / specific state.
+
+This matches scattered notes in sideloading-internals.md about "in this run not producing" and "RCE/sc mandatory for reliable auto sideload on locked."
+
+**For the requested UX ("user access url > click in start > install") the auto version is insufficient. A real tap is likely required to activate the download write + external navigation.**
+
+## New Client-Side Deliverable
+
+Created `tools/browser-exploit/locked-clickstart.html`:
+
+- Dark monospace UI, one big "START - DROP & INSTALL APK" button.
+- onclick (real user gesture): fetch(/payload.apk) → blob → createObjectURL → a.download("byd-sideload.apk").click() → short delay → location + anchor for the two intent variants (VIEW + INSTALL_PACKAGE with file:///sdcard/Download/...).
+- Status log + fallback instructions (if nothing pops: look in Downloads/, or do the one-time USB "Third Party Apps 55" + file manager bootstrap).
+- Host your target sideload APK as `payload.apk` next to the html (or edit the fetch). Serve with `python -m http.server` (or phone hotspot + termux, or any static host). Car browser opens the URL, user taps the button exactly as specified.
+
+This is the closest pure-web, no-ADB, no-prior-apps match to the flow. Gesture on the button should give the activation the auto version lacked.
+
+If even the onclick version fails to write the file or dispatch the intent (ExternalNavigationHandler still eats it), then V8 RCE (Option A) becomes the only client-side path that can do arbitrary writes + am/pm from escaped context.
+
+## Commit
+
+This update + the new locked-clickstart.html + the live test data committed/pushed. All per CLAUDE.md. No findings left only in chat.
