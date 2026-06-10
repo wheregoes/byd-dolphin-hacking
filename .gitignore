@@ -1,3 +1,6 @@
+# Car screenshots may contain PII — never commit
+/*.png
+
 *.apk
 !tools/browser-exploit/sideload-test.apk
 telemetry-logs/
