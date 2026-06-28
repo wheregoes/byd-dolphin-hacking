@@ -205,6 +205,9 @@ IDD-IDPS: port 12406 (localhost)
 | 🔊 [Sound & Themes](docs/sound-and-themes.md) | Audio hardware topology, 200+ CAN signal IDs, AVAS/AVAH analysis, MCU probe results |
 | 📷 [Camera System](docs/camera-system.md) | Dual camera API architecture, 360 view system, permission enforcement analysis |
 | 🔄 [OTA System](docs/ota-system.md) | COTA/FOTA/OTG reverse engineering, upgrade_server vulnerability, COTA auth analysis |
+| 🧪 [Decompiled APKs & Install Vectors](docs/decompiled-apks-install-vectors.md) | APK internals, install surfaces, sideload vectors |
+| 🔓 [Locked/ADB-less Jailbreak Options](docs/locked-no-adb-browser-jailbreak-options.md) | Non-ADB attack surface, browser jailbreaks |
+| 🌐 [Public Site Chain](docs/public-site-chain.md) | Remote/public web exploit chain research |
 
 ### NFC Digital Key
 
@@ -233,6 +236,7 @@ adb shell "cd /data/local/tmp && app_process -Djava.class.path=. / BydAudioQuery
 | `BydAudioRoutingTest.java` | Audio routing tests (I2S, AVAS paths) |
 | `BydNavAudioTest.java` | Navigation audio channel testing |
 | `BydDeviceScan.java` | Multi-device signal scanner |
+| `BydAvasPlayer.java` | AVAS melody player |
 | `SysMix.java` | System audio mixer queries |
 
 ### AVAS & Sound
@@ -248,6 +252,7 @@ adb shell "cd /data/local/tmp && app_process -Djava.class.path=. / BydAudioQuery
 | `AvahCycle.java` | AVAH cyclic test patterns |
 | `AvahIsolate.java` | AVAH signal isolation tests |
 | `AvahStop.java` | AVAH signal stop/cleanup |
+| `AvasVolume2.java` | Secondary AVAS volume attempts |
 
 ### MCU & System Probes
 
@@ -258,6 +263,7 @@ adb shell "cd /data/local/tmp && app_process -Djava.class.path=. / BydAudioQuery
 | `BydSpiDirect.java` | Direct SPI communication (requires root) |
 | `BydDebugProbe.java` | Debug interface / hidden feature discovery |
 | `BydLockSoundMonitor.java` | Door lock sound event monitoring |
+| `BydCotaProbe.java` | COTA cloud API probe |
 
 ### Vehicle Systems
 
