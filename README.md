@@ -38,7 +38,8 @@ Everything here was discovered through ADB exploration, APK decompilation, and C
 | ADB | WiFi, port 5555 |
 | Head Unit IP | `192.168.10.10` (car WiFi) |
 | Firmware | `13.1.32.2507250.1` (Jul 25 2025) |
-| MCU | `13.5.5.2505300.2` |
+| MCU | `13.5.2.2312260.1` |
+| DSP | `13.5.5.2505300.2` |
 | Bootloader | **Unlocked** (`ro.boot.flash.locked=0`) |
 | Verified boot | Orange (unlocked) |
 | Instrument Cluster | Separate Qt/QML system (Qt 5.15.10 / 6.5.5) |
