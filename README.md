@@ -243,7 +243,6 @@ adb shell "cd /data/local/tmp && app_process -Djava.class.path=. / BydAudioQuery
 
 | Script | Purpose |
 |--------|---------|
-| `BydAvasPlayer.java` | AVAS melody player (frequency control) |
 | `AvasRoute.java` | AVAS audio routing experiments |
 | `AvasVolume.java` / `AvasVolume2.java` | AVAS volume control attempts |
 | `AvahFreq.java` | AVAH frequency sweep testing |
@@ -252,7 +251,6 @@ adb shell "cd /data/local/tmp && app_process -Djava.class.path=. / BydAudioQuery
 | `AvahCycle.java` | AVAH cyclic test patterns |
 | `AvahIsolate.java` | AVAH signal isolation tests |
 | `AvahStop.java` | AVAH signal stop/cleanup |
-| `AvasVolume2.java` | Secondary AVAS volume attempts |
 
 ### MCU & System Probes
 
@@ -270,7 +268,6 @@ adb shell "cd /data/local/tmp && app_process -Djava.class.path=. / BydAudioQuery
 | Script | Purpose |
 |--------|---------|
 | `BydNfcKeyProbe.java` | NFC digital key CAN bus scanner |
-| `BydCotaProbe.java` | COTA cloud API probe — area resolution, auth testing |
 | `BydUpgradeProbe.java` | upgrade_server Binder service probe |
 | `car-telemetry.py` | Car data polling and logging (Python) |
 
