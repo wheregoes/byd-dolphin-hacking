@@ -1,6 +1,8 @@
 # Public Website Deployment Analysis (jailbreakmybyd.com style)
 
-## Current Working Chain (what just succeeded locally)
+> ⚠️ **CORRECTION (Jun 2026):** The "working chain" below relied on a host laptop with ADB access to push the APK after the blob download beacon fired. **The blob download itself does NOT write a file on firmware 13.1.32.2507250.1** — BYD's "Download proibido" policy silently blocks it. The chain only "worked" because the beacon triggered an ADB push from the host laptop, NOT because the blob download succeeded. This requires ADB to be enabled on the car, which is a chicken-and-egg problem for truly locked units. No browser-only (zero-ADB) path exists on the current firmware.
+
+## Current Working Chain (what just succeeded locally — requires ADB)
 
 1. Host machine (your laptop) runs three things on the same WiFi as the car:
    - `python3 tools/browser-exploit/serve.py` (or equiv) → serves the special two-phase HTML at `/` on port 8080. Binds beacons at `/beacon`.

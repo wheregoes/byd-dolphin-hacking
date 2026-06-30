@@ -86,8 +86,6 @@ adb connect 192.168.10.10:5555
 | **AVAH test tones** | Play on AVAS external speaker using factory diagnostic signals (`0x6E970010`) |
 | **Content providers** | Expose vehicle data (battery, tyre pressure, maintenance, trip consumption) |
 | **Sideloading** | USB drive or ADB — [see guide](docs/sideloading-guide.md) |
-| **Browser blob download bypass** | `fetch→blob→anchor.click` silently drops files (including APKs) to `/sdcard/Download/` — no user gesture needed (Chromium 113 bug) |
-
 ### ⚠️ Partially Working
 
 | Feature | Status |
@@ -105,6 +103,7 @@ adb connect 192.168.10.10:5555
 | **Horn** | Hardware relay, not software controllable |
 | **Boot animation** | Needs root to replace (`/system/media/`) |
 | **Cabin/inside temperature** | No API found — exhaustive probing confirmed unavailable |
+| **Browser blob download bypass** | `fetch→blob→anchor.click` is **silently blocked** by BYD's "Download proibido" policy on firmware 13.1.32.2507250.1. No file lands, no error, no popup. Earlier claims of this working were inaccurate — see [test-log](tools/browser-exploit/test-log.md) for the full diagnosis. `navigator.share` is also `undefined` in this build. |
 
 ### 🔓 With Root (Magisk)
 
@@ -131,7 +130,7 @@ Key security-relevant discoveries for researchers:
 | **Permission bypass** | `BydPermissionContext` overrides `enforceCallingOrSelfPermission()` — auto-grants all `BYDAUTO_*` permissions. Works for AC, DoorLock, Bodywork. Fails for Panorama (server-side IPC check) |
 | **upgrade_server — no permission check** | Binder service accepts calls from UID 2000 (shell) with no SecurityException. Firmware updates could be triggered from `adb shell` with a valid signed package |
 | **COTA auth cracked** | HMAC-SHA256 with character-shifted secret key. Area resolution API confirmed working (HTTP 200) |
-| **Browser blob bypass** | Chromium 113: `fetch()→blob→anchor.click` bypasses BYD's download block from **any web page** — remote exploit, no ADB needed. 52MB APK verified |
+| **Browser download block ("Download proibido")** | BYD deliberately blocks ALL browser-initiated downloads (blob, server URL, with/without user gesture) via a policy in `DownloadController`. Decompiled `com.byd.browser` confirms: no `addJavascriptInterface`/JS bridges, no bypass path. `navigator.share` is `undefined`. This prevents any browser-only APK sideloading chain. See [test-log](tools/browser-exploit/test-log.md) for full diagnosis. |
 | **Port 7000 (CarPlay)** | `carplayserv` runs as **root**, listens on `0.0.0.0` — network-exposed attack surface |
 | **IDD-IDPS monitoring** | Intrusion detection on `localhost:12406`, monitors `wlan0`/`rmnet` interfaces. Three root-UID clients |
 | **SPI unprotected** | Packet format `[featureId_BE:4][dataLen:1][data:dataLen]` — no CRC, no HMAC |
@@ -186,7 +185,7 @@ IDD-IDPS: port 12406 (localhost)
 | Doc | Description |
 |-----|-------------|
 | 📱 [Sideloading Guide](docs/sideloading-guide.md) | Install apps via USB or ADB — no root needed |
-| 🔬 [Sideloading Internals](docs/sideloading-internals.md) | Browser exploit chain, blob download bypass, AftermarketInstallTool reverse engineering, country-specific whitelisting |
+| 🔬 [Sideloading Internals](docs/sideloading-internals.md) | Browser download block analysis, AftermarketInstallTool reverse engineering, country-specific whitelisting |
 | 🔓 [Rooting Guide](docs/rooting-guide.md) | Magisk root via fastboot — A/B slot safety, recovery procedures |
 
 ### System Deep Dives
@@ -290,7 +289,7 @@ docs/                       Guides and deep-dive documentation
 scripts/                    On-device tools (CAN bus, MCU probes, AVAS, Chromium)
 tools/
   browser-exploit/          Browser sideloading research
-    index.html              Main test page — blob download bypass PoC
+    index.html              Main test page — blob download bypass attempt (blocked by BYD policy)
     autodownload.html       Auto-download trigger test
     install.html            APK install flow test
     pwa.html                PWA install behavior test

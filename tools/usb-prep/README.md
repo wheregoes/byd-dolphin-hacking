@@ -53,9 +53,8 @@ See `prep.py` — most use `BYD6125F`. India and some restricted markets are dif
 Install a capable file manager via the USB method above.
 
 Then:
-- Use any of the blob-download pages in `tools/browser-exploit/` (or a hosted one).
-- The page does `fetch(...apk)` → blob → hidden `<a download>` and writes straight to `/sdcard/Download/` (bypasses BYD's crippled DownloadManager).
-- On the car, open your file manager → Downloads → tap the APK → choose PackageInstaller (or the microG/GPack one if present) → Install.
+- **Note:** The blob-download pages in `tools/browser-exploit/` do NOT work on firmware 13.1.32.2507250.1 — BYD's "Download proibido" policy silently blocks all browser downloads (blob, server URL, with/without gesture). These pages are retained for testing on older firmware versions.
+- On the car, use the file manager to open APKs from USB or from `/sdcard/Download/` (if placed there via ADB or USB).
 
 No magic folder, no password, works from a phone hotspot page if you want remote drops.
 
@@ -74,7 +73,7 @@ If a vuln is found (e.g. StrategyManager config file on USB that forces scanDevi
 
 The browser (`com.byd.browser`, Chromium 113) has its normal download path completely neutered at the Java level.
 
-**Good news**: `fetch()` + Blob + `<a download>` completely bypasses it and can silently (or on click) write APKs (and any other files) to `/sdcard/Download/`. This works today, from HTTP or HTTPS pages, even autofire on some loads. No ADB or CDP required for the drop.
+**Testing result (Jun 2026):** `fetch()` + Blob + `<a download>` does **NOT** bypass the download block on firmware 13.1.32.2507250.1. BYD's "Download proibido" policy silently blocks ALL browser-initiated downloads — blob, server URL, with/without user gesture, with/without `download` attribute. No file lands, no error, no popup. `navigator.share` is `undefined`. Browser decompilation confirmed no JS interfaces or bypass paths. No browser-only APK install path exists on the current firmware.
 
 **Current limitation for "visit one page = app installed" on locked stock car**:
 - The V8 RCE (CVE-2023-3079 TheHole chain in `v8exploit.js` + shellcode for `pm install`) exists and the primitives (p1-p4 + sb arb write to JIT X page) have been reached in testing.

@@ -1,5 +1,7 @@
 # Sideloading Internals
 
+> ⚠️ **CORRECTION (Jun 2026):** Earlier versions of this document claimed that `fetch()→blob→anchor.click` could silently bypass BYD's download block and write files to `/sdcard/Download/`. **This is incorrect on firmware 13.1.32.2507250.1.** Exhaustive testing (blob, server URL, with/without user gesture, with/without `download` attribute, `navigator.share`) confirmed that BYD's "Download proibido" policy **silently blocks ALL browser-initiated downloads** — no file lands, no error, no popup. Decompilation of `com.byd.browser` confirmed no `addJavascriptInterface`/JS bridges exist. The blob bypass may have worked on an earlier firmware version, but does NOT work on the current build. See `tools/browser-exploit/test-log.md` for the full diagnosis. All blob-bypass claims below are retained for historical reference but **should be treated as non-functional on the current firmware**.
+
 Deep dive into how BYD DiLink 3.0 handles third-party app installation. Reverse-engineered from `AftermarketInstallTool.apk` (`/system/app/AftermarketInstallTool/`).
 
 ## AftermarketInstallTool

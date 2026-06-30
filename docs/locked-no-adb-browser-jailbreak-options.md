@@ -1,16 +1,16 @@
 # Locked BYD (no ADB) Browser-Only Jailbreak Chain Analysis
 
+> ⚠️ **CORRECTION (Jun 2026):** The blob download bypass described below as "the golden ticket" **does NOT work on firmware 13.1.32.2507250.1**. Exhaustive testing confirmed BYD's "Download proibido" policy silently blocks ALL browser downloads (blob, server URL, with/without gesture). No file lands. `navigator.share` is `undefined`. Browser decompilation confirmed no JS interfaces. No browser-only install path exists on the current firmware. The analysis below is retained for historical reference. See `tools/browser-exploit/test-log.md` for the full diagnosis.
+
 **Goal:** User opens attacker URL in stock `com.byd.browser` (Chromium 113) → clicks Start → APK sideloads and installs. Works on units where ADB/TestTools/debug menu is inaccessible (IMEI password not known, wireless adb never enabled).
 
 **Current date context:** Analysis performed live on 192.168.10.10 (DiLink 3.0, Android 10, build 2025-07, country 55 BR, browser 113.1.6.37).
 
 ## 1. Confirmed Primitives (Browser Sandbox)
 
-- **Blob download bypass (the golden ticket):** `fetch(url_to_apk) → blob() → URL.createObjectURL → <a download=foo.apk>.click()` **completely bypasses** the BYD gutted DownloadController.
+- **Blob download bypass (DOES NOT WORK on current firmware):** `fetch(url_to_apk) → blob() → URL.createObjectURL → <a download=foo.apk>.click()` was previously believed to bypass the BYD DownloadController. **Testing on firmware 13.1.32.2507250.1 confirmed it is silently blocked** — no file lands, no error, no popup. The "Download proibido" policy blocks blob downloads, server URL downloads, and `navigator.share` equally. See test-log for details.
   - Normal `<a href=... download>` and `Page.navigate` hit `onDownloadStarted()` → toast "Download proibido..." (or localized) and cancel (receivedBytes=0).
-  - Blob path lives in renderer (Network + BlobRegistry), never calls the Java cancel hook. Files land in `/sdcard/Download/` (sdcardfs, owned root:sdcard_rw but world-readable enough for media + PackageInstaller).
-  - Evidence: multiple prior drops (electro_.apk 8.8MB present), testpm, 10KB/5MB/52MB binaries all verified in previous sessions. Works over HTTP and HTTPS (self-signed OK with warning).
-  - No gesture required for the anchor click in many tests (can fire onload or via small delay after fetch).
+  - Earlier claims of blob bypass working (electro_.apk, testpm, 52MB binaries) could not be reproduced and may have been from an earlier firmware version or misattributed to ADB-assisted flows.
 
 - Browser has `REQUEST_INSTALL_PACKAGES` (and READ/WRITE_EXTERNAL_STORAGE with installer exemptions).
 - `install_non_market_apps` appears enabled by default for aftermarket flows.

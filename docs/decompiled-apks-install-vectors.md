@@ -95,7 +95,7 @@ Key APKs (focus: anything that can turn a browser blob-dropped APK on /sdcard in
   2. Standard Chromium ExternalNavigationHandler that enforces BROWSABLE for dangerous dispatches (PackageInstaller lacks it → blocked or only resolver in some cases).
 
 **Implications:**
-- The download block is a single @CalledByNative hook — blob path (renderer fetch + URL.createObjectURL + a.download) was the bypass we already have (and the live test showed the fetch part works; the write sometimes needs gesture).
+- The download block is a single @CalledByNative hook — the blob path (renderer fetch + URL.createObjectURL + a.download) was previously believed to bypass it, but **testing on firmware 13.1.32.2507250.1 confirmed the blob path is also silently blocked**. No file lands. The fetch succeeds but the blob-to-disk write is intercepted by the "Download proibido" policy.
 - Intent dispatch to PackageInstaller is intentionally hard (BROWSABLE requirement + origin checks). This is why Ace (when present) or content: URIs from MediaStore were interesting — they sometimes route differently.
 - No obvious addJavascriptInterface or BYD JS bridge exposed to every page.
 
