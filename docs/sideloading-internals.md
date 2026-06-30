@@ -193,7 +193,7 @@ adb shell am start -a android.intent.action.VIEW \
 
 ## Browser Exploit: Download Bypass
 
-**Status:** Confirmed working — blob download is a remote web exploit (no ADB needed). Web Share is a secondary method (requires HTTPS + file manager).
+**Status (Jun 2026):** **DOES NOT WORK on firmware 13.1.32.2507250.1.** Earlier status of "Confirmed working" was inaccurate — the blob download is silently blocked by BYD's "Download proibido" policy. `navigator.share` / `navigator.canShare` are `undefined` (not even present in the BYD browser build). No browser-only download or install path exists on the current firmware.
 
 BYD's download block is only at `DownloadController.onDownloadStarted()` — a single Java entry point called from native Chromium. The `fetch()` API operates entirely in the renderer process and never touches the download manager.
 
@@ -515,7 +515,7 @@ Chain: `Visit URL` → `blob download` → `ADB cp+pm install` → **INSTALLED**
 | `pm install /data/local/tmp/app.apk` | **Works** | Silent install, no UI |
 | `pm install /sdcard/Download/app.apk` | Fails | SELinux denies system_server read on sdcardfs |
 | `am start -a VIEW -t .../package-archive -d content://media/external/file/{id}` | **Works** | MediaStore tracks blob-downloaded APKs. Content URI triggers PackageInstaller. |
-| `navigator.share({files: [apkFile]})` | Blocked | `NotAllowedError: Permission denied` — even on localhost (secure context). BYD disabled Web Share Level 2 file sharing. `canShare()` returns true but `share()` throws. |
+| `navigator.share({files: [apkFile]})` | Blocked | `navigator.canShare` is `undefined` (Jun 2026 test) — the BYD browser does not implement Web Share Level 2 at all. Earlier claim of `canShare()` returning true was inaccurate. |
 | `chrome://downloads` | Blocked | `ERR_BYD_NETWORK_BLOCK_LIST` — BYD blocks SOME chrome:// URLs |
 | `intent://` → PackageInstaller | Fails | No BROWSABLE category |
 | `content://downloads/all_downloads` | Fails | `ERR_FILE_NOT_FOUND` |
