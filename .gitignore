@@ -19,6 +19,8 @@ apk-analysis/ext_decompiled/
 
 # Pulled libs — too large, regeneratable from device
 data/cluster_libs/
+data/framework/*.jar
+data/framework/framework_extracted/
 
 # Cluster screenshots — may contain PII (odometer, location)
 data/cluster_screenshot*.png

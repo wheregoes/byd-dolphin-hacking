@@ -495,3 +495,112 @@ The cluster Qt app runs independently and receives data via:
 - `apk-analysis/services_decompiled/` — services.jar
 - `apk-analysis/ext_decompiled/` — ext.jar
 - `apk-analysis/DiCarServer_decompiled/` — DiCarServer (BYDAutoInstrumentDevice)
+
+## CAN Bus Injection (VCDS-Style) — WORKS!
+
+### The CAN Injection Path
+
+The `com.byd.cluster.spi` broadcast → `BYDAutoTestDevice.TEST_SIMULATE_DOWN_SET`
+path is **functional** on our car! This is the equivalent of VCDS for BYD.
+
+**How to use it:**
+
+1. Start the ClusterDebug app + service:
+```bash
+adb shell "am start -n com.byd.clusterdebug/.MainActivity"
+adb shell "am startservice -n com.byd.clusterdebug/.ClusterDebugService"
+```
+
+2. Send CAN frames via broadcast:
+```bash
+# "normal" extra — raw data bytes
+adb shell "am broadcast -a com.byd.cluster.spi --es normal 'FF,FF,FF,FF,FF,FF,FF,FF'"
+
+# "wholeFrame" extra — complete CAN frame (includes CAN ID)
+adb shell "am broadcast -a com.byd.cluster.spi --es wholeFrame '28,C0,00,00,00,00,00,00,00'"
+```
+
+3. Verify in logcat:
+```
+ClusterDebugService: receive normal: FF,FF,FF,FF,FF,FF,FF,FF
+AbsBYDAutoDevice: set featureID is aa00020f bufferDataValue is [-1, -1, -1, -1, -1, -1, -1, -1]
+```
+
+The bytes are injected via `BYDAutoTestDevice.set({0xAA00020F}, bufferDataValue)`
+which simulates CAN frames on the bus. The cluster (and other ECUs) receive
+these as if they came from the actual CAN bus.
+
+**Permissions**: The ClusterDebug app has `BYDAUTO_TEST_SET` permission.
+Shell (UID 2000) triggers the broadcast, and the app's receiver does the
+actual injection with its own permissions. **This works without root!**
+
+### OBD Diagnostic Protocol (UDS)
+
+Decompiled `BydDevelopmentTools.apk` reveals the full BYD OBD diagnostic system:
+
+**DiagnoseManager (`a.a.a.k0.a`)** — UDS (ISO 14229) diagnostic communication:
+
+- **Send OBD data**: `BYDAutoOtaDevice.set({0xAA000140}, eventValue)` — sends UDS frames
+- **Receive OBD responses**: `BYDAutoOtaDevice.registerListener(listener, {0x99000140})` — listens for responses
+- **Configure MCU OBD monitor**: `BYDAutoSettingDevice.set({0xAA000241}, ...)` — sets receive ID
+
+**Frame format** (from `DiagnoseManager.c()`):
+```
+[checksum_hi, checksum_lo,  # 2 bytes: checksum of payload
+ total_packets,              # 1 byte: total number of packets
+ packet_num,                 # 1 byte: current packet number
+ data_len,                   # 1 byte: payload length
+ 0x00, 0x03, 0xE8,          # 3 bytes: protocol header
+ 0x00, 0x01,                # 2 bytes: constant
+ request_id_hi, request_id_lo, # 2 bytes: sender CAN ID
+ 0x01,                       # 1 byte: constant
+ receive_id_hi, receive_id_lo, # 2 bytes: target CAN ID
+ ... payload bytes ...]      # UDS diagnostic data
+```
+
+**UDS commands found:**
+- `3E 80` = Tester Present (keep-alive/handshake)
+- `10 05` = Diagnostic Session Control → extended diagnostic session
+
+**CAN domains (networks):**
+1. 智能进入网 (Smart Entry)
+2. 车身网 (Body)
+3. 能量网 (Energy)
+4. 底盘网 (Chassis)
+5. ADAS网 (ADAS)
+6. 车身网2 (Body 2)
+
+**CAN IDs:**
+- Left domain: requestId=1824 (0x720), receiveId=1832 (0x728)
+- Right domain: requestId=1863 (0x747), receiveId=1871 (0x74F)
+- IPB (Parking Brake): requestId=1922 (0x782), receiveId=1930 (0x78A)
+
+### What's Needed to Enable Hidden Features
+
+To do "VCDS-style" feature coding, we need:
+
+1. **CAN injection** — ✅ WORKS via `com.byd.cluster.spi` broadcast
+2. **UDS diagnostic protocol** — known (frame format documented above)
+3. **CAN IDs for target ECUs** — partially known (6 networks, specific IDs)
+4. **UDS service IDs for feature coding** — NOT YET KNOWN
+
+The missing piece: **which UDS services/identifiers control specific features**.
+BYD uses standard UDS (0x10=session, 0x22=read by ID, 0x2E=write by ID, 0x3E=tester present),
+but the coding data identifiers for each feature are proprietary.
+
+**Possible approaches:**
+- Sniff CAN bus traffic while using the official BYD diagnostic tool
+- Reverse engineer the `BydHealthDiagnostic.apk` for more UDS identifiers
+- Try standard UDS sequences (session control → security access → read/write by ID)
+- Use the CAN injection path to send UDS frames to specific ECUs
+
+### Comparison: VCDS vs BYD CAN Coding
+
+| Aspect | VAG (VCDS) | BYD |
+|--------|-----------|-----|
+| Protocol | UDS/KWP2000 over CAN | UDS over CAN |
+| Tool | External OBD2 dongle | Built-in Android app |
+| Access | Plug into OBD2 port | ADB broadcast (no hardware) |
+| Permissions | None (hardware access) | `BYDAUTO_TEST_SET` (via ClusterDebug) |
+| Feature coding | Change ECU coding values | Write UDS identifiers |
+| Security | PIN/SKC for some features | Security access seed/key exchange |
