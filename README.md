@@ -236,6 +236,8 @@ adb shell "cd /data/local/tmp && app_process -Djava.class.path=. / BydAudioQuery
 | `BydNavAudioTest.java` | Navigation audio channel testing |
 | `BydDeviceScan.java` | Multi-device signal scanner |
 | `BydAvasPlayer.java` | AVAS melody player |
+| `BydCarPropertyTest.java` | DiCar/ICarPropertyService API probe (second MCU path via ContentProvider) |
+| `BydAvasDeepProbe.java` | Tests newly discovered signals from CarSetting decompilation (UE_BROADCAST, HW_L1, PROMPT_VOLUME, etc.) |
 | `SysMix.java` | System audio mixer queries |
 
 ### AVAS & Sound

@@ -919,19 +919,129 @@ from shell context. The unlocked bootloader + Magisk via fastboot is the viable 
 - Potentially restore AVAH test tone by resetting MCU config directly via SPI
 - Install system-level apps with BYDAUTO permissions
 
+### CarSetting.apk Decompilation — New API Path & Untested Signals (2026-06-30)
+
+Decompiled `CarSetting.apk` (52MB, 6063 Java files) with jadx. Key discoveries:
+
+#### DiCar / ICarPropertyService — Second API Path to MCU
+
+The CarSetting UI does NOT use `BYDAutoManager.setInt()` for the external speaker toggle.
+It uses a completely different API: **DiCar / ICarPropertyService** via Binder.
+
+```
+CarSetting UI → CarControlMgr → DiCarSetter
+  → ICarPropertyManager (CarPropertyManager client)
+    → Spi.getService(ICarPropertyService)
+      → ContentProvider: content://com.byd.car.server.provider.CarServiceProvider/sync_binder
+        → BinderProvider (android:exported="true" — accessible from ANY app!)
+        → Returns IBinder for ICarPropertyService
+  → ICarPropertyService.setProperties(CarPropertyValue[]) → DiCarServer → MCU
+```
+
+**This is a DIFFERENT API path from BYDAutoManager.** We've only been testing via
+`BYDAutoManager.setInt(devType, featureId, value)`. The DiCar path uses string-based
+hex IDs (`setProperty("0x1C10000E", 1)`) and routes through a different Binder service.
+It may have different permission handling, different feature ID mapping, or different
+MCU routing logic.
+
+**The ContentProvider is `android:exported="true"`** — confirmed in DiCarServer's
+AndroidManifest.xml. This means `app_process` (shell UID) CAN access it.
+
+**Binder interface**: `com.byd.car.property.ICarPropertyService`
+- `setProperties(CarPropertyValue[])` — transaction code 1
+- `getProperty(String)` — transaction code 2
+- `getProperties(String[])` — transaction code 3
+
+**Test script**: `scripts/BydCarPropertyTest.java` — accesses ICarPropertyService via
+ContentProvider, tests external speaker switch + all new signals via the DiCar path.
+
+#### Hidden External Speaker UI Toggle
+
+`ExternalSpeakerCommon.java` is a UI toggle for the external speaker in Sound settings:
+- Action ID: `00300200190000` (CCS entity system)
+- Visibility controlled by `AUDIO_EXTERIOR_SPEAKER_CONFIG` (0x35201036)
+  - Returns 2 = visible (shown in UI)
+  - Returns 0 or 1 = hidden (NOT shown — this is why it's hidden on our Dolphin)
+- Toggle state: `AUDIO_EXTERIOR_SPEAKER_SWITCH_STATUS` (0x35201040) — 1=on, 2=off
+- Toggle write: `AUDIO_EXTERIOR_SPEAKER_SWITCH_SET` (0x1C10000E) — 1=on, 2=off
+  - **This is the SAME signal that FAILED via BYDAutoManager** — but the UI sends it
+    via DiCar/ICarPropertyService. Testing via the DiCar path may produce a different
+    result.
+- Gear-gated: only enabled when gear == 3 (likely Park)
+- `Sound00300200190000.java` is the CCS entity implementation
+
+#### 599 Audio Feature IDs — Many Untested
+
+`com.byd.feature.audio.Audio.java` contains 599 lines of feature ID constants. Many
+were NOT tested in the original BydAudioQuery/BydMcuProbe scripts. Key untested groups:
+
+| Signal Group | Hex IDs | Purpose |
+|--------------|---------|---------|
+| **UE_BROADCAST** | 0x32B1C028, 0x1A900040, 0x1A90001E | User External broadcast sound source + volume + trigger |
+| **HW_L1_SOUNDING_DIRECTION** | 0x32B1C020 | Hardware L1 sounding direction (routing?) |
+| **HW_L2/L3_SILENCE** | 0x32B1C01C, 0x32B1C01E | Hardware L2/L3 silence control |
+| **HW_MDC_L2_LOWER** | 0x32B1C024 | Hardware MDC L2 lower |
+| **KEY_SOUND_SOURCE** | 0x32B1C010 | Key sound source routing |
+| **KEY_TONE** | 0x1B10000E | Key tone (different from key sound source) |
+| **PROMPT_VOLUME_LEVEL** | 0xAA000299 (SET), 0x99000307 (STATUS) | Prompt volume 1=low, 2=mid, 3=high |
+| **NON_BRANDED_AMP_UE** | 0xAA000346, 0xAA000332, 0xAA000334 | Non-branded amp UE mute/volume/duck |
+| **OPEN_DOOR_LOW_MEDIA** | 0xAA000311, 0x1A900046 | Open door low media sound behavior |
+| **DYNA_REWORK_SOUND_EFFECT** | 0x99000233, 0x99000234 | Dynaudio rework sound effect config + style |
+| **FAULT_TYPE_A2B/DSP/PA/PAD** | 0x99000246-49 | A2B bus, DSP, PA, PAD fault status (NEW!) |
+| **SOUND_SHIELD** | 0x35202034, 0x3520202E | Sound shield configuration + status |
+| **SPEAKER_FLIP** | 0x35A000D8, 0x35A000DA | Speaker flip cover config |
+| **3D_SOUND_EFFECT** | 0x4AB0001D, 0x4AB0000D | 3D sound effect config + status |
+| **SUPPORT_VARIABLE_SOUND_SOURCE** | 0x99000266 | Variable sound source support flag |
+
+"UE" likely means "User External" — the external/AVAS speaker channel. These UE_BROADCAST
+signals are the most promising untested candidates for routing audio to the AVAS speaker.
+
+**Test script**: `scripts/BydAvasDeepProbe.java` — tests all new signals via BYDAutoManager.
+
+#### No Hidden Lock/Power-On Sound UI
+
+`AUDIO_LOCK_CAR_SOUND_EFFECT_PLAYBACK_STATUS_SET` (0xAA000321) and
+`AUDIO_START_PLAY_POWER_ON_SOUND_SET` (0xAA000243) exist in Audio.java but are NOT
+wired to any UI activity in CarSetting. They are placeholder constants only — no
+hidden menu, no settings activity, no broadcast receiver uses them.
+
+#### No Hidden Factory/Test Activities
+
+The AndroidManifest.xml contains no hidden test, factory, or engineering mode
+activities related to AVAS or sound. The `com.byd.test` package (seen in app filter
+lists) is a separate APK (`com.byd.test`), not part of CarSetting.
+
+`IFullSettingService` has `setDebugModeSwitch(boolean)` but this is for OMS (Occupant
+Monitoring System) debug mode only — not a general system debug mode.
+
+#### Prompt Sound Source UI
+
+`VehiclePromptSoundSource.java` controls the Normal/Tech sound profile:
+- Read: `STATISTICS_SOUND_SOURCE_INFO` (0x99000194) as byte array, byte offset 5 = value
+- Write: `STATISTICS_SOUND_SOURCE_INFO_SET` (0xAA000194) — 1=Normal, 2=Tech
+- When Tech is selected, the engine simulator sub-menu is hidden
+- Uses `HalSetter.getInstance().set()` — yet another API path (HalSetter)
+
 ### Pending Investigation
 
 | Test | Status | Notes |
 |------|--------|-------|
 | AVAH tone failure | **RESOLVED** | Fixed with enabler commands (see AVAH Enabler Commands section) |
 | AVAS volume increase | **CLOSED** | Hardcoded in MCU firmware; all CAN approaches tested, none work |
-| Custom audio on AVAS | **CLOSED** | I2S audio cannot reach AVAS; MCU has hard separation. Requires root or firmware mod |
+| Custom audio on AVAS | **CLOSED (pre-root)** | I2S audio cannot reach AVAS; MCU has hard separation. Requires root or firmware mod |
 | I2S combination attacks | **CLOSED** | All Phase 1 pre-root tests failed (combo, UE, kitchen sink, PCM streaming) |
 | PCM streaming via setBuffer | **CLOSED** | MCU ignores buffer data content, only respects setInt value for tone selection |
 | tinymix enumeration | **BLOCKED** | Requires root; app_process (UID 2000) cannot access /dev/snd/* |
 | Root via Magisk + fastboot | **NOT PURSUED** | Bootloader unlocked, Magisk viable, but user chose not to root |
 | AVAS presets while driving (0x1B10003D) | Not tested | Values 0-5+ — must test at low speed |
 | OTA pipeline for DSP sound package | Partially probed | Data path works but DSP sound source rejects buffer |
+| **DiCar/ICarPropertyService path** | **NEW — untested** | Second API to MCU via exported ContentProvider. Test external speaker switch via this path |
+| **UE_BROADCAST signals** | **NEW — untested** | User External broadcast sound source/volume/trigger — may route to AVAS |
+| **HW_L1_SOUNDING_DIRECTION** | **NEW — untested** | Hardware sounding direction control — may route audio |
+| **PROMPT_VOLUME_LEVEL** | **NEW — untested** | Prompt volume 1-3 (low/mid/high) — may affect AVAS volume |
+| **EXTERIOR_SPEAKER_CONFIG readback** | **NEW — untested** | Read 0x35201036 to check if ext speaker is hidden (expect 0 or 1) |
+| **A2B/DSP/PA fault status** | **NEW — untested** | 0x99000246-49 — may reveal AVAS hardware path status |
+| **KEY_SOUND_SOURCE** | **NEW — untested** | Key sound source routing |
 
 ## Theme System
 

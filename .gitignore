@@ -7,3 +7,6 @@ telemetry-logs/
 __pycache__/
 *.pyc
 .env
+
+# Decompiled APKs — regeneratable via jadx from data/apks/*.apk
+apk-analysis/CarSetting_decompiled/
