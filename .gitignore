@@ -8,5 +8,17 @@ __pycache__/
 *.pyc
 .env
 
-# Decompiled APKs — regeneratable via jadx from data/apks/*.apk
+# Decompiled APKs/jars — regeneratable via jadx from data/apks/*.apk or data/framework/*.jar
 apk-analysis/CarSetting_decompiled/
+apk-analysis/ClusterDebug_decompiled/
+apk-analysis/BydThemeStore_decompiled/
+apk-analysis/DiCarServer_decompiled/
+apk-analysis/framework_decompiled/
+apk-analysis/services_decompiled/
+apk-analysis/ext_decompiled/
+
+# Pulled libs — too large, regeneratable from device
+data/cluster_libs/
+
+# Cluster screenshots — may contain PII (odometer, location)
+data/cluster_screenshot*.png
