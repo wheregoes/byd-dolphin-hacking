@@ -1035,13 +1035,14 @@ Monitoring System) debug mode only — not a general system debug mode.
 | Root via Magisk + fastboot | **NOT PURSUED** | Bootloader unlocked, Magisk viable, but user chose not to root |
 | AVAS presets while driving (0x1B10003D) | Not tested | Values 0-5+ — must test at low speed |
 | OTA pipeline for DSP sound package | Partially probed | Data path works but DSP sound source rejects buffer |
-| **DiCar/ICarPropertyService path** | **NEW — untested** | Second API to MCU via exported ContentProvider. Test external speaker switch via this path |
-| **UE_BROADCAST signals** | **NEW — untested** | User External broadcast sound source/volume/trigger — may route to AVAS |
-| **HW_L1_SOUNDING_DIRECTION** | **NEW — untested** | Hardware sounding direction control — may route audio |
-| **PROMPT_VOLUME_LEVEL** | **NEW — untested** | Prompt volume 1-3 (low/mid/high) — may affect AVAS volume |
-| **EXTERIOR_SPEAKER_CONFIG readback** | **NEW — untested** | Read 0x35201036 to check if ext speaker is hidden (expect 0 or 1) |
-| **A2B/DSP/PA fault status** | **NEW — untested** | 0x99000246-49 — may reveal AVAS hardware path status |
-| **KEY_SOUND_SOURCE** | **NEW — untested** | Key sound source routing |
+| **DiCar/ICarPropertyService path** | **BLOCKED** | ContentProvider exported but Android 10 UID check blocks app_process: "Given calling package android does not match caller's uid 2000". No `car_property_service` in ServiceManager. |
+| **UE_BROADCAST signals** | **FAILED** | ALL UE_BROADCAST SET signals return MCU_FAILED (-2147482648). UE channel not implemented on Dolphin MCU. |
+| **HW_L1/L2/L3_SOUNDING** | **FAILED** | ALL HW sounding direction SET signals return MCU_FAILED. Not implemented on Dolphin MCU. |
+| **PROMPT_VOLUME_LEVEL** | **SUCCESS** | `PROMPT_VOLUME_LEVEL_SET` (0xAA000299) accepts 1=low, 2=mid, 3=high. Readback via 0x99000307 confirms change. Was 1 (low), changed to 3, confirmed readback=3. **Whether this affects AVAS volume needs user confirmation.** |
+| **EXTERIOR_SPEAKER_CONFIG readback** | **CONFIRMED HIDDEN** | 0x35201036 returns -10011 (NOT_REGISTERED) — exterior speaker feature not implemented on Dolphin MCU. This is why the UI toggle is hidden. |
+| **A2B/DSP/PA fault status** | **NOT READABLE** | 0x99000246-49 all return -10011 (NOT_REGISTERED). Fault status signals not implemented on Dolphin. |
+| **KEY_SOUND_SOURCE** | **FAILED** | 0x32B1C010 and 0x1B10000E both return MCU_FAILED. Not implemented. |
+| **NON_BRANDED_AMP_UE** | **FAILED** | 0xAA000346, 0xAA000332, 0xAA000334 all return MCU_FAILED. Non-branded amp UE channel not implemented. |
 
 ## Theme System
 
