@@ -67,6 +67,25 @@ adb connect 192.168.10.10:5555
 - **APK requirements** — ARM64, `targetSdk ≤ 33`, `minSdk ≤ 29`
 - **Country-specific restrictions** — Kazakhstan (14-app whitelist), India (Mappls only), Europe/Japan/Australia (online verification)
 
+### CAN Bus Injection (VCDS-Style Coding)
+
+Inject CAN frames from ADB — no root, no OBD2 dongle:
+
+```bash
+# 1. Start the ClusterDebug app + service (acts as privileged proxy)
+adb shell "am start -n com.byd.clusterdebug/.MainActivity"
+adb shell "am startservice -n com.byd.clusterdebug/.ClusterDebugService"
+
+# 2. Inject CAN frames
+adb shell "am broadcast -a com.byd.cluster.spi --es normal 'FF,FF,FF,FF,FF,FF,FF,FF'"
+
+# 3. Capture cluster screenshot
+adb shell "fission_screencap -d 1 -p /data/local/tmp/cluster.png"
+adb pull /data/local/tmp/cluster.png
+```
+
+See [Driver Display](docs/driver-display.md) for the full UDS diagnostic protocol, CAN frame format, and ECU network topology.
+
 ---
 
 ## 🔬 Key Findings
@@ -84,6 +103,10 @@ adb connect 192.168.10.10:5555
 | **Engine simulator sound** | CAN-writable — UI shows 3 presets but MCU accepts 1–255 |
 | **AVAS preset selection** | CAN-writable — UI shows 2 but MCU accepts 0–5+ |
 | **AVAH test tones** | Play on AVAS external speaker using factory diagnostic signals (`0x6E970010`) |
+| **AVAS melody patterns** | 8 working patterns (doorbell, shop chime, alarm, fanfare, etc.) via `TEST_AUDIO_AVAS_SET` pitch control — [Door Sound app](https://github.com/wheregoes/byd-apps) |
+| **CAN bus injection** | **VCDS-style feature coding possible** — inject CAN frames via `com.byd.cluster.spi` broadcast, no root needed |
+| **Cluster screenshot** | Capture driver display via `fission_screencap -d 1 -p <file>` |
+| **Instrument cluster reads** | PowerUnit, TempUnit, BacklightCtlType, InsThemeValue via BYDAutoManager |
 | **Content providers** | Expose vehicle data (battery, tyre pressure, maintenance, trip consumption) |
 | **Sideloading** | USB drive or ADB — [see guide](docs/sideloading-guide.md) |
 ### ⚠️ Partially Working
@@ -97,8 +120,11 @@ adb connect 192.168.10.10:5555
 
 | Feature | Reason |
 |---------|--------|
-| **Custom AVAS audio (Boombox)** | MCU firmware blocks I2S → AVAS routing |
-| **AVAS volume control** | Hardcoded in MCU, no CAN signal changes it |
+| **Custom AVAS audio (Boombox)** | MCU firmware blocks I2S → AVAS routing. Only 2 pitches available (TEST_AVAS 1=A, 2=B) |
+| **AVAS volume control** | Hardcoded in MCU, PROMPT_VOLUME_LEVEL doesn't affect it |
+| **Cluster theme/skin changes** | AutoContainer service throws "no AutoContainerNative" in single-OS mode (`fission_single_os=1`) |
+| **Cluster debug commands** | Day/night, classic/tech, FPS, skins — all require AutoContainer (blocked) |
+| **BYDAutoInstrumentDevice API** | Requires `BYDAUTO_INSTRUMENT_COMMON/SET` permissions — shell UID 2000 blocked |
 | **Custom lock/power-on sounds** | MCU firmware rejects the commands |
 | **Horn** | Hardware relay, not software controllable |
 | **Boot animation** | Needs root to replace (`/system/media/`) |
@@ -114,7 +140,9 @@ Root is optional — most features work without it. [Rooting Guide](docs/rooting
 | Direct SPI access | `/dev/spidev_ivi` — bypass 128-byte Java API limit (up to 247-byte SPI records) |
 | ALSA mixer controls | Potential AVAS audio routing via `tinymix` |
 | MCU config reset | Direct SPI commands to reset MCU state |
-| System partition write | Modify `/system/media/` (boot animation), install system apps |
+| System partition write | Modify `/system/media/` (boot animation), install system apps, replace `cluster_theme*.rcc` |
+| Cluster theme replacement | Replace 132MB/124MB RCC files in `/system/lib64/`, patch `libBydCluster.so` single-OS check |
+| OBD diagnostic send | `BYDAUTO_OTA_SET` + `BYDAUTO_SETTING_COMMON` permissions for full UDS coding |
 | Kernel symbols | `/proc/kallsyms` access, `dmesg` |
 | KernelSU | **Not viable** — requires GKI kernel 5.10+, device runs 4.14.117 (non-GKI) |
 
@@ -134,6 +162,8 @@ Key security-relevant discoveries for researchers:
 | **Port 7000 (CarPlay)** | `carplayserv` runs as **root**, listens on `0.0.0.0` — network-exposed attack surface |
 | **IDD-IDPS monitoring** | Intrusion detection on `localhost:12406`, monitors `wlan0`/`rmnet` interfaces. Three root-UID clients |
 | **SPI unprotected** | Packet format `[featureId_BE:4][dataLen:1][data:dataLen]` — no CRC, no HMAC |
+| **CAN bus injection from shell** | `com.byd.cluster.spi` broadcast → `BYDAutoTestDevice.TEST_SIMULATE_DOWN_SET` (0xAA00020F) injects raw CAN frames. No root, no hardware — just ADB. ClusterDebug app acts as privileged proxy. VCDS-style ECU coding possible. |
+| **UDS diagnostic protocol exposed** | BydDevelopmentTools.apk (`sharedUserId=android.uid.system`) contains full UDS (ISO 14229) stack — frame format, CAN domain IDs, session control, security access. Send via `BYDAutoOtaDevice.set({0xAA000140}, ...)`. |
 | **Most BYDAUTO permissions** | `protectionLevel=normal` — any app can request them at install time |
 
 ---
@@ -157,6 +187,28 @@ SoC → I2S → MCU DSP → A2B bus → Amplifiers / AVAS speaker
 ```
 BYD App → HTTPS → BYD Cloud → MQTT → cloudmanager (native) → CAN bus
 ```
+
+### Instrument Cluster (Driver Display)
+
+```
+IVI (Android) ──fission/cbox bridge──→ Cluster (Qt OS, Qt 5.15.10 / 6.5.5)
+                                              ↓
+                                    libBydCluster.so (31MB)
+                                    cluster_theme1.rcc (132MB)
+                                    cluster_theme2.rcc (124MB)
+```
+
+- **Single-OS mode** (`fission_single_os=1`): AutoContainer service is a stub — "no AutoContainerNative"
+- **Dual-OS mode** (`fission_single_os=0`): full cluster theme/skin API via `sendInfo2(8, flatBuffer)`
+- **CAN injection** works in both modes: `com.byd.cluster.spi` broadcast → MCU → cluster
+
+### CAN Bus Injection Path
+
+```
+ADB shell → am broadcast → ClusterDebug app (BYDAUTO_TEST_SET) → TEST_SIMULATE_DOWN_SET → MCU → CAN bus
+```
+
+No root, no OBD2 dongle — just ADB WiFi.
 
 ### OTA Update Paths
 
@@ -201,7 +253,8 @@ IDD-IDPS: port 12406 (localhost)
 | Doc | Description |
 |-----|-------------|
 | ❄️ [AC & Climate Control](docs/ac-climate-control.md) | Temperature zones, AC state getters/setters, encoding quirks, permission bypass code |
-| 🔊 [Sound & Themes](docs/sound-and-themes.md) | Audio hardware topology, 200+ CAN signal IDs, AVAS/AVAH analysis, MCU probe results |
+| 🔊 [Sound & Themes](docs/sound-and-themes.md) | Audio hardware topology, 200+ CAN signal IDs, AVAS/AVAH analysis, MCU probe results, 8 working melody patterns |
+| 🖥️ [Driver Display](docs/driver-display.md) | Instrument cluster reverse engineering — Qt OS, AutoContainer bridge, CAN injection, UDS diagnostics, VCDS-style coding |
 | 📷 [Camera System](docs/camera-system.md) | Dual camera API architecture, 360 view system, permission enforcement analysis |
 | 🔄 [OTA System](docs/ota-system.md) | COTA/FOTA/OTG reverse engineering, upgrade_server vulnerability, COTA auth analysis |
 | 🧪 [Decompiled APKs & Install Vectors](docs/decompiled-apks-install-vectors.md) | APK internals, install surfaces, sideload vectors |
@@ -238,6 +291,13 @@ adb shell "cd /data/local/tmp && app_process -Djava.class.path=. / BydAudioQuery
 | `BydAvasPlayer.java` | AVAS melody player |
 | `BydCarPropertyTest.java` | DiCar/ICarPropertyService API probe (second MCU path via ContentProvider) |
 | `BydAvasDeepProbe.java` | Tests newly discovered signals from CarSetting decompilation (UE_BROADCAST, HW_L1, PROMPT_VOLUME, etc.) |
+| `AvasPattern.java` / `AvasMelody.java` | AVAS melody pattern players (doorbell, shop chime, alarm, fanfare) |
+| `PitchTest.java` / `PitchHunt.java` / `TestAvasSweep.java` | AVAS pitch discovery — confirmed only 2 pitches (1=A, 2=B) |
+| `PromptVolTest.java` / `PromptVolSingle.java` | PROMPT_VOLUME_LEVEL tests (accepted but no AVAS volume change) |
+| `ClusterCmd.java` | Send AutoContainer cluster debug commands (blocked by single-OS) |
+| `ClusterProbe.java` | Probe instrument cluster feature IDs via BYDAutoManager |
+| `ClusterTest.java` | Targeted test of working instrument features (BacklightCtlType, InsThemeValue, PowerUnit, TempUnit) |
+| `InstrumentDeviceTest.java` | Direct BYDAutoInstrumentDevice API test (blocked by permission) |
 | `SysMix.java` | System audio mixer queries |
 
 ### AVAS & Sound
@@ -301,16 +361,18 @@ tools/
     serve_https.py          Local HTTPS server for testing
     sideload-test.apk       Mock APK for install chain testing
 data/
-  apks/                     Extracted system APKs (DiCarServer, CarSetting)
+  apks/                     Extracted system APKs (DiCarServer, CarSetting, ClusterDebug, BydThemeStore, devtools)
   audio-config/             Audio platform XML configs (I2S, mixer paths)
   car-status/               CarStatusProvider data dumps
+  cluster_libs/             Cluster native libs (libBydCluster.so) — gitignored, regeneratable
+  framework/                Pulled framework.jar, services.jar, ext.jar — gitignored
   native-libs/              Native shared libraries (auto.default.so, libbydauto.so)
   packages/                 Package lists and service dumps
   permissions/              BYDAUTO permission definitions
   system-properties/        System property dumps and Android settings
   chromium_flags_*.json     Chromium flag analysis data
   mcu-probe-*.txt           MCU probe scan results
-apk-analysis/               Vehicle type mappings (VehicleCarType.json, vehicleType.json)
+apk-analysis/               Decompiled APKs (regeneratable via jadx) + vehicle type mappings
 ```
 
 Custom Android apps (Door Sound, etc.) live in [byd-apps](https://github.com/wheregoes/byd-apps).
