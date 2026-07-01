@@ -199,7 +199,32 @@ The AVAS is **partially controlled from the Android head unit**. DiCarServer has
 
 **Vehicle Prompt Sound Source**: A separate sound profile system accessible via `STATISTICS_SOUND_SOURCE_INFO` (0x99000194 read, 0xAA000194 write). Values: 1=Normal, 2=Tech. When set to "Tech", the engine simulator sub-menu is hidden in Vehicle Settings. This is read as a byte array — byte offset 5 contains the current value.
 
-**AVAH test tones — CONFIRMED WORKING**: `TEST_CMD_TEST_AUDIO_AVAH_SET` (0x6E970010) plays test tones on the AVAS external speaker. Both GET and SET have **real non-zero feature IDs** (1855389712 SET, 1856438288 GET) — fully implemented in the HAL. Values: 0=stop, 1=1kHz, 2=2kHz, 3=3kHz. **Tested and verified**: 1kHz tone is audible from outside the car through the AVAS speaker.
+**AVAH test tones — CONFIRMED WORKING (CORRECTED 2026-06-30)**: `TEST_CMD_TEST_AUDIO_AVAH_SET` (0x6E970010) plays test tones on the AVAS external speaker. However, live user testing corrected the earlier documentation:
+
+- **AVAH (0x6E970010) = ON/OFF only**: Value 1=on (any non-zero), 0=off. Does NOT change pitch. Earlier claim of "1=1kHz, 2=2kHz, 3=3kHz" was WRONG — all non-zero values produce the same pitch.
+- **TEST_AUDIO_AVAS_SET (0xAA000104) = pitch selector**: Value 1=pitch A (lower), 2=pitch B (higher), 0/3+=silence. This is the actual pitch control. Change mid-tone by setting TEST_AVAS while AVAH stays on.
+- **Only 2 pitches available**: Tested TEST_AVAS values 0-255. Only 1 and 2 produce tones (different pitches). All other values (3, 6, 7, 8, 10, 15, 20, 50, 100, 255) are silent.
+- **Rests**: Setting TEST_AVAS=0 while AVAH=1 produces silence (rest between notes).
+- **Pitch change mid-tone**: Confirmed working — changing TEST_AVAS from 1→2 while AVAH stays on produces an audible pitch change without stopping.
+
+**Working AVAS pattern recipe** (Tesla Boombox-style, 2 pitches + rests):
+```java
+enable(); // 6 enabler commands
+setInt(1002, AVAH, 1); // tone ON
+setInt(1002, TEST_AVAS, 1); Thread.sleep(400); // pitch A
+setInt(1002, TEST_AVAS, 0); Thread.sleep(120); // rest
+setInt(1002, TEST_AVAS, 2); Thread.sleep(600); // pitch B
+setInt(1002, AVAH, 0); // tone OFF
+disable(); // 5 disable commands
+```
+
+**Confirmed patterns** (user-verified, audible outside car):
+- Doorbell: pitch A (400ms) → pitch B (600ms) = ding-DONG
+- Shop chime: A(200)→rest(120)→A(200)→rest(120)→B(300)→rest(120)→B(400) = ding-ding-dong-dong
+- Alarm: A(300)→B(300) × 4 = wee-woo-wee-woo
+- Triple beep: 3× A(200) with full disable/re-enable between = three separate beeps
+
+See `scripts/AvasMelody.java` for the working pattern player.
 
 **Prerequisites**: AVAS must be **enabled** in Vehicle Settings > Notification. When AVAS is disabled, the amplifier is powered off and no sound is produced even though the MCU accepts the command (returns SUCCESS).
 
@@ -1038,7 +1063,7 @@ Monitoring System) debug mode only — not a general system debug mode.
 | **DiCar/ICarPropertyService path** | **BLOCKED** | ContentProvider exported but Android 10 UID check blocks app_process: "Given calling package android does not match caller's uid 2000". No `car_property_service` in ServiceManager. |
 | **UE_BROADCAST signals** | **FAILED** | ALL UE_BROADCAST SET signals return MCU_FAILED (-2147482648). UE channel not implemented on Dolphin MCU. |
 | **HW_L1/L2/L3_SOUNDING** | **FAILED** | ALL HW sounding direction SET signals return MCU_FAILED. Not implemented on Dolphin MCU. |
-| **PROMPT_VOLUME_LEVEL** | **SUCCESS** | `PROMPT_VOLUME_LEVEL_SET` (0xAA000299) accepts 1=low, 2=mid, 3=high. Readback via 0x99000307 confirms change. Was 1 (low), changed to 3, confirmed readback=3. **Whether this affects AVAS volume needs user confirmation.** |
+| **PROMPT_VOLUME_LEVEL** | **DOES NOT affect AVAS** | `PROMPT_VOLUME_LEVEL_SET` (0xAA000299) accepts 1/2/3 and readback confirms change, but live user testing confirmed NO volume difference on AVAS speaker across all 3 levels. Volume is still hardcoded. |
 | **EXTERIOR_SPEAKER_CONFIG readback** | **CONFIRMED HIDDEN** | 0x35201036 returns -10011 (NOT_REGISTERED) — exterior speaker feature not implemented on Dolphin MCU. This is why the UI toggle is hidden. |
 | **A2B/DSP/PA fault status** | **NOT READABLE** | 0x99000246-49 all return -10011 (NOT_REGISTERED). Fault status signals not implemented on Dolphin. |
 | **KEY_SOUND_SOURCE** | **FAILED** | 0x32B1C010 and 0x1B10000E both return MCU_FAILED. Not implemented. |
