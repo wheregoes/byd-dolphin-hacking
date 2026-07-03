@@ -130,7 +130,7 @@ See [Driver Display](docs/driver-display.md) for the full UDS diagnostic protoco
 | **BYDAutoInstrumentDevice API** | Requires `BYDAUTO_INSTRUMENT_COMMON/SET` permissions — shell UID 2000 blocked |
 | **Custom lock/power-on sounds** | MCU firmware rejects the commands |
 | **Horn** | Hardware relay, not software controllable |
-| **Hazard light flash** | MCU rejects `setInt(1004, ...)` for turn/hazard/fog. Cloud path (`server_data_to_mcu(532)`) works but needs AES encryption. YUN device (1034) accepts transport but needs encrypted data. |
+| **Hazard light flash** | MCU GUID gate — MCU accepts SPI transport (result=0) but silently drops remote control commands without cloud-authenticated GUID registered. MCU brought online via `setInt(1005, 0xAA00004A, 1)` (mMCUStatus=1 confirmed). Frame format fully decoded via Ghidra. Final barrier: GUID only available in cloudmanager process memory (root). |
 | **Boot animation** | Needs root to replace (`/system/media/`) |
 | **Cabin/inside temperature** | No API found — exhaustive probing confirmed unavailable |
 | **Browser blob download bypass** | `fetch→blob→anchor.click` is **silently blocked** by BYD's "Download proibido" policy on firmware 13.1.32.2507250.1. No file lands, no error, no popup. Earlier claims of this working were inaccurate — see [test-log](tools/browser-exploit/test-log.md) for the full diagnosis. `navigator.share` is also `undefined` in this build. |
@@ -169,9 +169,13 @@ Key security-relevant discoveries for researchers:
 | **CAN bus injection from shell** | `com.byd.cluster.spi` broadcast → `BYDAutoTestDevice.TEST_SIMULATE_DOWN_SET` (0xAA00020F) injects raw CAN frames. No root, no hardware — just ADB. ClusterDebug app acts as privileged proxy. VCDS-style ECU coding possible. |
 | **UDS diagnostic protocol exposed** | BydDevelopmentTools.apk (`sharedUserId=android.uid.system`) contains full UDS (ISO 14229) stack — frame format, CAN domain IDs, session control, security access. Send via `BYDAutoOtaDevice.set({0xAA000140}, ...)`. |
 | **Most BYDAUTO permissions** | `protectionLevel=normal` — any app can request them at install time |
-| **BYDAUTO_DEVICE_YUN (1034)** | Cloud device type accepts ALL `0xAA` feature IDs via `setBuffer`/`setInt` — no MCU rejection. Cloudmanager uses this as private MCU channel. Data needs AES encryption for actuation. |
-| **Cloud command path traced** | Phone app → BYD Cloud → AES TCP → `cloudmanager` → `server_data_to_mcu(532)` → `setBuffer(1034, 0xAA000005, encrypted)` → MCU → hazard lights. FuncNum 532 = find car / flash. Full protocol captured via logcat sniff. |
-| **cloudmanager binary extracted** | Pulled from user's own firmware (`13.1.32.2507250.1`). Contains AES S-Box, `server_data_to_mcu` function, 532 handler with UHT/battery/speed validation. See `data/firmware-binaries/`. |
+| **BYDAUTO_DEVICE_YUN (1034)** | Cloud device type accepts ALL `0xAA` feature IDs via `setBuffer`/`setInt` — no MCU rejection. Cloudmanager's private MCU channel. MCU path is **UNENCRYPTED** (confirmed via Ghidra — `TcpSendIndtoMcu` does raw memcpy, AES only for cloud TCP). |
+| **Cloud command path traced** | Phone app → BYD Cloud → AES TCP → `cloudmanager` → `server_data_to_mcu(532)` → `setBuffer(1034, 0xAA000004, unencrypted_frame)` → MCU → hazard lights. FuncNum 532 = find car / flash. Correct feature ID is `0xAA000004` (not `0xAA000005`). Full protocol captured via logcat + Ghidra decompilation. |
+| **MCU can be brought online** | `setInt(1005, 0xAA00004A, 1)` → cloudmanager logs `POWER_MCU_STATUS value: 1 / set mMCUStatus = 1`. MCU accepts frames but requires GUID authentication for remote control commands. |
+| **cloudmanager binary extracted** | Pulled from user's own firmware (`13.1.32.2507250.1`). Contains AES S-Box, `server_data_to_mcu` function, 532 handler. See `data/firmware-binaries/`. Fully decompiled via Ghidra MCP. |
+| **Kernel 4.14.117 — OverlayFS compiled in** | GameOver(lay) (CVE-2023-2640/CVE-2023-32629) possible — security patch is 2023-02-05, fix was Aug 2023. User namespaces status unclear (shell `unshare -U` returns EINVAL, need app-context test). |
+| **Root BYD services exposed via binder** | 13+ BYD services running as root with custom SELinux domains (cloudmanager, cloudctrlserv, carplayserv, etc.) accept binder transactions from shell UID 2000. `cloudmanager` = `ICloudRemoteControlService` (39 methods). Prime targets for privilege escalation. |
+| **Shell can call cloudmanager binder** | `service call cloudmanager <tx>` from shell returns `Parcel(NULL)` — NOT SELinux-denied. Shell is allowed to transact with root-running cloudmanager service. |
 
 ---
 
@@ -200,15 +204,19 @@ BYD App → HTTPS → BYD Cloud → MQTT → cloudmanager (native) → CAN bus
 ```
 Phone app → HTTPS → BYD Cloud → AES-encrypted TCP (10.168.126.25:5002)
 → cloudmanager (PID 5158, root) → server_data_to_mcu(FuncNum=532)
-→ AES encrypt → setBuffer(1034, 0xAA000005, encrypted) → MCU → hazard lights
+→ remoteControltoMcu() → TcpSendIndtoMcu() → setBuffer(1034, 0xAA000004, UNENCRYPTED frame)
+→ MCU → hazard lights
 ```
 
-- **FuncNum 532** (0x0214), cmd 0x16 = find car / flash hazard
-- **Device 1034** = `BYDAUTO_DEVICE_YUN` — cloud device, accepts all commands
-- **Device 1005** = `BYDAUTO_DEVICE_POWER` — power domain
-- AES S-Box at offset `0xc0a0` in cloudmanager binary (standard AES)
-- 532 handler validates: ACC on + speed > 1 → reject, UUID dedup, UHT auth, battery < 25% → reject
+- **FuncNum 532** (0x0214), cmd 0x16 = find car / flash hazard (cmd 3 = successful reply)
+- **Correct feature ID:** `0xAA000004` (confirmed via Ghidra decompilation of `remoteControltoMcu`)
+- **MCU path is UNENCRYPTED** — `TcpSendIndtoMcu` does raw memcpy to SPI. AES is only for cloud TCP.
+- **Device 1034** = `BYDAUTO_DEVICE_YUN` — cloud device, all 0xAA feature IDs accepted
+- **Device 1005** = `BYDAUTO_DEVICE_POWER` — `setInt(1005, 0xAA00004A, 1)` brings MCU online
+- **Frame format:** `[type_byte][funcNum_hi][funcNum_lo][replyFlag=0xFE][funcVersion=0x00][dataLen][data]`
+- **MCU GUID gate:** MCU requires cloud-authenticated GUID before processing remote control commands. GUID sent to MCU via `mcu_guid_ind()`. Only available in cloudmanager process memory (root).
 - Cloud TCP server: `10.168.126.25:5002` (private APN)
+- AES S-Box at offset `0xc0a0` in cloudmanager binary (standard AES-128-CBC)
 
 ### Instrument Cluster (Driver Display)
 
@@ -277,7 +285,8 @@ IDD-IDPS: port 12406 (localhost)
 | ❄️ [AC & Climate Control](docs/ac-climate-control.md) | Temperature zones, AC state getters/setters, encoding quirks, permission bypass code |
 | 🔊 [Sound & Themes](docs/sound-and-themes.md) | Audio hardware topology, 200+ CAN signal IDs, AVAS/AVAH analysis, MCU probe results, 8 working melody patterns |
 | 🖥️ [Driver Display](docs/driver-display.md) | Instrument cluster reverse engineering — Qt OS, AutoContainer bridge, CAN injection, UDS diagnostics, VCDS-style coding |
-| 💡 [Light Control](docs/light-control.md) | 214 light feature IDs, DRL toggle confirmed, MCU-locked actuation, cloud command path traced, YUN device (1034), AES encryption analysis |
+| 💡 [Light Control](docs/light-control.md) | 214 light feature IDs, DRL toggle confirmed, MCU-locked actuation, cloud command path traced, YUN device (1034), MCU unencrypted path confirmed via Ghidra |
+| 🔓 [Jailbreak Analysis](docs/jailbreak-analysis.md) | Kernel 4.14.117 analysis, OverlayFS/GameOver(lay), root BYD services binder attack surface, escalation chain |
 | 📷 [Camera System](docs/camera-system.md) | Dual camera API architecture, 360 view system, permission enforcement analysis |
 | 🔄 [OTA System](docs/ota-system.md) | COTA/FOTA/OTG reverse engineering, upgrade_server vulnerability, COTA auth analysis |
 | 🧪 [Decompiled APKs & Install Vectors](docs/decompiled-apks-install-vectors.md) | APK internals, install surfaces, sideload vectors |
