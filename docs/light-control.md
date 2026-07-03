@@ -237,3 +237,125 @@ through. Direct actuation requires either:
 This is a well-designed security boundary: the attack surface is large
 (214+ feature IDs, normal permissions, CAN injection path), but the MCU
 enforces actuation control at the lowest practical level.
+
+---
+
+## Cloud Command Path (server_data_to_mcu)
+
+The phone app's "find car" / flash hazard command bypasses the feature ID
+layer entirely via a separate native path:
+
+```
+Phone app → HTTPS → BYD Cloud → AES-encrypted TCP → cloudmanager (native)
+→ server_data_to_mcu(FuncNum=532) → SPI → MCU → hazard lights
+```
+
+### Captured command (logcat sniff)
+
+| Field | Value |
+|-------|-------|
+| FuncNum | 532 (0x0214) |
+| Cmd | 0x16 (find car / flash hazard) |
+| Data payload | `9b895083217c427a8c78405b4aa47ec41600000000` (21 bytes) |
+| Encryption | AES (encrypt_flag:3, msgIndex-based) |
+| MCU response | `840214000115...ff0000` via mcu_data_ind (0x99000004) |
+
+### Why we can't replicate it locally
+
+- `server_data_to_mcu` is internal to `/system/bin/cloudmanager` (native binary)
+- No binder interface exposes this function
+- cloudmanager binary is root-locked (unreadable even from system UID 1000)
+- AES encryption key unknown (stored inside cloudmanager)
+- CAN injection (TEST_SIMULATE_DOWN_SET) doesn't accept cloud protocol frames
+
+### Paths to crack it
+
+1. **Extract cloudmanager from factory image** — See [Firmware Resources](../README.md#-firmware-resources--references) in main README. Download a BYD factory image for the 13.1.32 platform, extract cloudmanager, reverse with Ghidra to find AES key + SPI frame format
+2. **Root the car** — Read cloudmanager directly, access `/dev/spidev_ivi`, replicate the SPI call
+3. **Physical SPI sniff** — Logic analyzer on the SPI bus during a phone-app "find car" trigger
+
+### Cloud services on the car
+
+| Service | PID | Binder Interface |
+|---------|-----|-----------------|
+| cloudmanager | 5158 (root) | `android.os.ICloudRemoteControlService` |
+| cloudctrlserv | 242 (root) | `android.os.IMqttCloudControlServ` |
+| mqttserv | 241 (root) | `android.os.IBYDCloudMqttServer` |
+| CloudServiceApp | 3580 (system) | `com.byd.cloudserviceapp.aidl.ICloudServiceApp` |
+
+Cloud TCP server: `10.168.126.25:5002` (private APN, not externally accessible).
+
+---
+
+## Firmware Reverse Engineering — cloudmanager Binary
+
+Extracted from user's own firmware update (`BYD_32.250725.zip`, version `13.1.32.2507250.1`).
+Binaries in `data/firmware-binaries/`.
+
+### Critical Discovery: BYDAUTO_DEVICE_YUN (1034)
+
+cloudmanager communicates with the MCU using a **dedicated "Yun" (Cloud) device type**:
+
+| Device Type | Name | Constant | Usage |
+|-------------|------|----------|-------|
+| **1034** | **BYDAUTO_DEVICE_YUN** | `0x40A` | `setBuffer(1034, 0xAA000005, encryptedData, len)` |
+| **1005** | BYDAUTO_DEVICE_POWER | `0x3ED` | `setInt(1005, fid, val)` |
+
+Found in `BYDAutoConstants.java:59`: `BYDAUTO_DEVICE_YUN = 1034`
+
+### cloudmanager → MCU Communication Path
+
+```
+Cloud TCP → AES decrypt → server_data_to_mcu(FuncNum) → encryptHandler (AES) → setBuffer(1034, 0xAA000005, encrypted, len) → MCU
+```
+
+The data is **AES encrypted** before sending via `setBuffer`. The AES S-Box is at offset `0xc0a0` in the binary (standard AES forward S-Box), inverse S-Box at `0xc1a0`.
+
+### Potential AES Key
+
+At offset `0xc2e0` in the binary:
+```
+01 23 45 67 89 ab cd ef fe dc ba 98 76 54 32 10
+```
+This is the standard NIST AES-128 test key. It may be the actual key or a test vector.
+
+### 532 Command Handler (Find Car / Flash Hazard)
+
+The 532 handler validates before executing:
+1. ACC on + speed > 1 → reject (can't flash while driving)
+2. UUID match → skip (dedup)
+3. UHT (User Handle Token) not secure → reject
+4. Battery < 25% → reject
+
+If all checks pass → `server_data_to_mcu(532)` → AES encrypt → `setBuffer(1034, fid, data, len)` → MCU → lights flash
+
+### Function Number Table
+
+| FuncNum | Purpose | Direction |
+|---------|---------|-----------|
+| 211 | Registration status | SOC→Cloud |
+| 511 | Status report (CAN FD, 129 bytes) | SOC→Cloud |
+| 532 | **Find car / flash hazard** | Cloud→SOC→MCU |
+| 540 | App command relay | SOC→Cloud |
+| 544 | Configuration upload | SOC→Cloud |
+| 708 | NFC/BT ID management | Cloud→SOC |
+| 741 | NFC settings | Cloud→SOC |
+| 742 | Broadcast data (includes 532) | Cloud→SOC |
+
+### Key Strings from cloudmanager Binary
+
+```
+server_data_to_mcu mFuncNum is %d,replyFlag is %d,mFuncVision %d
+recv 532 cmd is 0x%x
+532 data: = <hex payload>
+recv 532 but acc on and speed > 1!!
+recv 532 UHT is being UHTING !!
+recv 532 UHT is not being Secure!!
+recv 532 but elecPercentage is: %f and < 25%!!
+%s-->532_cmd:%d-> reply reult:sucess !
+aes_decrypt ret is %d
+dataDecrypt type is %d, inSize is %u, msgIndex is %u
+encryptHandler
+native.cloud.manager.service
+com.byd.cloudserviceapp.aidl.ICloudServiceApp
+```

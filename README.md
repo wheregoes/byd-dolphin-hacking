@@ -379,6 +379,59 @@ Custom Android apps (Door Sound, etc.) live in [byd-apps](https://github.com/whe
 
 ---
 
+## 🔧 Firmware Resources & References
+
+### BYD Factory Images & Repair Manuals
+
+Factory images (full system flash packages) and repair manuals for BYD models are shared by the community at:
+
+| Resource | URL |
+|----------|-----|
+| Global factory images (ATTO 3) | [github.com/BYDcar/BYDGlobalFactoryImages1](https://github.com/BYDcar/BYDGlobalFactoryImages1) |
+| Flash packages by chip (Di1–Di5) | [github.com/BYDcar/BYDPackagesByChip1](https://github.com/BYDcar/BYDPackagesByChip1) · [Chip2](https://github.com/BYDcar/BYDPackagesByChip2) · [Chip3](https://github.com/BYDcar/BYDPackagesByChip3) |
+| Repair manuals & dashboard firmware | [github.com/BYDcar/BYDRepairManual](https://github.com/BYDcar/BYDRepairManual) |
+
+These images contain the full Android system partition, including native binaries like `cloudmanager`, `mqttserv`, and MCU firmware — essential for offline reverse engineering when on-device extraction is blocked by SELinux.
+
+The original sources are BYD's after-sales portals:
+- Repair manuals: `http://lms.bydauto.com.cn/`
+- Factory images: `http://yunpan.byd.com.cn/`
+
+Both require a dealer or repair shop account. The GitHub repos above were sourced from Taobao/Xianyu sellers and shared freely.
+
+> **Note:** Firmware versions vary by model, region, and trim. The Dolphin (DiLink 50, Qualcomm 665, branch `13.1.32`) shares a platform with ATTO 3, Seagull, and Yuan PLUS — but binaries may differ between versions. Always verify compatibility before flashing.
+
+### Community
+
+| Resource | URL |
+|----------|-----|
+| BYD Owners Forum (firmware tracking) | [byd.forum/dilink-versions.html](https://byd.forum/dilink-versions.html) |
+| Telegram (BYD community) | [t.me/just_byd](https://t.me/just_byd) |
+| XDA: BYD DiLink TWRP / root threads | [xdaforums.com](https://xdaforums.com/t/byd-song-plus-ev-twrp-needed.4586857/) |
+
+### DiLink Platform Reference
+
+| DiLink Version | Controller | CPU | Android | Branch | Common Models |
+|---------------|------------|-----|---------|--------|---------------|
+| **DiLink 50** | 13 | Qualcomm 665 | 10 | **13.1.32** | **Dolphin**, ATTO 3, Seagull, Yuan PLUS, e2 |
+| DiLink 50P | 13 | Qualcomm 665 | 10 | 13.1.33 | Seal, Han, Tang |
+| DiLink 100 | 23 | Qualcomm 778G | 12 | 23.1.x | N7, D9, Leopard 5, Seal |
+| DiLink 150 | 34 | BYD 9000 | 13 | 34.1.x | Xia, Han L, Tang L, D9 |
+
+Full version table at [byd.forum/dilink-versions.html](https://byd.forum/dilink-versions.html).
+
+### USB Flashing Method
+
+```
+1. Download firmware ZIP, rename to UpdateFull.zip
+2. Format USB as FAT32, create folder structure:
+   BYDUpdatePackage/msm8953_64/UpdateFull.zip
+3. Plug into car's USB data port while system is running
+4. Auto-detects (~10 min), or force: hold "Previous track" steering button + volume wheel until screen goes black
+```
+
+---
+
 ## 📄 License
 
 MIT License
