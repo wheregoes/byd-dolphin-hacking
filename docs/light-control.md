@@ -285,6 +285,45 @@ Phone app → HTTPS → BYD Cloud → AES-encrypted TCP → cloudmanager (native
 
 Cloud TCP server: `10.168.126.25:5002` (private APN, not externally accessible).
 
+### Ghidra Decompilation Results
+
+Full decompilation via Ghidra MCP (251 tools). Key findings from cloudmanager binary:
+
+**The MCU path sends data UNENCRYPTED:**
+
+```
+CloudRemoteControlService::remoteControltoMcu()
+  → builds frame at object+0x47AB
+  → calls TcpSendIndtoMcu(object, 0x40A, 0xAA000004, frame, len)
+    → BYDAutoManager::setBuffer(1034, 0xAA000004, frame)  ← NO ENCRYPTION!
+```
+
+**Correct feature ID: `0xAA000004`** (not 0xAA000005 as previously assumed)
+
+**Frame format (6-byte header + payload):**
+```
+[byte 0]  = type_byte (from object offset 0x371 — CAN branch indicator)
+[byte 1]  = funcNum >> 8  (e.g. 0x02 for 532)
+[byte 2]  = funcNum & 0xFF (e.g. 0x14 for 532)
+[byte 3]  = replyFlag (0xFE for send, 0x01 for response)
+[byte 4]  = funcVersion (0x00)
+[byte 5]  = dataLen
+[byte 6+] = data payload
+```
+
+**AES functions in the binary:**
+- `AES_CBC_encrypt_buffer` at 0x1b1e8 — standard AES-128-CBC (10 rounds, S-Box)
+- `KeyExpansion` at 0x1b050 — standard AES key expansion
+- `aes_encrypt` at 0x1b15c — wrapper: KeyExpansion + AES_CBC_encrypt_buffer
+- These are used for **cloud TCP encryption**, NOT for MCU SPI communication
+
+**MCU state gate:**
+- `0x99000155` on device 1034 returns buffer `MCU_OFFLINE`
+- MCU requires cloud authentication handshake (function 211) before accepting remote control
+- Without handshake: `setBuffer(1034, 0xAA000004, frame)` returns `result=0` (transport OK)
+  but MCU state machine ignores the command
+- This is the final barrier: MCU must be "online" (handshake completed) to actuate
+
 ---
 
 ## Firmware Reverse Engineering — cloudmanager Binary
