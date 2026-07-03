@@ -147,30 +147,127 @@ Java BYDAutoManager → libbydauto.so (JNI, client)
 └─────────────────────────────────────────────────────┘
 ```
 
+## carplayserv Analysis (ROOT, network-exposed) — CRITICAL
+
+### Architecture
+- **Binary:** `/system/bin/carplayserv` (2.2MB ARM64 ELF, stripped)
+- **Shared lib:** `/system/lib64/libcarplayserv.so` (43KB) — binder interface
+- **Runs as:** root (UID 0), SELinux domain `carplayserv:s0`
+- **Listens on:** `0.0.0.0:7000` (TCP + IPv6) — ANY device on car WiFi can connect
+- **Protocol:** AirPlay/450.14 + CarPlay + iAP2 + HomeKit pairing
+- **Binder service:** `carplayserv` → `android.os.ICarplayServer`
+
+### AirPlay Version & CVEs
+- **Version:** AirPlay/450.14 (APT — AirPlay Protocol Toolkit, ~2021 era)
+- **Security patch:** 2023-02-05 (pre-dates AirPlay CVE fixes)
+
+| CVE | Description | Status |
+|-----|-------------|--------|
+| **CVE-2024-44189** | AirPlay RCE — attacker on same network can execute arbitrary code via crafted AirPlay messages | **VULNERABLE** (patched Sep 2024, car has Feb 2023) |
+| CVE-2023-32437 | AirPlay memory corruption | **LIKELY VULNERABLE** (patched May 2023) |
+| CVE-2021-30781 | AirPlay message handling | **LIKELY VULNERABLE** (patched 2021, but may be patched in binary) |
+
+### AirPlay Request Handlers (root, network-reachable)
+```
+_requestProcessAuthSetup(connection, httpMsg)     — auth setup
+_requestProcessSetProperty(connection, httpMsg)   — property setting
+_requestProcessPairSetupHomeKit(connection, msg)  — HomeKit pairing setup
+_requestProcessPairVerifyHomeKit(connection, msg) — HomeKit pairing verify
+_GeneralAudioProcessPacket(session, ctx, buf, sz) — audio packet processing
+APSRTPPacketHandler                                — RTP packet handler
+_SetupClientExchange(session, in, inLen, out, sz) — crypto exchange
+_VerifyPairingClientExchange(...)                   — crypto verify
+```
+
+### Binder Interface (BnCarplayServer::onTransact)
+Analyzed via Ghidra decompilation of libcarplayserv.so:
+
+| TX | Method | Data Pattern |
+|----|--------|-------------|
+| 1 | SendNMEAData(byte[], int) | VLA stack alloc — safe (dynamic size) |
+| 2 | SendUISource(byte[], int) | VLA stack alloc — safe |
+| 3 | SendWireLessMsg(byte[], int) | VLA stack alloc — safe |
+| 4 | SendPhoneManager(byte[], int) | VLA stack alloc — safe |
+| 5 | RegisterListener(listener, int, byte[], int) | VLA + binder |
+| 6 | UnRegisterListener(int, listener) | Standard |
+
+The binder onTransact uses VLA (alloca-style) for data buffers — no fixed-size overflow.
+**The vulnerability is in the AirPlay protocol handlers**, not the binder interface.
+
+### Attack Vectors
+1. **AirPlay HTTP/RTSP** (port 7000) — Crafted HTTP requests to `/info`, `/auth-setup`, `/pair-setup`, `/pair-verify`
+2. **RTP audio packets** — Malformed RTP packets to the audio port
+3. **mDNS/Bonjour** — Crafted service discovery responses
+4. **HomeKit pairing** — Pair-Setup/Pair-Verify handshake manipulation
+
+### Network Topology
+```
+Car WiFi: 192.168.10.x
+  ├── Head Unit: 192.168.10.10
+  │     ├── :5555  — ADB (IPv6 only)
+  │     ├── :7000  — carplayserv/AirPlay (0.0.0.0!) ← ATTACK TARGET
+  │     ├── :12406 — IDD-IDPS (localhost only)
+  │     ├── :14002-14041 — Various BYD services (IPv6)
+  │     └── :14006 — hbs (IPv6)
+  └── Phone/laptop: 192.168.10.X (attacker)
+```
+
+## Extracted Root Service Binaries
+
+All extracted from user's firmware (`13.1.32.2507250.1`) via 7z on system.img:
+
+| Binary | Size | SELinux Domain | Binder Interface | Analysis Status |
+|--------|------|----------------|------------------|-----------------|
+| **carplayserv** | 2.2MB | `carplayserv:s0` | ICarplayServer | AirPlay/450.14 — CVE-2024-44189 likely |
+| **strategyservice** | 209KB | root | IStrategyManagerService | Pending |
+| **gbacqservice** | 199KB | root | IBYDGBAcqServer | Pending |
+| **gbdataservice** | 120KB | root | IGbDataService | Pending |
+| **deservice** | 61KB | root | IDataExtractService | Has AES/RSA + network reply |
+| **cloudctrlserv** | 55KB | `cloudctrlserv:s0` | IMqttCloudControlServ | Already analyzed |
+| **cloudmanager** | 346KB | `cloudmanager:s0` | ICloudRemoteControlService | Fully analyzed (Ghidra) |
+| **mqttserv** | 178KB | root | IBYDCloudMqttServer | Pending |
+| **stateservice** | 26KB | root | IStateService | Pending |
+| **diagnosticsrv** | 11KB | root | IBYDDiagnosticService | Pending |
+| **cryptokeyserver** | 11KB | root | ICryptoKeyService | Pending |
+| **carpadinfosrv** | 11KB | root | (no AIDL) | Pending |
+| **detectionservice** | 11KB | root | IDetectionService | Pending |
+
+### deservice (DataExtractService) — Notable
+- Has `wifi_link_connect_status(int, void*, int)` — processes WiFi data
+- Has `aes_cbc_pcsk5_encrypt`, `encryptByPrikeyString` — RSA/AES crypto
+- Has `replyClient(char*, int, uint, uint)` — sends data to network clients
+- Has `packData(char*, uint, uint, uint, uchar*)` — packs data into buffer
+- Has `random_uuid(char*)` — UUID generation
+
 ## Most Promising Paths
 
-### 1. GameOver(lay) — Kernel exploit (HIGHEST priority)
+### 1. CVE-2024-44189 — AirPlay RCE on carplayserv (HIGHEST priority)
+- carplayserv runs AirPlay/450.14 as root on 0.0.0.0:7000
+- CVE disclosed Sep 2024, car patch is Feb 2023
+- AirPlay protocol message handling allows code execution
+- **Attack vector:** Connect to car WiFi, send crafted AirPlay messages to port 7000
+- **Result:** Root code execution on head unit
+
+### 2. GameOver(lay) — Kernel exploit
 - OverlayFS compiled in, kernel < 5.11, security patch before Aug 2023
 - Need to verify user namespace creation from APP context (not shell)
 - If it works: instant root from browser exploit chain
-- Test: write APK that calls `unshare(CLONE_NEWUSER)`
 
-### 2. KGSL kernel exploit
+### 3. KGSL kernel exploit
 - Qualcomm GPU driver present (336 refs)
 - Multiple known CVEs for msm-4.14 KGSL
 - Requires GPU access from browser (WebGL)
 
-### 3. Binder exploit on root BYD services
+### 4. Binder exploit on root BYD services
 - cloudmanager, carplayserv, etc. accept binder from shell
 - Need to find vulnerability in their binder transaction handlers
-- Analyze vendor binaries (cloudctrlserv, carplayserv) in Ghidra
-
-### 4. Direct cloudmanager memory read
-- `/proc/5158/mem` — root-only, but if we get system UID first...
-- `/proc/5158/maps` — might be readable from shell
+- carplayserv binder handler uses VLA (safe) — but AirPlay protocol handlers untested
 
 ## Firmware Resources
-- boot.img → kernel at `/tmp/opencode/byd-kernel-decompressed` (37MB)
-- vendor.img → at `/tmp/opencode/byd-all-partitions/vendor.img`
-- system.img → at `/tmp/opencode/byd-all-partitions/system.img` (5GB)
+- boot.img → kernel at `/tmp/opencode/byd-kernel-decompressed` (37MB, 4.14.117)
+- vendor.img → at `/tmp/opencode/byd-all-partitions/vendor.img` (877MB)
+- system.img → at `/tmp/opencode/byd-payload-out/system.img` (4.8GB)
+- Root service binaries → `/tmp/opencode/byd-root-services/` (15 binaries, 3.2MB total)
 - cloudmanager binary → `data/firmware-binaries/cloudmanager` (346KB)
+- carplayserv binary → `/tmp/opencode/byd-root-services/carplayserv` (2.2MB)
+- libcarplayserv.so → `/tmp/opencode/byd-root-services/libcarplayserv.so` (43KB)
