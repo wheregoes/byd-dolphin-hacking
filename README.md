@@ -21,6 +21,7 @@ Everything here was discovered through ADB exploration, APK decompilation, and C
 - [Documentation](#-documentation)
 - [Scripts](#-scripts)
 - [Repository Structure](#-repository-structure)
+- [Firmware Resources & References](#-firmware-resources--references)
 - [License](#-license)
 
 ---
@@ -107,6 +108,8 @@ See [Driver Display](docs/driver-display.md) for the full UDS diagnostic protoco
 | **CAN bus injection** | **VCDS-style feature coding possible** — inject CAN frames via `com.byd.cluster.spi` broadcast, no root needed |
 | **Cluster screenshot** | Capture driver display via `fission_screencap -d 1 -p <file>` |
 | **Instrument cluster reads** | PowerUnit, TempUnit, BacklightCtlType, InsThemeValue via BYDAutoManager |
+| **DRL toggle** | `setInt(1004, 0x43100046, 1/2)` — DRL auto mode ON/OFF, confirmed by readback |
+| **YUN device (1034)** | **ALL `0xAA` feature IDs accepted by MCU** — `setBuffer(1034, fid, data)` and `setInt(1034, fid, val)` return 0 (OK). Cloudmanager's private MCU channel. Needs AES encryption for actuation. |
 | **Content providers** | Expose vehicle data (battery, tyre pressure, maintenance, trip consumption) |
 | **Sideloading** | USB drive or ADB — [see guide](docs/sideloading-guide.md) |
 ### ⚠️ Partially Working
@@ -127,6 +130,7 @@ See [Driver Display](docs/driver-display.md) for the full UDS diagnostic protoco
 | **BYDAutoInstrumentDevice API** | Requires `BYDAUTO_INSTRUMENT_COMMON/SET` permissions — shell UID 2000 blocked |
 | **Custom lock/power-on sounds** | MCU firmware rejects the commands |
 | **Horn** | Hardware relay, not software controllable |
+| **Hazard light flash** | MCU rejects `setInt(1004, ...)` for turn/hazard/fog. Cloud path (`server_data_to_mcu(532)`) works but needs AES encryption. YUN device (1034) accepts transport but needs encrypted data. |
 | **Boot animation** | Needs root to replace (`/system/media/`) |
 | **Cabin/inside temperature** | No API found — exhaustive probing confirmed unavailable |
 | **Browser blob download bypass** | `fetch→blob→anchor.click` is **silently blocked** by BYD's "Download proibido" policy on firmware 13.1.32.2507250.1. No file lands, no error, no popup. Earlier claims of this working were inaccurate — see [test-log](tools/browser-exploit/test-log.md) for the full diagnosis. `navigator.share` is also `undefined` in this build. |
@@ -165,6 +169,9 @@ Key security-relevant discoveries for researchers:
 | **CAN bus injection from shell** | `com.byd.cluster.spi` broadcast → `BYDAutoTestDevice.TEST_SIMULATE_DOWN_SET` (0xAA00020F) injects raw CAN frames. No root, no hardware — just ADB. ClusterDebug app acts as privileged proxy. VCDS-style ECU coding possible. |
 | **UDS diagnostic protocol exposed** | BydDevelopmentTools.apk (`sharedUserId=android.uid.system`) contains full UDS (ISO 14229) stack — frame format, CAN domain IDs, session control, security access. Send via `BYDAutoOtaDevice.set({0xAA000140}, ...)`. |
 | **Most BYDAUTO permissions** | `protectionLevel=normal` — any app can request them at install time |
+| **BYDAUTO_DEVICE_YUN (1034)** | Cloud device type accepts ALL `0xAA` feature IDs via `setBuffer`/`setInt` — no MCU rejection. Cloudmanager uses this as private MCU channel. Data needs AES encryption for actuation. |
+| **Cloud command path traced** | Phone app → BYD Cloud → AES TCP → `cloudmanager` → `server_data_to_mcu(532)` → `setBuffer(1034, 0xAA000005, encrypted)` → MCU → hazard lights. FuncNum 532 = find car / flash. Full protocol captured via logcat sniff. |
+| **cloudmanager binary extracted** | Pulled from user's own firmware (`13.1.32.2507250.1`). Contains AES S-Box, `server_data_to_mcu` function, 532 handler with UHT/battery/speed validation. See `data/firmware-binaries/`. |
 
 ---
 
@@ -187,6 +194,21 @@ SoC → I2S → MCU DSP → A2B bus → Amplifiers / AVAS speaker
 ```
 BYD App → HTTPS → BYD Cloud → MQTT → cloudmanager (native) → CAN bus
 ```
+
+### Cloud Command Path (Find Car / Flash Hazard)
+
+```
+Phone app → HTTPS → BYD Cloud → AES-encrypted TCP (10.168.126.25:5002)
+→ cloudmanager (PID 5158, root) → server_data_to_mcu(FuncNum=532)
+→ AES encrypt → setBuffer(1034, 0xAA000005, encrypted) → MCU → hazard lights
+```
+
+- **FuncNum 532** (0x0214), cmd 0x16 = find car / flash hazard
+- **Device 1034** = `BYDAUTO_DEVICE_YUN` — cloud device, accepts all commands
+- **Device 1005** = `BYDAUTO_DEVICE_POWER` — power domain
+- AES S-Box at offset `0xc0a0` in cloudmanager binary (standard AES)
+- 532 handler validates: ACC on + speed > 1 → reject, UUID dedup, UHT auth, battery < 25% → reject
+- Cloud TCP server: `10.168.126.25:5002` (private APN)
 
 ### Instrument Cluster (Driver Display)
 
@@ -255,6 +277,7 @@ IDD-IDPS: port 12406 (localhost)
 | ❄️ [AC & Climate Control](docs/ac-climate-control.md) | Temperature zones, AC state getters/setters, encoding quirks, permission bypass code |
 | 🔊 [Sound & Themes](docs/sound-and-themes.md) | Audio hardware topology, 200+ CAN signal IDs, AVAS/AVAH analysis, MCU probe results, 8 working melody patterns |
 | 🖥️ [Driver Display](docs/driver-display.md) | Instrument cluster reverse engineering — Qt OS, AutoContainer bridge, CAN injection, UDS diagnostics, VCDS-style coding |
+| 💡 [Light Control](docs/light-control.md) | 214 light feature IDs, DRL toggle confirmed, MCU-locked actuation, cloud command path traced, YUN device (1034), AES encryption analysis |
 | 📷 [Camera System](docs/camera-system.md) | Dual camera API architecture, 360 view system, permission enforcement analysis |
 | 🔄 [OTA System](docs/ota-system.md) | COTA/FOTA/OTG reverse engineering, upgrade_server vulnerability, COTA auth analysis |
 | 🧪 [Decompiled APKs & Install Vectors](docs/decompiled-apks-install-vectors.md) | APK internals, install surfaces, sideload vectors |
@@ -298,6 +321,9 @@ adb shell "cd /data/local/tmp && app_process -Djava.class.path=. / BydAudioQuery
 | `ClusterProbe.java` | Probe instrument cluster feature IDs via BYDAutoManager |
 | `ClusterTest.java` | Targeted test of working instrument features (BacklightCtlType, InsThemeValue, PowerUnit, TempUnit) |
 | `InstrumentDeviceTest.java` | Direct BYDAutoInstrumentDevice API test (blocked by permission) |
+| `LightBlink.java` | Light control probe — read all states, sweep SET IDs, DRL toggle confirmed working |
+| `CloudFlash.java` | Call ICloudServiceApp.sendMsg + ICloudRemoteControlService.setControlConfigure (cloud command bridge) |
+| `YunTest.java` | **YUN device (1034) testing** — all 0xAA feature IDs ACCEPTED by MCU. Read/sweep/send/setint/getint. |
 | `SysMix.java` | System audio mixer queries |
 
 ### AVAS & Sound
@@ -365,6 +391,7 @@ data/
   audio-config/             Audio platform XML configs (I2S, mixer paths)
   car-status/               CarStatusProvider data dumps
   cluster_libs/             Cluster native libs (libBydCluster.so) — gitignored, regeneratable
+  firmware-binaries/        Extracted from user's firmware (13.1.32.2507250.1) — cloudmanager, mqttserv, cloudctrlserv, libmqttserv.so
   framework/                Pulled framework.jar, services.jar, ext.jar — gitignored
   native-libs/              Native shared libraries (auto.default.so, libbydauto.so)
   packages/                 Package lists and service dumps
