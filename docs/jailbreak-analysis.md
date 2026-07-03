@@ -159,13 +159,36 @@ Java BYDAutoManager → libbydauto.so (JNI, client)
 
 ### AirPlay Version & CVEs
 - **Version:** AirPlay/450.14 (APT — AirPlay Protocol Toolkit, ~2021 era)
-- **Security patch:** 2023-02-05 (pre-dates AirPlay CVE fixes)
+- **Security patch:** 2023-02-05 (pre-dates AirPlay SDK fixes by 2+ years)
+- **SDK fixed:** AirPlay audio SDK 2.7.1 / video SDK 3.6.0.126 (March 31, 2025)
 
-| CVE | Description | Status |
-|-----|-------------|--------|
-| **CVE-2024-44189** | AirPlay RCE — attacker on same network can execute arbitrary code via crafted AirPlay messages | **VULNERABLE** (patched Sep 2024, car has Feb 2023) |
-| CVE-2023-32437 | AirPlay memory corruption | **LIKELY VULNERABLE** (patched May 2023) |
-| CVE-2021-30781 | AirPlay message handling | **LIKELY VULNERABLE** (patched 2021, but may be patched in binary) |
+| CVE | Description | Impact | Status |
+|-----|-------------|--------|--------|
+| **CVE-2025-24132** | Memory handling in AirPlay SDK | **ROOT RCE** — "allows for remote code execution (RCE) with root privileges" (Oligo Security) | **VULNERABLE** — car SDK predates fix by years |
+| **CVE-2025-30422** | Buffer overflow in AirPlay SDK | App termination / potential RCE | **VULNERABLE** |
+| **CVE-2025-24271** | AirPlay access bypass | Unauthenticated AirPlay commands without pairing | **VULNERABLE** — no fix until iOS 18.4 (Mar 2025) |
+| CVE-2024-37602 | Mercedes NTG6 AirPlay NULL deref | DoS (needs physical Ethernet access) | N/A — different platform |
+
+### CVE-2025-24132 — Attack Chain (confirmed by Oligo Security, Dark Reading Sep 2025)
+
+**Researcher:** Uri Katz, Oligo Security (disclosed April 29, 2025)
+**Apple advisory:** https://support.apple.com/en-us/122403
+**CVSS:** 6.5 (CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H) — NVD rates as DoS, but Oligo confirms **ROOT RCE**
+
+**Attack flow (as described by Oligo Security):**
+1. **Entry:** Connect to car WiFi (we already have ADB — bypass this step)
+2. **iAP2 protocol:** iAP2 only authenticates ONE WAY — car doesn't verify the connecting device. Attacker impersonates an iPhone.
+3. **AirPlay SDK trigger:** Send crafted AirPlay protocol message to port 7000
+4. **Memory corruption:** CVE-2025-24132 triggers memory corruption in AirPlay handler
+5. **Root RCE:** Code execution with root privileges in carplayserv
+
+**Why the car IS vulnerable:**
+- carplayserv uses AirPlay/450.14 (ancient SDK)
+- Fix requires AirPlay audio SDK 2.7.1 / video SDK 3.6.0.126
+- BYD hasn't updated (as of firmware 13.1.32.2507250.1, July 2025)
+- Dark Reading (Sep 2025): "no car manufacturers have actually fixed their systems"
+
+**Our advantage:** We already have ADB WiFi access to the car's network (192.168.10.10). We don't need Bluetooth or physical access — we can probe port 7000 directly.
 
 ### AirPlay Request Handlers (root, network-reachable)
 ```
@@ -241,12 +264,15 @@ All extracted from user's firmware (`13.1.32.2507250.1`) via 7z on system.img:
 
 ## Most Promising Paths
 
-### 1. CVE-2024-44189 — AirPlay RCE on carplayserv (HIGHEST priority)
+### 1. CVE-2025-24132 — AirPlay ROOT RCE on carplayserv (HIGHEST priority)
 - carplayserv runs AirPlay/450.14 as root on 0.0.0.0:7000
-- CVE disclosed Sep 2024, car patch is Feb 2023
-- AirPlay protocol message handling allows code execution
-- **Attack vector:** Connect to car WiFi, send crafted AirPlay messages to port 7000
-- **Result:** Root code execution on head unit
+- Confirmed by Oligo Security as **ROOT RCE** (not just DoS as NVD states)
+- Fixed in AirPlay audio SDK 2.7.1 (March 2025) — car has 2021-era SDK
+- Dark Reading (Sep 2025): "no car manufacturers have actually fixed their systems"
+- **Attack vector:** Connect to car WiFi → send crafted AirPlay to port 7000 → root RCE
+- **Our advantage:** Already on car WiFi via ADB, no Bluetooth/iAP2 step needed
+- **Next:** Analyze carplayserv AirPlay handlers in Ghidra to find trigger point
+- **PoC status:** Oligo Security still concealing technical details — need to reverse engineer from binary
 
 ### 2. GameOver(lay) — Kernel exploit
 - OverlayFS compiled in, kernel < 5.11, security patch before Aug 2023
