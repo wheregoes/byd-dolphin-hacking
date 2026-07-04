@@ -101,8 +101,9 @@ See [Driver Display](docs/driver-display.md) for the full UDS diagnostic protoco
 | **Permission bypass** | `BydPermissionContext` (ContextWrapper) auto-grants `BYDAUTO_*` permissions client-side |
 | **CAN bus read/write** | Via ADB using `app_process` + reflection |
 | **75+ BYD packages** | With CAN bus access, 100+ custom `BYDAUTO_*` permissions |
-| **Engine simulator sound** | CAN-writable — UI shows 3 presets but MCU accepts 1–255 |
+| **Engine simulator sound** | **30+ presets confirmed** — SRC types 1–30 ALL accepted by MCU (readback verified). Dolphin HAS engine voice simulator (`HAS_SIMULATOR=2`). Selectable via `0x3E300038`. — [Engine Sound app](https://github.com/wheregoes/byd-apps) |
 | **AVAS preset selection** | CAN-writable — UI shows 2 but MCU accepts 0–5+ |
+| **setBuffer PCM streaming** | 128-byte PCM frames accepted by MCU (ret=0) for 8+ feature IDs. Max buffer: 128 bytes. Whether MCU interprets as audio unconfirmed. |
 | **AVAH test tones** | Play on AVAS external speaker using factory diagnostic signals (`0x6E970010`) |
 | **AVAS melody patterns** | 8 working patterns (doorbell, shop chime, alarm, fanfare, etc.) via `TEST_AUDIO_AVAS_SET` pitch control — [Door Sound app](https://github.com/wheregoes/byd-apps) |
 | **CAN bus injection** | **VCDS-style feature coding possible** — inject CAN frames via `com.byd.cluster.spi` broadcast, no root needed |
@@ -123,7 +124,7 @@ See [Driver Display](docs/driver-display.md) for the full UDS diagnostic protoco
 
 | Feature | Reason |
 |---------|--------|
-| **Custom AVAS audio (Boombox)** | MCU firmware blocks I2S → AVAS routing. Only 2 pitches available (TEST_AVAS 1=A, 2=B) |
+| **Custom AVAS audio upload** | `setBuffer` accepts 128-byte PCM data (ret=0) but MCU may not interpret as audio. Exterior speaker routing (`AUDIO_EXTERIOR_SPEAKER`) returns -10011 (not supported on Dolphin). Full Boombox-style custom audio not yet confirmed — see [AVAS research](docs/avas-engine-sound-simulator.md). |
 | **AVAS volume control** | Hardcoded in MCU, PROMPT_VOLUME_LEVEL doesn't affect it |
 | **Cluster theme/skin changes** | AutoContainer service throws "no AutoContainerNative" in single-OS mode (`fission_single_os=1`) |
 | **Cluster debug commands** | Day/night, classic/tech, FPS, skins — all require AutoContainer (blocked) |
@@ -284,6 +285,7 @@ IDD-IDPS: port 12406 (localhost)
 |-----|-------------|
 | ❄️ [AC & Climate Control](docs/ac-climate-control.md) | Temperature zones, AC state getters/setters, encoding quirks, permission bypass code |
 | 🔊 [Sound & Themes](docs/sound-and-themes.md) | Audio hardware topology, 200+ CAN signal IDs, AVAS/AVAH analysis, MCU probe results, 8 working melody patterns |
+| 🎵 [AVAS Engine Sound Simulator](docs/avas-engine-sound-simulator.md) | **30+ engine sound presets confirmed** — Dolphin HAS engine voice simulator, all SRC types 1-30 accepted, setBuffer 128B PCM accepted, full feature ID map |
 | 🖥️ [Driver Display](docs/driver-display.md) | Instrument cluster reverse engineering — Qt OS, AutoContainer bridge, CAN injection, UDS diagnostics, VCDS-style coding |
 | 💡 [Light Control](docs/light-control.md) | 214 light feature IDs, DRL toggle confirmed, MCU-locked actuation, cloud command path traced, YUN device (1034), MCU unencrypted path confirmed via Ghidra |
 | 🔓 [Jailbreak Analysis](docs/jailbreak-analysis.md) | Kernel 4.14.117 analysis, OverlayFS/GameOver(lay), root BYD services binder attack surface, escalation chain |
@@ -411,7 +413,7 @@ data/
 apk-analysis/               Decompiled APKs (regeneratable via jadx) + vehicle type mappings
 ```
 
-Custom Android apps (Door Sound, etc.) live in [byd-apps](https://github.com/wheregoes/byd-apps).
+Custom Android apps (Door Sound, Engine Sound, etc.) live in [byd-apps](https://github.com/wheregoes/byd-apps).
 
 ---
 
