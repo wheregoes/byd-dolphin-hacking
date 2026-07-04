@@ -176,3 +176,41 @@ adb shell 'curl -X POST http://127.0.0.1:7000/auth-setup \
   --data-binary @/data/local/tmp/auth.bin --max-time 5'
 # carplayserv crashes, CarPlay UI SIGSEGV, session disrupted
 ```
+
+## Crash Analysis Update: Clean Exit, Not Memory Corruption
+
+### Finding
+The crash buffer (`logcat -b crash`) contains ONLY the Java app crash:
+- `com.byd.carplay.ui` SIGSEGV at `VideoSink::~VideoSink()+168` (null deref)
+
+**No native carplayserv crash exists in the crash buffer.**
+
+This means carplayserv did NOT receive SIGSEGV/SIGABRT. Instead:
+1. carplayserv detected the auth-setup session conflict
+2. carplayserv called `exit()` voluntarily (clean restart)
+3. init restarted carplayserv with a new PID
+4. The Java app's binder death handler crashed (null deref in VideoSink cleanup)
+
+### Impact Assessment
+| Type | Status | Details |
+|------|--------|---------|
+| **Network DoS** | ✅ Confirmed | 33-byte payload restarts carplayserv, kills CarPlay session |
+| **Native RCE** | ❌ Not confirmed | carplayserv exits cleanly, no memory corruption |
+| **Java null deref** | ✅ Confirmed | VideoSink destructor null deref (not exploitable for RCE) |
+
+### CVE-2025-24132 Assessment
+The /auth-setup endpoint causes a **session conflict** (clean exit), not the memory corruption described in CVE-2025-24132.
+
+CVE-2025-24132 likely requires:
+1. **Proper iAP2 session establishment** — the attacker must connect as a valid iAP2 client
+2. **Then send malformed AirPlay data** on the established session
+3. The memory corruption is in the session data processing, not the auth-setup endpoint
+
+The iAP2 one-way authentication (described by Oligo Security) allows an attacker to impersonate an iPhone without the car verifying the connection. This establishes a valid session, which then gives access to the vulnerable AirPlay handler code path.
+
+### Next Steps for CVE-2025-24132
+1. **Implement iAP2 client** — simulate iPhone connecting via iAP2 protocol
+2. **Establish a separate AirPlay session** — not conflicting with existing CarPlay
+3. **Fuzz the session data handlers** — `/stream` with RTSP SETUP/RECORD
+4. **Analyze _requestProcessAuthSetup in Ghidra** — understand exact code path
+5. **Check if vulnerability is in RTP packet handler** — audio streaming data
