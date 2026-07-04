@@ -318,3 +318,27 @@ All extracted from user's firmware (`13.1.32.2507250.1`) via 7z on system.img:
 - cloudmanager binary → `data/firmware-binaries/cloudmanager` (346KB)
 - carplayserv binary → `/tmp/opencode/byd-root-services/carplayserv` (2.2MB)
 - libcarplayserv.so → `/tmp/opencode/byd-root-services/libcarplayserv.so` (43KB)
+
+## User Namespace Test Results (DEFINITIVE)
+
+Tested from BOTH contexts:
+- **Shell (UID 2000, `u:r:shell:s0`):** `unshare -U` → EINVAL
+- **App (UID 10132, `u:r:runas_app:s0`):** `run-as com.wheregoes.petmode unshare -U` → EINVAL
+
+### Conclusion
+**User namespaces are DISABLED at the kernel level.** Despite `CONFIG_USER_NS=y` being compiled in (strings present), the runtime behavior shows the kernel blocks unprivileged user namespace creation. Likely cause: `/proc/sys/user/max_user_namespaces = 0` (set at boot by BYD, readable only by root).
+
+### Impact on Exploit Paths
+
+| Exploit | Requires User NS | Status |
+|---------|-------------------|--------|
+| **GameOver(lay)** (CVE-2023-2640/32629) | YES | **❌ NOT VIABLE** |
+| CVE-2024-1086 (nf_tables) | No | ❌ nf_tables not compiled |
+| CVE-2022-0847 (Dirty Pipe) | No | ❌ kernel 5.8+ only |
+| KGSL exploits (CVE-2022-22057 etc.) | No | ⚠️ Needs testing |
+| Binder UAF (CVE-2020-0041) | No | ⚠️ Needs testing |
+
+### Remaining Kernel Exploit Options
+1. **KGSL (Qualcomm GPU driver)** — 336 refs in kernel. CVEs exist but need GPU access from exploit context.
+2. **Binder** — 205 refs. UAF exploits possible but complex.
+3. **Magisk root** (fastboot) — bootloader is unlocked, simplest path.
