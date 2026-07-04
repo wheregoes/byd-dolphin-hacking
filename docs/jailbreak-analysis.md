@@ -217,11 +217,32 @@ Analyzed via Ghidra decompilation of libcarplayserv.so:
 The binder onTransact uses VLA (alloca-style) for data buffers — no fixed-size overflow.
 **The vulnerability is in the AirPlay protocol handlers**, not the binder interface.
 
-### Attack Vectors
-1. **AirPlay HTTP/RTSP** (port 7000) — Crafted HTTP requests to `/info`, `/auth-setup`, `/pair-setup`, `/pair-verify`
-2. **RTP audio packets** — Malformed RTP packets to the audio port
-3. **mDNS/Bonjour** — Crafted service discovery responses
-4. **HomeKit pairing** — Pair-Setup/Pair-Verify handshake manipulation
+### Live Port 7000 Probe Results (tested via ADB port forwarding + on-car curl)
+
+**Confirmed:** TCP connections to port 7000 ARE accepted. HTTP server IS running.
+**Blocked by:** `[HTTPServer] link stoped, do not start carplay session`
+
+The carplayserv HTTP server checks CarPlay link state BEFORE processing any HTTP request. When no iPhone is connected (USB or wireless), the link is "stopped" and all HTTP connections are immediately closed with an empty reply.
+
+**Link state properties (all read-only from shell):**
+- `sys.carplay.connected=0` — not connected
+- `sys.carplay.transport=-1` — no transport
+- `sys.carplay.connecting=0` — not connecting
+- `sys.carplay.support=1` — CarPlay IS supported
+- `sys.carplay.uuid=F209634D-A589-45BC-B3BD-5C075410A8B4`
+
+**Endpoints probed (all returned empty reply):**
+`/info`, `/server-info`, `/pair-setup`, `/pair-verify`, `/auth-setup`, `/feedback`, `/stream`, `/reverse`
+
+**To reach the AirPlay handler, we need to establish a CarPlay link first:**
+1. **iAP2 protocol simulation** — send iAP2 handshake over TCP to establish wireless link
+2. **Real iPhone** — connect an iPhone briefly to establish link, then probe while active
+3. **Property bypass** — find a way to set `sys.carplay.connected=1` (requires root or system UID)
+4. **Binary analysis** — find the link check in Ghidra, understand if it can be bypassed via crafted packet
+
+**Other listening ports:**
+- Port 7000 (0x1B58) — carplayserv (0.0.0.0) — gated by link check
+- Port 12406 (0x3076) — IDD-IDPS (localhost only)
 
 ### Network Topology
 ```
