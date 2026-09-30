@@ -113,12 +113,14 @@ See [Driver Display](docs/driver-display.md) for the full UDS diagnostic protoco
 | **YUN device (1034)** | **ALL `0xAA` feature IDs accepted by MCU** — `setBuffer(1034, fid, data)` and `setInt(1034, fid, val)` return 0 (OK). Cloudmanager's private MCU channel. Needs AES encryption for actuation. |
 | **Content providers** | Expose vehicle data (battery, tyre pressure, maintenance, trip consumption) |
 | **Sideloading** | USB drive or ADB — [see guide](docs/sideloading-guide.md) |
+| **360 camera frames** | **Live 1280×960 from all four surround cameras, no root.** `bmmcamera.jar` is world-readable — load it yourself and drive `JNIBMMCamera` directly from a `shell`-uid `app_process`. An installed app can never do this (SELinux denies `untrusted_app_*` the `bmmcameraserver` binder); a process launched over ADB can — [details](docs/camera-system.md#frame-access-without-root) |
+
 ### ⚠️ Partially Working
 
 | Feature | Status |
 |---------|--------|
 | **Door lock status** | Main doors return INVALID (0), child lock readable. No dedicated `setDoorLockStatus()` — needs generic `set()` with unknown feature IDs |
-| **360 camera** | `BYDAutoPanoramaDevice` enforced server-side, bypass fails. `AVMCamera`/`NormalCamera` exist in `bmmcamera.jar` but not loadable by third-party apps |
+| **360 camera display control** | `BYDAutoPanoramaDevice` (mode, rotation, transparency) is enforced server-side and the `BydPermissionContext` bypass fails. Frame *capture* works — see above |
 
 ### ❌ What Doesn't Work
 
@@ -289,7 +291,7 @@ IDD-IDPS: port 12406 (localhost)
 | 🖥️ [Driver Display](docs/driver-display.md) | Instrument cluster reverse engineering — Qt OS, AutoContainer bridge, CAN injection, UDS diagnostics, VCDS-style coding |
 | 💡 [Light Control](docs/light-control.md) | 214 light feature IDs, DRL toggle confirmed, MCU-locked actuation, cloud command path traced, YUN device (1034), MCU unencrypted path confirmed via Ghidra |
 | 🔓 [Jailbreak Analysis](docs/jailbreak-analysis.md) | Kernel 4.14.117 analysis, OverlayFS/GameOver(lay), root BYD services binder attack surface, escalation chain |
-| 📷 [Camera System](docs/camera-system.md) | Dual camera API architecture, 360 view system, permission enforcement analysis |
+| 📷 [Camera System](docs/camera-system.md) | Dual camera API architecture, **pulling live 360 camera frames without root**, NV21 pixel-format gotcha, channel→direction mapping, hardware encode |
 | 🔄 [OTA System](docs/ota-system.md) | COTA/FOTA/OTG reverse engineering, upgrade_server vulnerability, COTA auth analysis |
 | 🧪 [Decompiled APKs & Install Vectors](docs/decompiled-apks-install-vectors.md) | APK internals, install surfaces, sideload vectors |
 | 🔓 [Locked/ADB-less Jailbreak Options](docs/locked-no-adb-browser-jailbreak-options.md) | Non-ADB attack surface, browser jailbreaks |
