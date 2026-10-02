@@ -16,17 +16,18 @@ No computer needed. Works with any USB drive formatted as FAT32 or exFAT.
 
 ### Steps
 
-1. On your USB drive, create a folder named exactly: `Third Party Apps 55`
+1. On your USB drive, create a folder named `Third Party Apps <countryCode>`, where `<countryCode>` is the value of the system property `sys.byd.countrycode` on your car (`55` Brazil, `52` Mexico, `62` Indonesia, `66` Thailand, `91` India, `966` Saudi Arabia, `971` UAE, `997` Kazakhstan, `998` Uzbekistan) — e.g. `Third Party Apps 55` on a Brazilian car
 2. Copy the APK file(s) into that folder
 3. Plug the USB drive into the car's USB port
 4. Wait a few seconds — a password prompt will appear
-5. Enter the password: `BYD6125F`
+5. Enter the password: `BYD6125F` (India uses `130820`)
 6. A file browser will appear showing the APKs — tap to install
 
 ### Notes
 
-- The folder name must be exactly `Third Party Apps 55` (with spaces)
-- The password `BYD6125F` is the same for all DiLink 3 vehicles
+- The folder name must match `Third Party Apps <countryCode>` exactly, spaces included; the wrong suffix means the folder is never scanned
+- The password `BYD6125F` is the same for all DiLink 3 vehicles **except India**, which uses `130820`
+- Europe, Australia and Japan units use `Application Installation <countryCode>` instead, with no password and cloud verification; Kazakhstan and India accept only a fixed list of packages (India: only `com.mappls.auto.bydznav23`) — see [sideloading-internals.md](https://github.com/wheregoes/byd-dolphin-hacking/blob/master/docs/sideloading-internals.md)
 - You can put multiple APKs in the folder and install them one by one
 
 ## Method 2: ADB over WiFi

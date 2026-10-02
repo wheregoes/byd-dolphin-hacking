@@ -1,8 +1,11 @@
-# BYD Dolphin Engine Voice Simulator — CUSTOM AVAS SOUNDS CONFIRMED
+# BYD Dolphin Engine Voice Simulator — feature map and measured limits
 
-## BREAKTHROUGH
-The BYD Dolphin **DOES support custom engine sounds** via the Engine Voice Simulator system.
-This is BYD's equivalent of Tesla's Boombox.
+The BYD Dolphin has an Engine Voice Simulator and it can be enabled and switched from Android.
+What is measured: `0x48F00000` reports the simulator as supported (`2`), the state write
+`0x3E300020` is readback-verified (0 → 1 → 0), and the source-type write `0x3E300038` is
+readback-verified for every value tried. What is **not** measured: how many distinct sounds exist,
+whether a given source type produces an audibly different sound, and which speaker the simulator
+drives. Nothing here demonstrates custom (user-supplied) audio on the AVAS speaker.
 
 ## Feature IDs (ALL WORKING)
 
@@ -26,7 +29,7 @@ This is BYD's equivalent of Tesla's Boombox.
 3. `setInt(1002, 0x3E300038, 3)` → SRC_TYPE = **3** (confirmed readback)
 4. `setInt(1002, 0x3E300038, 0)` → SRC_TYPE stayed at 3 (0 may be invalid)
 
-Source types 1, 2, 3 confirmed valid. Types 4, 5 untested.
+Acceptance is not capability: a later sweep confirmed readback for every source type up to 200 (only `0` is rejected), so this register behaves as unvalidated storage and says nothing about how many distinct sounds exist. No register reports a count.
 
 ## How It Works
 - Device ID: `1002` (BYDAUTO_DEVICE)
@@ -34,7 +37,7 @@ Source types 1, 2, 3 confirmed valid. Types 4, 5 untested.
 - Sounds are stored in MCU flash (preset sounds)
 - Source type selects which preset sound to use
 - Simulator must be enabled (STATE=1)
-- Sound plays through the **external AVAS speaker**
+- Which speaker the simulator drives is **unverified** — not measured on any car. Android audio (I2S) reaches cabin speakers only; the AVAS speaker is fed by the MCU's own tone generator (see [sound-and-themes.md](sound-and-themes.md)), but the simulator is MCU-internal, so either is possible.
 - AVAS typically activates at low speeds (<30 km/h) for pedestrian warning
 
 ## Usage
@@ -58,7 +61,7 @@ ALL source types 1-10 accepted by MCU:
 - SRC=0: REJECTED (invalid)
 - SRC=1 through SRC=10: ALL ACCEPTED (readback matches)
 
-The Dolphin has AT LEAST 10 different engine sound presets!
+Acceptance is not capability: a later sweep confirmed readback for every source type up to 200 (only `0` is rejected), so this register behaves as unvalidated storage and says nothing about how many distinct sounds exist. No register reports a count.
 
 ## setBuffer Results (LIVE TEST)
 
