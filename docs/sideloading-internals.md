@@ -460,22 +460,42 @@ This is standard Chromium security, not a BYD patch. Apps like WhatsApp that reg
 
 ### Browser-Only Sideload: Verdict
 
-**fetch→blob→anchor download bypass is a remote web exploit.** Any web page can silently drop files to `/sdcard/Download/` without ADB, CDP, or user interaction beyond visiting the page.
+> ⚠️ **CORRECTION (Jun 2026, firmware `13.1.32.2507250.1`).** There is **no browser-only install
+> path on this firmware**, and Flow A below — long advertised here as "true zero-prerequisite" — does
+> not work. Three separate measurements kill it
+> (`tools/browser-exploit/test-log.md`, entries of 2026-06-09 and 2026-06-30):
+>
+> - **All browser downloads are blocked.** `com.byd.browser`'s "Download proibido" policy silently
+>   drops blob downloads, direct `download`-attribute links and server-URL navigations, with or
+>   without a user gesture, across 8 MIME/extension variants, iframes and form submits. No file
+>   lands and no error is raised.
+> - **Chrome blocks every local URI inside `intent:` URLs** — `content://`, `file://` and `data:`
+>   all refuse to dispatch, including with `package=com.android.packageinstaller`. Only `http(s)://`
+>   survives. That is standard Chromium security, not a BYD patch, and it is what actually breaks
+>   Flow A's step 3.
+> - **`navigator.share({files})` is denied** at system level (`canShare` true, `share` throws
+>   "Permission denied"), and no RCE is available: CVE-2023-3079's primitive is wrong for this V8,
+>   CVE-2023-3420's trigger never fires on ARM64, CVE-2023-4863 does not crash this build.
+>
+> What *does* work from the browser: `fetch()` itself is not subject to the download policy, so the
+> APK bytes can be pulled into memory — they just cannot leave the sandbox. And a page can hand an
+> `http://` URL to **EX File Manager** (`com.ace.ex.file.manager`) through an `intent:` URL, which
+> then downloads and installs it. That app is not present on a stock unit, so it has to be planted
+> once over USB or ADB first. On a genuinely locked unit (no ADB, nothing sideloaded), the browser is
+> a dead end.
 
-**Full sideload chain — VERIFIED END TO END:**
+The historical claim is kept below for reference; treat it as **superseded**.
 
-Four viable flows, each tested and confirmed:
-
-**Flow A — TRUE ZERO-PREREQUISITE (NO ADB, NO TESTTOOLS, NO PASSWORD):**
+**Flow A — claimed zero-prerequisite chain (SUPERSEDED, does not work on 2507250.1):**
 1. User navigates car browser to `http://attacker-ip:8080`
-2. Page: `fetch()` → blob → `<a download>` drops APK to `/sdcard/Download/`
-3. Page: creates `<a href="intent://sdcard/Download/app.apk#Intent;scheme=file;action=android.intent.action.VIEW;type=application/vnd.android.package-archive;end">` and triggers click
-4. **PackageInstaller opens!** User taps "Install"
-5. **APK installed. Only prerequisites: visit URL + tap Install.**
+2. Page: `fetch()` → blob → `<a download>` drops APK to `/sdcard/Download/` — **blocked by policy**
+3. Page: creates `<a href="intent://sdcard/Download/app.apk#Intent;scheme=file;action=android.intent.action.VIEW;type=application/vnd.android.package-archive;end">` and triggers click — **blocked: local URIs are not allowed in `intent:` URLs**
+4. PackageInstaller opens — **not reached**
 
-Chain: `Visit URL` → `blob download` → `intent:// URL` → `PackageInstaller` → **INSTALLED**
+Claimed chain: `Visit URL` → `blob download` → `intent:// URL` → `PackageInstaller`. Both middle
+steps are blocked on 2507250.1; see the correction above.
 
-Why it works:
+Why it was believed to work:
 - `com.byd.browser` supports Chrome's `intent://` URL scheme
 - Browser has `REQUEST_INSTALL_PACKAGES` permission
 - `install_non_market_apps=1` in system settings (appears to be BYD default for AftermarketInstallTool)
@@ -527,27 +547,31 @@ Chain: `Visit URL` → `blob download` → `ADB cp+pm install` → **INSTALLED**
 - `isSecureContext = false` on `https://YOUR_HOST_IP:9191` (self-signed cert)
 - `isSecureContext = true` on `http://localhost:8191` (localhost exception)
 - Web Share Level 2, Service Worker registration require secure context
-- Blob download bypass works regardless of secure context
+- Blob download is blocked by policy regardless of secure context
 
 Summary of all paths:
 
 | Vector | Status | Notes |
 |--------|--------|-------|
-| fetch→blob→anchor | **WORKS (remote)** | No ADB/CDP needed. Any page can drop files to `/sdcard/Download/` |
+| fetch→blob→anchor | **Blocked (2507250.1)** | "Download proibido" policy drops every browser download; `fetch()` itself works, but the bytes cannot leave the sandbox |
 | WiFi ADB `pm install` | **WORKS** | Requires ADB WiFi enabled via TestTools. Silent install from `/data/local/tmp/` |
 | `am start` intent | **WORKS** | Resolver shows PackageInstaller, GPack, microG Vending |
 | Download manager | Gutted | `DownloadController.onDownloadStarted()` → toast |
 | Direct URL `<a download>` | Fails | Java cancel layer kills at receivedBytes=0 |
 | `fetch()` → filesystem | No path | `showSaveFilePicker` unavailable, OPFS sandboxed |
 | `navigator.share(APK)` | Blocked | `NotAllowedError` even on secure context |
-| `intent://` → PackageInstaller | Fails | No `BROWSABLE` category on target apps |
+| `intent://` → PackageInstaller | Fails | Chrome allows only `http(s)://` URIs in `intent:` URLs — `content://`, `file://` and `data:` are all refused — and the target activities also lack `BROWSABLE` |
 | `chrome://downloads` | Blocked | `ERR_BYD_NETWORK_BLOCK_LIST` — BYD-specific block |
 | PWA install | Shortcut only | Creates bookmark, not WebAPK/APK |
 | JS-to-native bridge | None | No `@JavascriptInterface`, no custom URL schemes |
 | `file://` APK navigation | Re-downloads | Treated as download, not install trigger |
 | CVE-2023-3079 | Partial (JS primitives) | V8 type confusion (TheHole) + OOB + addrof/fakeobj + arb R/W achieved on car Chrome 113 arm64. Sandbox mode (shift=24) detected. No native code exec yet (RX code pages; fake Code/Bytecode hijack recon only). No BYD JS bridges found. file:///proc/self/maps blocked in renderer. |
 
-For stock units, USB `Third Party Apps` folder is the official method. The blob download bypass gets files onto the device silently, but the install step still requires either ADB (Flow A/B) or a non-stock file manager (Flow C). No stock-browser-only install path exists yet.
+For stock units, the USB `Third Party Apps` folder is the official method. On firmware
+`13.1.32.2507250.1` there is **no browser-only install path at all**: downloads are blocked, local
+URIs cannot be dispatched from a page, `navigator.share` is denied and no RCE lands. The install step
+needs ADB, or a planted file manager (EX File Manager will fetch an `http://` URL handed to it via an
+`intent:` URL and install it), or the USB installer itself.
 
 ### Other Browser Findings
 
