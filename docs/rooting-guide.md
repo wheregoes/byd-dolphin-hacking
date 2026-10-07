@@ -211,16 +211,26 @@ BYD's kernel source code (not published) and building a custom kernel — extrem
 
 ## Stock Firmware Availability
 
-**No matching stock firmware found.** Available BYD Dolphin firmware on GitHub
-(BYDcar repos) is **Di3.0_13.1.22.xxx** for the **msm8953** chipset. Our car runs
-**QCM6125** with firmware **13.5.x** — completely different platform. Flashing
-msm8953 firmware would brick the car.
+**No matching stock firmware found.** The public BYDcar archives hold China-market Dolphin
+builds on the **13.1.22** branch (`Di3.0_13.1.22.2205262.1`, `…2207200.1`, `…2211166.1`, filed
+under "13.x芯片组", controller 13) and export ATTO 3 builds on our **13.1.32** branch
+(`Di3.0_13.1.32.2212081.1`, `…2302170.1`). None of them is our build or an export Dolphin build.
 
-| Source | Firmware | Chipset | Match? |
-|--------|----------|---------|--------|
-| GitHub BYDcar repos | Di3.0_13.1.22.xxx | msm8953 | **NO** |
-| Our car (0x99000001) | 13.5.2.2312260.1 | QCM6125 (SM6125) | — |
+| Source | Firmware | Platform | Match? |
+|--------|----------|----------|--------|
+| BYDcar archive, 海豚 (China) | Di3.0_13.1.22.x | controller 13 (Qualcomm 665) | **NO**: China branch |
+| BYDcar archive, ATTO 3 (export) | Di3.0_13.1.32.2212081.1 / 2302170.1 | controller 13 (Qualcomm 665) | **NO**: other model, 2022–23 builds |
+| Our car (system) | 13.1.32.2507250.1 | `ro.board.platform=trinket`, `ro.product.board=QCM6125` | — |
+| Our car MCU (0x99000001) | 13.5.2.2312260.1 | — | — |
 | Our car DSP (0x99000002) | 13.5.5.2505300.2 | — | — |
+
+The 13.1.22 and 13.1.32 branches run on the same SoC: a China-market 2022 Dolphin on
+`13.1.22.2605271.1` reports `ro.board.platform=trinket`
+([byd-apps#7](https://github.com/wheregoes/byd-apps/issues/7)), exactly as ours does. An earlier
+version of this page called the 13.1.22 images "msm8953". That came from the legacy USB update
+folder name `BYDUpdatePackage/msm8953_64/`, which OTGUpdate still hard-codes on these units, and
+it was wrong. Cross-flashing branches is still not a supported path: the USB updater refuses a
+branch mismatch (third version segment), see [ota-system.md](ota-system.md).
 
 **Implication**: Boot image MUST be extracted from the device before patching. There
 is no downloadable stock firmware to fall back to if the backup is lost.

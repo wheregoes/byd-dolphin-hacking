@@ -11,7 +11,7 @@ The PS4 jailbreak model: browser exploit → kernel/system exploit → root.
 - **Version:** Linux 4.14.117-perf (SMP PREEMPT)
 - **Build date:** Fri Jul 25 16:13:23 CST 2025
 - **Compiler:** Clang 8.0.12 (Android NDK)
-- **Platform:** Qualcomm msm8953 (Snapdragon 665 / DiLink 50)
+- **Platform:** Qualcomm `trinket`: QCM6125 (SM6125, Snapdragon 665 class), DiLink 50 (`ro.board.platform=trinket`, `ro.product.board=QCM6125`)
 - **Build path:** `Di3.0_repo_dilink3.0_6125f_mp250603_hotfx_canfd_single_214/AP/kernel/msm-4.14`
 - **Android security patch:** 2023-02-05
 
